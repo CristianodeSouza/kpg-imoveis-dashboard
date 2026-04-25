@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KPG Imóveis — Login</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#07051e; color:#fff; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+.card { background:#0b0950; border:1px solid #1a1770; border-radius:20px; padding:40px 36px; width:100%; max-width:380px; box-shadow:0 24px 60px rgba(0,0,0,0.5); }
+.logo { text-align:center; margin-bottom:32px; }
+.logo-line { width:48px; height:3px; background:linear-gradient(90deg,#BD851F,#CFA544); border-radius:99px; margin:0 auto 16px; }
+.logo h1 { font-size:1.45rem; font-weight:800; color:#fff; letter-spacing:-0.5px; }
+.logo .sub { color:#BD851F; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:2px; margin-top:4px; }
+.logo p { color:#7b7ab0; font-size:0.78rem; margin-top:8px; }
+label { display:block; font-size:0.72rem; color:#7b7ab0; margin-bottom:6px; text-transform:uppercase; letter-spacing:.6px; }
+input[type=text], input[type=password] { width:100%; background:#060474; border:1px solid #1a1770; color:#fff; padding:12px 14px; border-radius:8px; font-size:0.9rem; outline:none; transition:border-color .2s; margin-bottom:16px; }
+input::placeholder { color:#3d3c6e; }
+input:focus { border-color:#BD851F; }
+.btn { width:100%; background:linear-gradient(135deg,#020067,#BD851F); border:none; color:#fff; padding:13px; border-radius:8px; font-size:0.95rem; font-weight:700; cursor:pointer; transition:opacity .2s; letter-spacing:0.3px; }
+.btn:hover { opacity:.88; }
+.error { background:rgba(189,133,31,0.08); border:1px solid rgba(189,133,31,0.3); color:#CFA544; padding:10px 14px; border-radius:8px; font-size:0.82rem; margin-bottom:16px; }
+.footer { text-align:center; margin-top:24px; color:#3d3c6e; font-size:0.7rem; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-line"></div>
+    <h1>KPG Imóveis</h1>
+    <div class="sub">Gramado &amp; Canela</div>
+    <p>Dashboard de Marketing Digital</p>
+  </div>
+
+  {% if error %}
+  <div class="error">⚠️ {{ error }}</div>
+  {% endif %}
+
+  <form method="POST">
+    <label>Seu nome</label>
+    <input type="text" name="user" placeholder="Ex: Ana, João..." required>
+    <label>Senha de acesso</label>
+    <input type="password" name="password" placeholder="••••••••" required autofocus>
+    <button type="submit" class="btn">Entrar no Dashboard</button>
+  </form>
+
+  <div class="footer">Acesso restrito à equipe KPG Imóveis</div>
+</div>
+</body>
+</html>

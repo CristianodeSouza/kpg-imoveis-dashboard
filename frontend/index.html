@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KPG Imóveis — Publisher Instagram</title>
+  <style>
+    :root {
+      --primary: #1A2C4E;
+      --primary-light: #243d6b;
+      --accent: #C8A84B;
+      --accent-light: #e2c46a;
+      --bg: #f0f2f5;
+      --card: #ffffff;
+      --text: #1a1a2e;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --success: #16a34a;
+      --error: #dc2626;
+      --shadow: 0 4px 24px rgba(26,44,78,0.10);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--primary);
+      padding: 0 40px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-text {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    .logo-sub {
+      font-size: 12px;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    #status-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .status-dot {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #6b7280;
+    }
+    .dot.ok { background: #22c55e; }
+    .dot.warn { background: var(--accent); }
+
+    main {
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 0 24px;
+    }
+
+    .steps {
+      display: flex;
+      gap: 0;
+      margin-bottom: 36px;
+      background: var(--card);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .step {
+      flex: 1;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-right: 1px solid var(--border);
+      opacity: 0.4;
+      transition: all 0.2s;
+    }
+
+    .step:last-child { border-right: none; }
+
+    .step.active { opacity: 1; background: linear-gradient(90deg, #f0f4ff, #fff); }
+    .step.done { opacity: 0.7; }
+
+    .step-num {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .step.active .step-num { background: var(--primary); color: #fff; }
+    .step.done .step-num { background: var(--success); color: #fff; }
+
+    .step-label { font-size: 13px; font-weight: 600; line-height: 1.3; }
+    .step-sub { font-size: 11px; color: var(--text-muted); }
+
+    .panel {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 36px 40px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+
+    .panel-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 24px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-title span { color: var(--accent); }
+
+    .input-group {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input[type="text"], input[type="number"], textarea {
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 16px;
+      font-family: inherit;
+      color: var(--text);
+      transition: border-color 0.2s;
+      outline: none;
+      width: 100%;
+    }
+
+    input:focus, textarea:focus { border-color: var(--primary); }
+
+    textarea { min-height: 120px; resize: vertical; }
+
+    .btn {
+      padding: 13px 28px;
+      border-radius: 10px;
+      border: none;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: var(--primary-light); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-accent {
+      background: var(--accent);
+      color: var(--primary);
+    }
+
+    .btn-accent:hover { background: var(--accent-light); transform: translateY(-1px); }
+    .btn-accent:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+    }
+
+    .btn-outline:hover { background: var(--primary); color: #fff; }
+
+    .imovel-card {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-top: 4px;
+    }
+
+    .imovel-info h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #e8f0fe;
+      color: var(--primary);
+      margin-bottom: 16px;
+    }
+
+    .preco {
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--accent);
+      margin-bottom: 20px;
+      letter-spacing: -0.5px;
+    }
+
+    .caracteristicas {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .caract-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .caract-icon { font-size: 18px; }
+
+    .local {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .fotos-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .foto-thumb {
+      aspect-ratio: 4/3;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: all 0.15s;
+      position: relative;
+    }
+
+    .foto-thumb:hover { border-color: var(--primary); transform: scale(1.02); }
+    .foto-thumb.selecionada { border-color: var(--accent); }
+
+    .foto-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .foto-check {
+      position: absolute;
+      top: 6px; right: 6px;
+      background: var(--accent);
+      color: var(--primary);
+      border-radius: 50%;
+      width: 22px; height: 22px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .foto-thumb.selecionada .foto-check { display: flex; }
+
+    .criativos-preview {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .criativo-item { text-align: center; }
+
+    .criativo-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .criativo-img {
+      width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+
+    .resultado-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .resultado-item {
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .resultado-item.sucesso {
+      background: #f0fdf4;
+      border: 2px solid #86efac;
+    }
+
+    .resultado-item.erro {
+      background: #fef2f2;
+      border: 2px solid #fca5a5;
+    }
+
+    .resultado-item.pendente {
+      background: var(--bg);
+      border: 2px solid var(--border);
+    }
+
+    .resultado-icon { font-size: 32px; margin-bottom: 8px; }
+    .resultado-titulo { font-weight: 700; font-size: 15px; }
+    .resultado-msg { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+    .loader {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .alert {
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 16px;
+    }
+
+    .alert-error { background: #fef2f2; border: 1px solid #fca5a5; color: var(--error); }
+    .alert-success { background: #f0fdf4; border: 1px solid #86efac; color: var(--success); }
+    .alert-info { background: #eff6ff; border: 1px solid #93c5fd; color: #1d4ed8; }
+
+    .hidden { display: none !important; }
+
+    .divider { border: none; border-top: 2px solid var(--border); margin: 24px 0; }
+
+    .actions { display: flex; gap: 12px; margin-top: 24px; }
+
+    .caption-area { position: relative; }
+    .caption-regenerar {
+      position: absolute;
+      top: 8px; right: 8px;
+      font-size: 12px;
+      padding: 6px 12px;
+    }
+
+    .checkboxes {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 2px solid var(--border);
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .checkbox-item input { display: none; }
+
+    .checkbox-item.checked {
+      border-color: var(--primary);
+      background: #f0f4ff;
+      color: var(--primary);
+    }
+
+    @media (max-width: 768px) {
+      .imovel-card { grid-template-columns: 1fr; }
+      .criativos-preview { grid-template-columns: 1fr; }
+      .resultado-grid { grid-template-columns: 1fr; }
+      .steps { flex-direction: column; }
+      .panel { padding: 20px; }
+      header { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div>
+      <div class="logo-text">KPG IMÓVEIS</div>
+      <div class="logo-sub">Instagram Publisher</div>
+    </div>
+  </div>
+  <div id="status-bar"></div>
+</header>
+
+<main>
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step active" id="step-1">
+      <div class="step-num">1</div>
+      <div><div class="step-label">Buscar Imóvel</div><div class="step-sub">Código do CRM SIGA</div></div>
+    </div>
+    <div class="step" id="step-2">
+      <div class="step-num">2</div>
+      <div><div class="step-label">Dados & Fotos</div><div class="step-sub">Revise as informações</div></div>
+    </div>
+    <div class="step" id="step-3">
+      <div class="step-num">3</div>
+      <div><div class="step-label">Gerar Criativos</div><div class="step-sub">Preview das imagens</div></div>
+    </div>
+    <div class="step" id="step-4">
+      <div class="step-num">4</div>
+      <div><div class="step-label">Publicar</div><div class="step-sub">Feed, Stories e Reels</div></div>
+    </div>
+  </div>
+
+  <!-- Step 1: Buscar -->
+  <div class="panel" id="panel-buscar">
+    <div class="panel-title">🔍 Buscar <span>Imóvel</span></div>
+    <div class="input-group">
+      <div class="field">
+        <label>Código do Imóvel no SIGA</label>
+        <input type="number" id="input-codigo" placeholder="Ex: 1234" min="1" />
+      </div>
+      <button class="btn btn-primary" id="btn-buscar" onclick="buscarImovel()">
+        Buscar Imóvel
+      </button>
+    </div>
+    <div id="buscar-erro" class="hidden"></div>
+  </div>
+
+  <!-- Step 2: Preview do Imóvel -->
+  <div class="panel hidden" id="panel-imovel">
+    <div class="panel-title">🏠 <span>Imóvel</span> Encontrado</div>
+    <div class="imovel-card">
+      <div class="imovel-info" id="imovel-info"></div>
+      <div class="fotos-grid" id="fotos-grid"></div>
+    </div>
+    <hr class="divider">
+    <div class="actions">
+      <button class="btn btn-primary" onclick="gerarCriativos()">
+        Gerar Criativos para Instagram
+      </button>
+      <button class="btn btn-outline" onclick="resetar()">Nova Busca</button>
+    </div>
+    <div id="gerar-erro" class="hidden"></div>
+  </div>
+
+  <!-- Step 3: Criativos -->
+  <div class="panel hidden" id="panel-criativos">
+    <div class="panel-title">🎨 <span>Criativos</span> Gerados</div>
+    <div id="criativos-preview"></div>
+    <hr class="divider">
+    <div class="field">
+      <label>Legenda do Post</label>
+      <div class="caption-area">
+        <textarea id="textarea-caption"></textarea>
+      </div>
+    </div>
+    <hr class="divider">
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; margin-bottom: 12px;">O que deseja publicar?</label>
+      <div class="checkboxes">
+        <label class="checkbox-item checked" id="chk-feed-label">
+          <input type="checkbox" id="chk-feed" checked onchange="toggleCheck(this)">
+          📸 Feed (Carrossel)
+        </label>
+        <label class="checkbox-item checked" id="chk-stories-label">
+          <input type="checkbox" id="chk-stories" checked onchange="toggleCheck(this)">
+          📱 Stories
+        </label>
+        <label class="checkbox-item" id="chk-reels-label">
+          <input type="checkbox" id="chk-reels" onchange="toggleCheck(this)">
+          🎬 Reels (se houver vídeo)
+        </label>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-accent" id="btn-publicar" onclick="publicarInstagram()">
+        🚀 Publicar no Instagram
+      </button>
+      <button class="btn btn-outline" onclick="voltarStep2()">Voltar</button>
+    </div>
+    <div id="publicar-erro" class="hidden"></div>
+  </div>
+
+  <!-- Step 4: Resultado -->
+  <div class="panel hidden" id="panel-resultado">
+    <div class="panel-title">✅ <span>Publicação</span> Concluída</div>
+    <div class="resultado-grid" id="resultado-grid"></div>
+    <hr class="divider">
+    <div class="actions">
+      <button class="btn btn-primary" onclick="resetar()">Publicar Outro Imóvel</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  let imovelAtual = null;
+  let criativosGerados = null;
+
+  // Carrega status dos serviços
+  async function carregarStatus() {
+    try {
+      const r = await fetch('/api/status');
+      const data = await r.json();
+      const bar = document.getElementById('status-bar');
+      bar.innerHTML = Object.entries(data).map(([k, v]) => {
+        const ok = v === 'configurado';
+        const labels = { siga: 'SIGA', instagram: 'Instagram', imgbb: 'ImgBB', ia_caption: 'IA' };
+        return `<div class="status-dot">
+          <div class="dot ${ok ? 'ok' : 'warn'}"></div>
+          ${labels[k] || k}
+        </div>`;
+      }).join('');
+    } catch(e) {}
+  }
+
+  async function buscarImovel() {
+    const codigo = document.getElementById('input-codigo').value;
+    if (!codigo) return mostrarErro('buscar-erro', 'Informe o código do imóvel.');
+
+    const btn = document.getElementById('btn-buscar');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loader"></span> Buscando...';
+    esconder('buscar-erro');
+
+    try {
+      const r = await fetch('/api/buscar', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({codigo: parseInt(codigo)})
+      });
+
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || 'Erro ao buscar imóvel.');
+
+      imovelAtual = data.imovel;
+      mostrarImovel(imovelAtual);
+      setStep(2);
+    } catch(e) {
+      mostrarErro('buscar-erro', e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Buscar Imóvel';
+    }
+  }
+
+  function mostrarImovel(im) {
+    const info = document.getElementById('imovel-info');
+    const preco = formatarPreco(im.valor);
+    const local = [im.bairro, im.cidade, im.uf?.toUpperCase()].filter(Boolean).join(', ');
+
+    info.innerHTML = `
+      <div class="badge">${im.categoria || 'Imóvel'} • ${im.situacao || ''}</div>
+      <h2>${im.nome || 'Imóvel'}</h2>
+      <div class="preco">${preco}</div>
+      <div class="caracteristicas">
+        ${im.dormitorios ? `<div class="caract-item"><span class="caract-icon">🛏</span> ${im.dormitorios} Dormitório${im.dormitorios > 1 ? 's' : ''}</div>` : ''}
+        ${im.suites > 0 ? `<div class="caract-item"><span class="caract-icon">✨</span> ${im.suites} Suíte${im.suites > 1 ? 's' : ''}</div>` : ''}
+        ${im.area_privativa ? `<div class="caract-item"><span class="caract-icon">📐</span> ${im.area_privativa} m²</div>` : ''}
+        ${im.garagem > 0 ? `<div class="caract-item"><span class="caract-icon">🚗</span> ${im.garagem} Vaga${im.garagem > 1 ? 's' : ''}</div>` : ''}
+        ${im.banheiros > 0 ? `<div class="caract-item"><span class="caract-icon">🚿</span> ${im.banheiros} Banheiro${im.banheiros > 1 ? 's' : ''}</div>` : ''}
+        ${im.valor_condominio ? `<div class="caract-item"><span class="caract-icon">🏢</span> Cond. R$ ${im.valor_condominio}</div>` : ''}
+      </div>
+      ${local ? `<div class="local">📍 ${local}</div>` : ''}
+      ${im.corretor?.Nome ? `<div class="local" style="margin-top:8px">👤 ${im.corretor.Nome}</div>` : ''}
+      ${im.video ? `<div class="local" style="margin-top:8px">🎬 <a href="${im.video}" target="_blank" style="color:var(--primary)">Ver vídeo</a></div>` : ''}
+    `;
+
+    const grid = document.getElementById('fotos-grid');
+    const fotos = (im.fotos || []).slice(0, 9);
+    grid.innerHTML = fotos.map((f, i) => `
+      <div class="foto-thumb ${i === 0 ? 'selecionada' : ''}" onclick="toggleFoto(this, ${i})" data-url="${f.url}">
+        <img src="${f.media || f.url}" loading="lazy" alt="Foto ${i+1}" />
+        <div class="foto-check">✓</div>
+      </div>
+    `).join('') || '<p style="color:var(--text-muted);grid-column:1/-1">Sem fotos disponíveis</p>';
+
+    mostrar('panel-imovel');
+  }
+
+  function toggleFoto(el) {
+    el.classList.toggle('selecionada');
+  }
+
+  async function gerarCriativos() {
+    const btn = document.querySelector('#panel-imovel .btn-primary');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loader"></span> Gerando criativos...';
+    esconder('gerar-erro');
+
+    try {
+      const r = await fetch('/api/criativos/gerar', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({codigo: imovelAtual.codigo, id_imovel: imovelAtual.id})
+      });
+
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || 'Erro ao gerar criativos.');
+
+      criativosGerados = data;
+      mostrarCriativos(data);
+      setStep(3);
+    } catch(e) {
+      mostrarErro('gerar-erro', e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Gerar Criativos para Instagram';
+    }
+  }
+
+  function mostrarCriativos(data) {
+    const c = data.criativos;
+    const preview = document.getElementById('criativos-preview');
+
+    const items = [
+      { label: '📸 Feed Principal', url: c.feed?.[0] },
+      { label: '📱 Stories', url: c.stories?.[0] },
+      { label: '🖼 Carrossel (1ª foto)', url: c.carousel?.[0] },
+    ].filter(i => i.url);
+
+    preview.innerHTML = `<div class="criativos-preview">` +
+      items.map(i => `
+        <div class="criativo-item">
+          <div class="criativo-label">${i.label}</div>
+          <img class="criativo-img" src="${i.url}?t=${Date.now()}" alt="${i.label}" />
+        </div>
+      `).join('') +
+    `</div>`;
+
+    document.getElementById('textarea-caption').value = data.caption || '';
+    mostrar('panel-criativos');
+  }
+
+  async function publicarInstagram() {
+    const btn = document.getElementById('btn-publicar');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loader"></span> Publicando...';
+    esconder('publicar-erro');
+
+    try {
+      const r = await fetch('/api/publicar', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          codigo: imovelAtual.codigo,
+          id_imovel: imovelAtual.id,
+          caption: document.getElementById('textarea-caption').value,
+          publicar_feed: document.getElementById('chk-feed').checked,
+          publicar_stories: document.getElementById('chk-stories').checked,
+          publicar_reels: document.getElementById('chk-reels').checked,
+        })
+      });
+
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || 'Erro ao publicar.');
+
+      mostrarResultado(data.resultado);
+      setStep(4);
+    } catch(e) {
+      mostrarErro('publicar-erro', e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '🚀 Publicar no Instagram';
+    }
+  }
+
+  function mostrarResultado(resultado) {
+    const grid = document.getElementById('resultado-grid');
+    const itens = [
+      { key: 'feed', label: 'Feed (Carrossel)', icon: '📸' },
+      { key: 'stories', label: 'Stories', icon: '📱' },
+      { key: 'reels', label: 'Reels', icon: '🎬' },
+    ];
+
+    grid.innerHTML = itens.map(({ key, label, icon }) => {
+      const r = resultado[key];
+      if (!r) return `
+        <div class="resultado-item pendente">
+          <div class="resultado-icon">${icon}</div>
+          <div class="resultado-titulo">${label}</div>
+          <div class="resultado-msg">Não solicitado</div>
+        </div>`;
+
+      if (r.sucesso) return `
+        <div class="resultado-item sucesso">
+          <div class="resultado-icon">${icon}</div>
+          <div class="resultado-titulo">${label}</div>
+          <div class="resultado-msg">✅ Publicado com sucesso!<br><small>ID: ${r.id}</small></div>
+        </div>`;
+
+      return `
+        <div class="resultado-item erro">
+          <div class="resultado-icon">${icon}</div>
+          <div class="resultado-titulo">${label}</div>
+          <div class="resultado-msg">❌ ${r.erro}</div>
+        </div>`;
+    }).join('');
+
+    mostrar('panel-resultado');
+  }
+
+  function toggleCheck(el) {
+    el.closest('.checkbox-item').classList.toggle('checked', el.checked);
+  }
+
+  function setStep(n) {
+    for (let i = 1; i <= 4; i++) {
+      const s = document.getElementById(`step-${i}`);
+      s.classList.remove('active', 'done');
+      if (i < n) s.classList.add('done');
+      else if (i === n) s.classList.add('active');
+    }
+  }
+
+  function voltarStep2() {
+    esconder('panel-criativos');
+    setStep(2);
+  }
+
+  function resetar() {
+    imovelAtual = null;
+    criativosGerados = null;
+    document.getElementById('input-codigo').value = '';
+    ['panel-imovel', 'panel-criativos', 'panel-resultado'].forEach(esconder);
+    setStep(1);
+  }
+
+  function mostrar(id) { document.getElementById(id)?.classList.remove('hidden'); }
+  function esconder(id) { document.getElementById(id)?.classList.add('hidden'); }
+
+  function mostrarErro(id, msg) {
+    const el = document.getElementById(id);
+    el.className = 'alert alert-error';
+    el.textContent = '⚠ ' + msg;
+    el.classList.remove('hidden');
+  }
+
+  function formatarPreco(valor) {
+    if (!valor) return 'Consulte o valor';
+    try {
+      const v = parseFloat(String(valor).replace(/\./g, '').replace(',', '.'));
+      return 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+    } catch(e) { return 'R$ ' + valor; }
+  }
+
+  // Busca ao pressionar Enter
+  document.addEventListener('DOMContentLoaded', () => {
+    carregarStatus();
+    document.getElementById('input-codigo').addEventListener('keydown', e => {
+      if (e.key === 'Enter') buscarImovel();
+    });
+  });
+</script>
+
+</body>
+</html>

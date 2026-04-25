@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+requests
+pillow
+python-dotenv
+anthropic
+python-multipart
+aiofiles

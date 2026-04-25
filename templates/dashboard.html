@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KPG Imóveis — Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  /* ── KPG Imóveis — Paleta Executiva ── */
+  :root {
+    --navy:      #020067;
+    --navy-mid:  #060474;
+    --navy-card: #0b0950;
+    --navy-dark: #07051e;
+    --gold:      #BD851F;
+    --gold-light:#CFA544;
+    --border:    #1a1770;
+    --border-lt: #252290;
+    --muted:     #7b7ab0;
+    --text-dim:  #a0a0cc;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--navy-dark); color: #fff; min-height: 100vh; }
+
+  /* ── Header ── */
+  .header { background: var(--navy); border-bottom: 3px solid var(--gold); }
+  .header-inner { padding: 18px 32px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .avatar-wrap { background: linear-gradient(135deg, var(--gold), var(--gold-light)); padding: 3px; border-radius: 50%; flex-shrink: 0; }
+  .avatar { width: 68px; height: 68px; border-radius: 50%; border: 3px solid var(--navy); object-fit: cover; display: block; }
+  .profile-info h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.3px; }
+  .profile-info .username { color: var(--text-dim); font-size: 0.82rem; margin-top: 2px; }
+  .profile-info .bio { color: #c0bfe0; font-size: 0.78rem; margin-top: 5px; max-width: 480px; line-height: 1.5; }
+  .profile-info .website a { color: var(--gold-light); font-size: 0.78rem; text-decoration: none; margin-top: 3px; display: inline-block; }
+  .profile-info .website a:hover { color: var(--gold); }
+  .badge { display: inline-block; background: var(--gold); color: var(--navy); font-size: 0.6rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.5px; }
+  .last-updated { margin-left: auto; text-align: right; color: var(--muted); font-size: 0.73rem; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; background: var(--navy); border-bottom: 1px solid var(--border); padding: 0 32px; }
+  .tab { padding: 14px 18px; font-size: 0.82rem; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; letter-spacing: 0.2px; }
+  .tab:hover { color: #d0cfff; }
+  .tab.active { color: #fff; border-bottom-color: var(--gold); font-weight: 600; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+
+  /* ── Stat Cards ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .stat-card { background: var(--navy-card); border-radius: 10px; padding: 18px 14px; text-align: center; border: 1px solid var(--border); transition: transform 0.2s, border-color 0.2s; }
+  .stat-card:hover { transform: translateY(-2px); border-color: var(--gold); }
+  .stat-icon { font-size: 1.4rem; margin-bottom: 6px; }
+  .stat-value { font-size: 1.65rem; font-weight: 800; background: linear-gradient(135deg, var(--gold), var(--gold-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .stat-label { color: var(--muted); font-size: 0.68rem; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.6px; }
+  .stat-sub { color: #4e4d7a; font-size: 0.66rem; margin-top: 2px; }
+
+  /* ── Section title ── */
+  .section-title { font-size: 0.88rem; font-weight: 600; color: #d0cff5; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .section-title::before { content: ''; display: block; width: 3px; height: 14px; background: linear-gradient(var(--gold), var(--gold-light)); border-radius: 4px; }
+
+  /* ── Layout ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  @media(max-width: 900px) { .two-col, .three-col { grid-template-columns: 1fr; } }
+
+  .card { background: var(--navy-card); border-radius: 10px; padding: 18px; border: 1px solid var(--border); }
+  .card.full { margin-bottom: 20px; }
+  .card:hover { border-color: var(--border-lt); }
+
+  .chart-wrap { position: relative; height: 200px; }
+  .chart-wrap-sm { position: relative; height: 160px; }
+
+  /* ── Barras ── */
+  .bar-item { margin-bottom: 12px; }
+  .bar-item .label { font-size: 0.75rem; color: #c0bfe0; margin-bottom: 4px; display: flex; justify-content: space-between; }
+  .bar-track { background: var(--border); border-radius: 99px; height: 6px; }
+  .bar-fill { height: 6px; border-radius: 99px; transition: width 1.2s ease; }
+  .grad-purple { background: linear-gradient(90deg, var(--navy), #3432b0); }
+  .grad-orange { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+  .grad-green  { background: linear-gradient(90deg, #0d7a6e, #1fbfa8); }
+  .grad-blue   { background: linear-gradient(90deg, var(--navy), var(--gold)); }
+
+  /* ── Engagement rows ── */
+  .engagement-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .engagement-row:last-child { border-bottom: none; }
+  .eng-label { font-size: 0.78rem; color: #c0bfe0; }
+  .eng-value { font-size: 0.9rem; font-weight: 700; color: #fff; }
+  .eng-sub { font-size: 0.68rem; color: var(--muted); margin-top: 1px; }
+
+  /* ── Pills & Hashtags ── */
+  .type-pills { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .pill { background: #110f55; border: 1px solid var(--border); border-radius: 99px; padding: 6px 14px; font-size: 0.78rem; display: flex; align-items: center; gap: 7px; }
+  .pill .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-img { background: var(--navy-mid); } .dot-vid { background: var(--gold); } .dot-car { background: var(--gold-light); }
+  .pill .pct { color: var(--muted); font-size: 0.7rem; }
+
+  .hashtag-cloud { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+  .hashtag { background: #110f55; border: 1px solid var(--border); border-radius: 6px; padding: 4px 11px; font-size: 0.73rem; color: #c0bfe0; }
+  .hashtag.hot { border-color: var(--gold); color: var(--gold-light); }
+
+  /* ── Post cards ── */
+  .posts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; margin-bottom: 22px; }
+  .post-card { background: var(--navy-card); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); transition: transform 0.2s, border-color 0.2s; }
+  .post-card:hover { transform: translateY(-2px); border-color: var(--border-lt); }
+  .post-card.top-post { border-color: var(--gold); }
+  .post-img { width: 100%; height: 170px; object-fit: cover; display: block; background: var(--border); }
+  .post-body { padding: 11px; }
+  .post-meta { display: flex; gap: 12px; margin-bottom: 6px; }
+  .post-meta span { font-size: 0.78rem; color: #c0bfe0; display: flex; align-items: center; gap: 3px; }
+  .post-caption { font-size: 0.73rem; color: var(--muted); line-height: 1.4; max-height: 48px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+  .post-date { font-size: 0.68rem; color: #4e4d7a; margin-top: 7px; }
+  .post-type-badge { display: inline-block; font-size: 0.6rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-bottom: 5px; letter-spacing: 0.3px; }
+  .type-IMAGE { background: rgba(2,0,103,0.8); color: var(--gold-light); border: 1px solid var(--border-lt); }
+  .type-VIDEO { background: rgba(189,133,31,0.15); color: var(--gold); border: 1px solid rgba(189,133,31,0.3); }
+  .type-CAROUSEL_ALBUM { background: rgba(207,165,68,0.12); color: var(--gold-light); border: 1px solid rgba(207,165,68,0.25); }
+
+  /* ── Insight KPIs ── */
+  .insight-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; margin-bottom: 22px; }
+  .ikpi { background: var(--navy-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 12px; text-align: center; transition: border-color 0.2s; }
+  .ikpi:hover { border-color: var(--gold); }
+  .ikpi .ival { font-size: 1.55rem; font-weight: 800; }
+  .ikpi .ilabel { font-size: 0.66rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; }
+  .c-reach { color: var(--gold); }       .c-eng { color: var(--gold-light); }   .c-views { color: #7b9fff; }
+  .c-click { color: #1fbfa8; }           .c-like { color: var(--gold); }         .c-comment { color: #7b9fff; }
+  .c-share { color: var(--gold-light); } .c-save { color: #1fbfa8; }             .c-follow { color: var(--gold); }
+
+  /* ── Alert / Footer ── */
+  .alert-box { background: rgba(189,133,31,0.08); border: 1px solid rgba(189,133,31,0.3); border-radius: 8px; padding: 12px 16px; margin-bottom: 18px; font-size: 0.8rem; color: var(--gold-light); display: flex; gap: 10px; align-items: flex-start; }
+  .footer { text-align: center; padding: 18px; color: #3d3c6e; font-size: 0.7rem; border-top: 1px solid var(--border); margin-top: 8px; }
+
+  /* ── Filter buttons ── */
+  .fbtn { background: #110f55; border: 1px solid var(--border); color: var(--muted); font-size: 0.7rem; padding: 5px 12px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+  .fbtn:hover { background: #1a1770; color: #d0cfff; border-color: var(--border-lt); }
+  .fbtn.active { background: linear-gradient(135deg, var(--navy), var(--gold)); border-color: transparent; color: #fff; font-weight: 600; }
+
+  /* ── Rank rows ── */
+  .rank-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+  .rank-row:last-child { border-bottom: none; }
+  .rank-num { font-size: 0.73rem; font-weight: 700; color: var(--muted); width: 18px; flex-shrink: 0; }
+  .rank-img { width: 36px; height: 36px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: var(--border); }
+  .rank-info { flex: 1; min-width: 0; }
+  .rank-caption { font-size: 0.72rem; color: #d0cff5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rank-meta { font-size: 0.66rem; color: var(--muted); margin-top: 2px; }
+  .rank-val { font-size: 0.85rem; font-weight: 700; color: var(--gold-light); flex-shrink: 0; }
+  .rank-badge { font-size: 0.6rem; padding: 2px 6px; border-radius: 3px; flex-shrink: 0; }
+
+  /* ── GMB ── */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .gmb-kpi-g { color: #4285F4; } .gmb-kpi-gr { color: #34A853; } .gmb-kpi-r { color: #EA4335; } .gmb-kpi-y { color: #FBBC04; }
+
+  /* ── Tabela campanha ── */
+  table { border-collapse: collapse; }
+  thead th { color: var(--muted); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.4px; padding: 8px; border-bottom: 1px solid var(--border); }
+  tbody tr:hover td { background: rgba(189,133,31,0.05); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="avatar-wrap">
+      <img class="avatar" src="https://scontent.fcxj18-1.fna.fbcdn.net/v/t51.2885-15/473648227_922669969997860_4798942320979994988_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=7d201b&_nc_ohc=c-yaIEsZqFcQ7kNvwGa7bZE&_nc_oc=AdopjmYh-oNI91wF5Yc0mPVEhULFl_jreSYcyPq_EOHKKtcsPaOXFwjDc7SxBKGqPbEtdYMgbLgSDaO6aN4iQgjs&_nc_zt=23&_nc_ht=scontent.fcxj18-1.fna&edm=AL-3X8kEAAAA&oh=00_Af1cXha6tjpLTWkX0hRJoVR5oPUV3y13flR90gXA9jDfQQ&oe=69F170A3" alt="KPG" onerror="this.style.background='#333'">
+    </div>
+    <div class="profile-info">
+      <h1>Imobiliária em Gramado <span class="badge">Business</span></h1>
+      <div class="username">@kpgimoveis · 📍 Gramado & Canela, RS</div>
+      <div class="bio">Onde Experiência e Oportunidade Se Encontram. +15 anos no mercado imobiliário da Serra Gaúcha.</div>
+      <div class="website"><a href="https://linkme.bio/kpgimoveis" target="_blank">🔗 linkme.bio/kpgimoveis</a></div>
+    </div>
+    <div class="last-updated">
+      <div>Dados em tempo real</div>
+      <div style="color:#fff;font-weight:600;font-size:0.9rem">{{ now }}</div>
+      <div style="margin-top:4px;color:#555;font-size:0.68rem">Meta Graph API v19.0</div>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:8px;justify-content:flex-end">
+        <span style="color:#a0a0cc;font-size:0.72rem">👤 {{ user }}</span>
+        <a href="/logout" style="background:#060474;border:1px solid #1a1770;color:#7b7ab0;padding:4px 10px;border-radius:5px;font-size:0.68rem;text-decoration:none;transition:color .2s" onmouseover="this.style.color='#BD851F';this.style.borderColor='#BD851F'" onmouseout="this.style.color='#7b7ab0';this.style.borderColor='#1a1770'">Sair</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('perfil')">📊 Visão Geral</div>
+  <div class="tab" onclick="showTab('insights')">📈 Insights 28 dias</div>
+  <div class="tab" onclick="showTab('posts')">🖼 Publicações</div>
+  <div class="tab" onclick="showTab('campanhas')">📢 Campanhas</div>
+  <div class="tab" onclick="showTab('gmb')">🗺 Google Meu Negócio</div>
+</div>
+
+<!-- ===== ABA: VISÃO GERAL ===== -->
+<div id="page-perfil" class="page active">
+
+<!-- BARRA DE FILTROS -->
+<div style="background:#060474;border-bottom:1px solid #1a1770;padding:12px 32px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+  <span style="font-size:0.78rem;color:#888;margin-right:4px">Filtrar por:</span>
+
+  <div style="display:flex;gap:6px;align-items:center">
+    <span style="font-size:0.72rem;color:#666">Período</span>
+    <div id="filter-period" style="display:flex;gap:4px">
+      <button class="fbtn active" onclick="setPeriod('30d',this)">30 dias</button>
+      <button class="fbtn" onclick="setPeriod('90d',this)">90 dias</button>
+      <button class="fbtn" onclick="setPeriod('all',this)">Todos</button>
+    </div>
+  </div>
+
+  <div style="width:1px;height:24px;background:#333"></div>
+
+  <div style="display:flex;gap:6px;align-items:center">
+    <span style="font-size:0.72rem;color:#666">Tipo</span>
+    <div id="filter-type" style="display:flex;gap:4px">
+      <button class="fbtn active" onclick="setType('all',this)">Todos</button>
+      <button class="fbtn" onclick="setType('IMAGE',this)">🖼 Imagem</button>
+      <button class="fbtn" onclick="setType('VIDEO',this)">▶ Vídeo</button>
+      <button class="fbtn" onclick="setType('CAROUSEL',this)">🎠 Carrossel</button>
+    </div>
+  </div>
+
+  <div style="width:1px;height:24px;background:#333"></div>
+
+  <div style="display:flex;gap:6px;align-items:center">
+    <span style="font-size:0.72rem;color:#666">Ordenar</span>
+    <div id="filter-sort" style="display:flex;gap:4px">
+      <button class="fbtn active" onclick="setSort('likes',this)">❤️ Curtidas</button>
+      <button class="fbtn" onclick="setSort('comments',this)">💬 Coments</button>
+      <button class="fbtn" onclick="setSort('eng',this)">📊 Engaj.</button>
+    </div>
+  </div>
+
+  <div style="margin-left:auto;font-size:0.72rem;color:#555" id="filter-summary">Exibindo 12 posts · todos os tipos</div>
+</div>
+
+<div class="container">
+
+  <!-- KPIs dinâmicos -->
+  <div class="stats-grid" id="kpi-grid">
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-value">7.543</div>
+      <div class="stat-label">Seguidores</div>
+      <div class="stat-sub" style="color:#1fbfa8">↑ +25 nos últimos 28d</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-value" id="kpi-reach">4.562</div>
+      <div class="stat-label">Alcance 28d</div>
+      <div class="stat-sub">contas únicas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">❤️</div>
+      <div class="stat-value" id="kpi-likes">—</div>
+      <div class="stat-label" id="kpi-likes-label">Curtidas (filtro)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">💬</div>
+      <div class="stat-value" id="kpi-comments">—</div>
+      <div class="stat-label" id="kpi-comments-label">Comentários (filtro)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-value" id="kpi-eng-rate">—</div>
+      <div class="stat-label">Tx. Engajamento</div>
+      <div class="stat-sub">(curtidas+coments)/posts</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📈</div>
+      <div class="stat-value" id="kpi-avg-likes">—</div>
+      <div class="stat-label">Média curtidas/post</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🏆</div>
+      <div class="stat-value" id="kpi-best">—</div>
+      <div class="stat-label">Melhor post</div>
+      <div class="stat-sub" id="kpi-best-label"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🖼️</div>
+      <div class="stat-value" id="kpi-count">—</div>
+      <div class="stat-label">Posts no filtro</div>
+    </div>
+  </div>
+
+  <!-- Linha 1: Alcance + Engajamento por tipo -->
+  <div class="two-col">
+    <div class="card">
+      <div class="section-title">Alcance Diário — últimos 28 dias</div>
+      <div class="chart-wrap"><canvas id="reachChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Engajamento por Tipo de Conteúdo</div>
+      <div style="position:relative;height:200px"><canvas id="engByTypeChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Linha 2: Curtidas ao longo do tempo + Melhor dia -->
+  <div class="two-col">
+    <div class="card">
+      <div class="section-title" id="likes-chart-title">Curtidas por Post (filtrado)</div>
+      <div style="position:relative;height:200px"><canvas id="likesByPostChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Melhor Dia da Semana para Postar</div>
+      <div style="position:relative;height:200px"><canvas id="dayOfWeekChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Linha 3: Tipo donut + Top posts ranking -->
+  <div class="two-col">
+    <div class="card">
+      <div class="section-title">Mix de Conteúdo (filtrado)</div>
+      <div style="display:flex;gap:16px;align-items:center;margin-top:8px;">
+        <div style="width:120px;height:120px;flex-shrink:0"><canvas id="typeChart"></canvas></div>
+        <div id="type-legend" style="flex:1"></div>
+      </div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid #222">
+        <div style="font-size:0.72rem;color:#888;margin-bottom:8px">Curtidas médias por tipo:</div>
+        <div id="type-avg-bars"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">Ranking de Posts (filtrado)</div>
+      <div id="posts-ranking" style="margin-top:4px"></div>
+    </div>
+  </div>
+
+  <!-- Linha 4: Seguidores + Alcance vs Interações -->
+  <div class="two-col">
+    <div class="card">
+      <div class="section-title">Novos Seguidores por Dia (28d)</div>
+      <div class="chart-wrap"><canvas id="followerChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Alcance vs Interações</div>
+      <div style="position:relative;height:200px"><canvas id="reachVsEngChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Hashtags -->
+  <div class="card full">
+    <div class="section-title">Hashtags mais usadas nos posts filtrados</div>
+    <div class="hashtag-cloud" id="hashtag-cloud">
+      <span class="hashtag hot">#kpgimoveis</span>
+      <span class="hashtag hot">#gramado</span>
+      <span class="hashtag hot">#mercadoimobiliario</span>
+      <span class="hashtag hot">#serragaucha</span>
+      <span class="hashtag">#imoveis</span>
+      <span class="hashtag">#altopadrao</span>
+      <span class="hashtag">#canela</span>
+      <span class="hashtag">#apartamentoemgramado</span>
+      <span class="hashtag">#imoveisemgramado</span>
+      <span class="hashtag">#natalluz</span>
+      <span class="hashtag">#investimentoseguro</span>
+      <span class="hashtag">#vivernaserragaucha</span>
+      <span class="hashtag">#imovelmobiliado</span>
+      <span class="hashtag">#kpgimoveisgramado</span>
+      <span class="hashtag">#chocopascoagramado</span>
+      <span class="hashtag">#reservaparkcanella</span>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ===== ABA: INSIGHTS ===== -->
+<div id="page-insights" class="page">
+<div class="container">
+
+  <div class="insight-kpi">
+    <div class="ikpi"><div class="ival c-reach">4.562</div><div class="ilabel">Alcance total</div></div>
+    <div class="ikpi"><div class="ival c-eng">110</div><div class="ilabel">Contas engajadas</div></div>
+    <div class="ikpi"><div class="ival c-views">65</div><div class="ilabel">Visitas ao perfil</div></div>
+    <div class="ikpi"><div class="ival c-click">11</div><div class="ilabel">Cliques no site</div></div>
+    <div class="ikpi"><div class="ival c-like">111</div><div class="ilabel">Curtidas</div></div>
+    <div class="ikpi"><div class="ival c-comment">31</div><div class="ilabel">Comentários</div></div>
+    <div class="ikpi"><div class="ival c-share">5</div><div class="ilabel">Compartilhamentos</div></div>
+    <div class="ikpi"><div class="ival c-save">2</div><div class="ilabel">Salvamentos</div></div>
+    <div class="ikpi"><div class="ival c-follow">+25</div><div class="ilabel">Novos seguidores</div></div>
+  </div>
+
+  <div class="card full">
+    <div class="section-title">Alcance por dia — 27 Mar a 23 Abr 2026</div>
+    <div style="position:relative;height:240px">
+      <canvas id="reachChartFull"></canvas>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="section-title">Distribuição das Interações</div>
+      <div style="position:relative;height:200px">
+        <canvas id="interactionsChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">Detalhamento das Métricas</div>
+      <div class="engagement-row">
+        <div><div class="eng-label">🎯 Alcance total</div><div class="eng-sub">contas únicas alcançadas</div></div>
+        <div class="eng-value" style="color:#BD851F">4.562</div>
+      </div>
+      <div class="engagement-row">
+        <div><div class="eng-label">🔥 Total de interações</div><div class="eng-sub">curtidas + coment + compart + salv</div></div>
+        <div class="eng-value" style="color:#CFA544">156</div>
+      </div>
+      <div class="engagement-row">
+        <div><div class="eng-label">📊 Taxa de engajamento</div><div class="eng-sub">interações / alcance</div></div>
+        <div class="eng-value" style="color:#1fbfa8">3,42%</div>
+      </div>
+      <div class="engagement-row">
+        <div><div class="eng-label">👁️ Visitas ao perfil</div><div class="eng-sub">acessos à página @kpgimoveis</div></div>
+        <div class="eng-value" style="color:#1fbfa8">65</div>
+      </div>
+      <div class="engagement-row">
+        <div><div class="eng-label">🔗 Cliques no link</div><div class="eng-sub">linkme.bio/kpgimoveis</div></div>
+        <div class="eng-value" style="color:#4776e6">11</div>
+      </div>
+      <div class="engagement-row">
+        <div><div class="eng-label">📈 Novos seguidores</div><div class="eng-sub">ganhos nos últimos 28 dias</div></div>
+        <div class="eng-value" style="color:#11998e">+25</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card full">
+    <div class="section-title">Novos Seguidores por Dia — 27 Mar a 23 Abr 2026</div>
+    <div style="position:relative;height:180px">
+      <canvas id="followerChartFull"></canvas>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ===== ABA: PUBLICAÇÕES ===== -->
+<div id="page-posts" class="page">
+<div class="container">
+
+  <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">
+    <div class="stat-card"><div class="stat-icon">❤️</div><div class="stat-value">255</div><div class="stat-label">Total curtidas</div></div>
+    <div class="stat-card"><div class="stat-icon">💬</div><div class="stat-value">59</div><div class="stat-label">Total comentários</div></div>
+    <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value">21,2</div><div class="stat-label">Média curtidas</div></div>
+    <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-value">69</div><div class="stat-label">Melhor post</div></div>
+    <div class="stat-card"><div class="stat-icon">🎠</div><div class="stat-value">50%</div><div class="stat-label">Carrosséis</div></div>
+  </div>
+
+  <div class="section-title">Publicações Recentes</div>
+  <div class="posts-grid">
+    <div class="post-card top-post">
+      <img class="post-img" src="https://scontent.cdninstagram.com/v/t51.82787-15/539455992_18236741596294899_4214338548146159887_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=101&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiRkVFRC5iZXN0X2ltYWdlX3VybGdlbi5DMyJ9&_nc_ohc=31jCnW8SSnsQ7kNvwEG27tO&_nc_oc=AdqVbDzV_Yxm9b1R0y_wFZF-cleFevjp1ztHBuBAln-OpwEUDl8s7a10b432gb_DuYfRNuLGemIp5qo4zJ9xhxUX&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&edm=AM6HXa8EAAAA&_nc_gid=500rgIOR3wY8INi14srsLQ&oh=00_Af1I7O2IzmngyZ5WOzoBSOTnkp82sMSFL52S7Znrl1f1sg&oe=69F13AF7" onerror="this.style.background='#2a2a2a'" alt="">
+      <div class="post-body">
+        <span class="post-type-badge type-IMAGE">🖼 IMAGEM</span>
+        <div style="font-size:0.68rem;color:#BD851F;margin-bottom:5px">🏆 Post mais curtido</div>
+        <div class="post-meta"><span>❤️ 69</span><span>💬 16</span></div>
+        <div class="post-caption">Ser corretor é exercer uma profissão que exige garra, resiliência e paixão...</div>
+        <div class="post-date">27 ago 2025 · <a href="https://www.instagram.com/p/DN3n9Zu0r-g/" target="_blank" style="color:#CFA544">Ver ↗</a></div>
+      </div>
+    </div>
+    <div class="post-card">
+      <img class="post-img" src="https://scontent.cdninstagram.com/v/t51.71878-15/659119242_998404372525618_4187989698430248367_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=101&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%253D%253D&_nc_ohc=fIHTjmLnf64Q7kNvwE-f06l&_nc_oc=AdrsTwGG_NfqmnGUX3Y6LCoZqvL86hHspIfn4KY1e4V-HaCTnkdY2euoR7LFnjf-PLZO3zhwiu_GzKfd1VhyKt5E&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&edm=AM6HXa8EAAAA&_nc_gid=500rgIOR3wY8INi14srsLQ&oh=00_Af0Ye87S-WUwlghodiCqAilgH1babxmxey2oV9ZY5A31Pw&oe=69F14384" onerror="this.style.background='#2a2a2a'" alt="">
+      <div class="post-body">
+        <span class="post-type-badge type-VIDEO">▶ VÍDEO</span>
+        <div class="post-meta"><span>❤️ 57</span><span>💬 11</span></div>
+        <div class="post-caption">KPG Imóveis unem forças com Jairo Candiago e a Viva na Serra. Parceria com experiência e visão de futuro.</div>
+        <div class="post-date">30 mar 2026 · <a href="https://www.instagram.com/reel/DWhW1CAiZkj/" target="_blank" style="color:#CFA544">Ver ↗</a></div>
+      </div>
+    </div>
+    <div class="post-card">
+      <img class="post-img" src="https://scontent.cdninstagram.com/v/t51.82787-15/670797621_18264370492294899_6337783890867650350_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=108&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiRkVFRC5iZXN0X2ltYWdlX3VybGdlbi5DMyJ9&_nc_ohc=srtCOeJ6B_IQ7kNvwEnRuNf&_nc_oc=AdpI_BJAhIpPlw4Rb--xB6NJem-yvUa7MmJrzcr-ng0x1LCQ5BuyZhHWF-Ev7SUBbawG388W0n6N-j4rCBRULT19&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&edm=AM6HXa8EAAAA&_nc_gid=500rgIOR3wY8INi14srsLQ&oh=00_Af0coGMCQEBLlFRP5EmZ0iGAgtaCAVE3Y65uhQiR7Wb2EA&oe=69F13CA6" onerror="this.style.background='#2a2a2a'" alt="">
+      <div class="post-body">
+        <span class="post-type-badge type-IMAGE">🖼 IMAGEM</span>
+        <div class="post-meta"><span>❤️ 33</span><span>💬 18</span></div>
+        <div class="post-caption">Celebramos uma trajetória construída com dedicação, visão e excelência. Parabéns, Paula!</div>
+        <div class="post-date">16 abr 2026 · <a href="https://www.instagram.com/p/DXM2QP7jt3q/" target="_blank" style="color:#CFA544">Ver ↗</a></div>
+      </div>
+    </div>
+    <div class="post-card">
+      <img class="post-img" src="https://scontent.cdninstagram.com/v/t51.82787-15/656052245_18261323941294899_4842568630833516006_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=108&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0FST1VTRUxfSVRFTS5iZXN0X2ltYWdlX3VybGdlbi5DMyJ9&_nc_ohc=B8XM60nOza8Q7kNvwE9Isbe&_nc_oc=AdrJdf5l-xxeYN3HdHm6W-hi_GbxorrzOQva6Gk9VIR-lz4m8Vmdn5rXWsWqIT8neOsvazlbSnybvh8mzj3jxdIy&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&edm=AM6HXa8EAAAA&_nc_gid=500rgIOR3wY8INi14srsLQ&oh=00_Af2H3WXNGm7PinnWWhQJFziFn8t4CMZYASdDyay00iT5xw&oe=69F17153" onerror="this.style.background='#2a2a2a'" alt="">
+      <div class="post-body">
+        <span class="post-type-badge type-CAROUSEL_ALBUM">🎠 CARROSSEL</span>
+        <div class="post-meta"><span>❤️ 16</span><span>💬 2</span></div>
+        <div class="post-caption">Em Gramado, a Páscoa se transforma em cenário encantado. ChocoPáscoa de 12 mar a 12 abr 2026.</div>
+        <div class="post-date">23 mar 2026 · <a href="https://www.instagram.com/p/DWPNVy8iVed/" target="_blank" style="color:#CFA544">Ver ↗</a></div>
+      </div>
+    </div>
+    <div class="post-card">
+      <img class="post-img" src="https://scontent.cdninstagram.com/v/t51.82787-15/649245153_18259663687294899_2787676002961089889_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=102&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0FST1VTRUxfSVRFTS5iZXN0X2ltYWdlX3VybGdlbi5DMyJ9&_nc_ohc=cT7ZaQIZzy0Q7kNvwFA6RiV&_nc_oc=AdofzYDLsxj7lyESyAyOga7h1_1EL_cTS-csNWlIuoRcj4GjDCjvC9dW_Z5OLunCcE5mWiz_AqPtoWD7ScZfr6v7&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&edm=AM6HXa8EAAAA&_nc_gid=500rgIOR3wY8INi14srsLQ&oh=00_Af0ggsjz1Ir9zWgfqGHneQSUb751v00AOLn66zjmrL32ZQ&oe=69F162BC" onerror="this.style.background='#2a2a2a'" alt="">
+      <div class="post-body">
+        <span class="post-type-badge type-CAROUSEL_ALBUM">🎠 CARROSSEL</span>
+        <div class="post-meta"><span>❤️ 15</span><span>💬 3</span></div>
+        <div class="post-caption">Apartamento 2 dormitórios totalmente mobiliado, equipado e decorado. Excelente localização em Gramado.</div>
+        <div class="post-date">12 mar 2026 · <a href="https://www.instagram.com/p/DVycB2yjk8e/" target="_blank" style="color:#CFA544">Ver ↗</a></div>
+      </div>
+    </div>
+    <div class="post-card">
+      <img class="post-img" src="https://scontent.cdninstagram.com/v/t51.71878-15/561174950_1134350918244394_4569757773939200414_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=106&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%253D%253D&_nc_ohc=ZmFfWALTOegQ7kNvwErdRRt&_nc_oc=AdpMKlvt7MTYDW8AmOF5A289xHCUB_Rz_psOcUFDY1_WFK15qB3zWu_kbvNon62ro2C0a5TL-iLZIn8uKpIEa94_&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&edm=AM6HXa8EAAAA&_nc_gid=500rgIOR3wY8INi14srsLQ&oh=00_Af1mbHVdeMdKxEyNIm6c-pTuBKUthWhlTq48vUtcyJSuyw&oe=69F15C79" onerror="this.style.background='#2a2a2a'" alt="">
+      <div class="post-body">
+        <span class="post-type-badge type-VIDEO">▶ VÍDEO</span>
+        <div class="post-meta"><span>❤️ 15</span><span>💬 5</span></div>
+        <div class="post-caption">Reserva Park Canella — loteamento fechado, 74 lotes a partir de 420m². Lago, fireplace, beach tennis.</div>
+        <div class="post-date">08 out 2025 · <a href="https://www.instagram.com/reel/DPjtG_UifYF/" target="_blank" style="color:#CFA544">Ver ↗</a></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ===== ABA: CAMPANHAS ===== -->
+<div id="page-campanhas" class="page">
+<div class="container">
+
+  <!-- KPIs da conta -->
+  <div class="insight-kpi" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+    <div class="ikpi"><div class="ival" style="color:#1fbfa8">R$ 2.739</div><div class="ilabel">Total investido</div></div>
+    <div class="ikpi"><div class="ival" style="color:#BD851F">20</div><div class="ilabel">Campanhas total</div></div>
+    <div class="ikpi"><div class="ival" style="color:#CFA544">10</div><div class="ilabel">Com dados de métricas</div></div>
+    <div class="ikpi"><div class="ival" style="color:#7b9fff">0</div><div class="ilabel">Ativas agora</div></div>
+    <div class="ikpi"><div class="ival" style="color:#4776e6">224.551</div><div class="ilabel">Impressões totais</div></div>
+    <div class="ikpi"><div class="ival" style="color:#c77dff">136.864</div><div class="ilabel">Alcance total</div></div>
+    <div class="ikpi"><div class="ival" style="color:#11998e">7.227</div><div class="ilabel">Cliques totais</div></div>
+    <div class="ikpi"><div class="ival" style="color:#ffd166">3,22%</div><div class="ilabel">CTR médio</div></div>
+  </div>
+
+  <!-- Gasto mensal -->
+  <div class="card full">
+    <div class="section-title">Investimento Mensal em Anúncios (R$)</div>
+    <div style="position:relative;height:220px">
+      <canvas id="monthlySpendChart"></canvas>
+    </div>
+    <div style="display:flex;gap:24px;margin-top:12px;flex-wrap:wrap">
+      <div style="font-size:0.75rem;color:#888">📅 <strong style="color:#ccc">Mai/Jun 2023:</strong> pico de tráfego orgânico — CPM baixíssimo (R$1,40–4,24)</div>
+      <div style="font-size:0.75rem;color:#888">📅 <strong style="color:#ccc">Fev/Mar 2025:</strong> maior investimento (R$968 e R$948) — campanhas de lançamento WPP</div>
+      <div style="font-size:0.75rem;color:#888">📅 <strong style="color:#ccc">Abr 2025:</strong> apenas R$12 investidos — conta desacelerada</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="section-title">Gasto por Campanha (R$)</div>
+      <div style="position:relative;height:240px">
+        <canvas id="spendChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">Impressões por Campanha</div>
+      <div style="position:relative;height:240px">
+        <canvas id="impressionsChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabela de campanhas -->
+  <div class="card full">
+    <div class="section-title">Todas as Campanhas — KPG Principal Anúncios</div>
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:0.78rem">
+      <thead>
+        <tr style="border-bottom:1px solid #333;color:#888;text-align:left">
+          <th style="padding:10px 8px">Campanha</th>
+          <th style="padding:10px 8px">Objetivo</th>
+          <th style="padding:10px 8px">Status</th>
+          <th style="padding:10px 8px;text-align:right">Gasto</th>
+          <th style="padding:10px 8px;text-align:right">Impressões</th>
+          <th style="padding:10px 8px;text-align:right">Alcance</th>
+          <th style="padding:10px 8px;text-align:right">Cliques</th>
+          <th style="padding:10px 8px;text-align:right">CPM</th>
+          <th style="padding:10px 8px;text-align:right">CPC</th>
+          <th style="padding:10px 8px;text-align:right">CTR</th>
+          <th style="padding:10px 8px;text-align:right">Freq.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #1a1770">
+          <td style="padding:10px 8px;color:#ccc;max-width:200px">[CP NEW 2025] LANÇAMENTO 21/01</td>
+          <td style="padding:10px 8px"><span style="background:#2d1b4e;color:#c77dff;padding:2px 7px;border-radius:4px;font-size:0.68rem">Engajamento</span></td>
+          <td style="padding:10px 8px"><span style="background:#0b0950;color:#7b7ab0;padding:2px 7px;border-radius:4px;font-size:0.68rem;border:1px solid #1a1770">⏸ Pausada</span></td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8;font-weight:700">R$ 817,55</td>
+          <td style="padding:10px 8px;text-align:right">23.013</td>
+          <td style="padding:10px 8px;text-align:right">13.889</td>
+          <td style="padding:10px 8px;text-align:right">616</td>
+          <td style="padding:10px 8px;text-align:right">R$ 35,53</td>
+          <td style="padding:10px 8px;text-align:right">R$ 1,33</td>
+          <td style="padding:10px 8px;text-align:right;color:#CFA544">2,68%</td>
+          <td style="padding:10px 8px;text-align:right;color:#888">1,66x</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a1770">
+          <td style="padding:10px 8px;color:#ccc">[CP NEW 2025] LANÇAMENTO FLOW 28/02</td>
+          <td style="padding:10px 8px"><span style="background:#2d1b4e;color:#c77dff;padding:2px 7px;border-radius:4px;font-size:0.68rem">Engajamento</span></td>
+          <td style="padding:10px 8px"><span style="background:#0b0950;color:#7b7ab0;padding:2px 7px;border-radius:4px;font-size:0.68rem;border:1px solid #1a1770">⏸ Pausada</span></td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8;font-weight:700">R$ 610,65</td>
+          <td style="padding:10px 8px;text-align:right">14.119</td>
+          <td style="padding:10px 8px;text-align:right">8.070</td>
+          <td style="padding:10px 8px;text-align:right">283</td>
+          <td style="padding:10px 8px;text-align:right">R$ 43,25</td>
+          <td style="padding:10px 8px;text-align:right">R$ 2,16</td>
+          <td style="padding:10px 8px;text-align:right;color:#CFA544">2,00%</td>
+          <td style="padding:10px 8px;text-align:right;color:#888">1,75x</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a1770">
+          <td style="padding:10px 8px;color:#ccc">[CP NEW 2025] LANÇAMENTO 02 27/01</td>
+          <td style="padding:10px 8px"><span style="background:#2d1b4e;color:#c77dff;padding:2px 7px;border-radius:4px;font-size:0.68rem">Engajamento</span></td>
+          <td style="padding:10px 8px"><span style="background:#0b0950;color:#7b7ab0;padding:2px 7px;border-radius:4px;font-size:0.68rem;border:1px solid #1a1770">⏸ Pausada</span></td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8;font-weight:700">R$ 522,85</td>
+          <td style="padding:10px 8px;text-align:right">11.257</td>
+          <td style="padding:10px 8px;text-align:right">6.292</td>
+          <td style="padding:10px 8px;text-align:right">160</td>
+          <td style="padding:10px 8px;text-align:right">R$ 46,45</td>
+          <td style="padding:10px 8px;text-align:right">R$ 3,27</td>
+          <td style="padding:10px 8px;text-align:right;color:#888">1,42%</td>
+          <td style="padding:10px 8px;text-align:right;color:#888">1,79x</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a1770">
+          <td style="padding:10px 8px;color:#ccc">[Publico-20a60] 10 Estados</td>
+          <td style="padding:10px 8px"><span style="background:rgba(31,191,168,0.1);color:#1fbfa8;padding:2px 7px;border-radius:4px;font-size:0.68rem;border:1px solid rgba(31,191,168,0.25)">Tráfego</span></td>
+          <td style="padding:10px 8px"><span style="background:#0b0950;color:#7b7ab0;padding:2px 7px;border-radius:4px;font-size:0.68rem;border:1px solid #1a1770">⏸ Pausada</span></td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8;font-weight:700">R$ 311,37</td>
+          <td style="padding:10px 8px;text-align:right">141.913</td>
+          <td style="padding:10px 8px;text-align:right">86.785</td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8;font-weight:700">5.095</td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8">R$ 2,19</td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8">R$ 0,06</td>
+          <td style="padding:10px 8px;text-align:right;color:#CFA544">3,59%</td>
+          <td style="padding:10px 8px;text-align:right;color:#888">1,64x</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a1770">
+          <td style="padding:10px 8px;color:#ccc">[CP NEW 2025] ESSENCE 17/03</td>
+          <td style="padding:10px 8px"><span style="background:#2d1b4e;color:#c77dff;padding:2px 7px;border-radius:4px;font-size:0.68rem">Engajamento</span></td>
+          <td style="padding:10px 8px"><span style="background:#0b0950;color:#7b7ab0;padding:2px 7px;border-radius:4px;font-size:0.68rem;border:1px solid #1a1770">⏸ Pausada</span></td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8;font-weight:700">R$ 267,64</td>
+          <td style="padding:10px 8px;text-align:right">5.734</td>
+          <td style="padding:10px 8px;text-align:right">3.259</td>
+          <td style="padding:10px 8px;text-align:right">135</td>
+          <td style="padding:10px 8px;text-align:right">R$ 46,68</td>
+          <td style="padding:10px 8px;text-align:right">R$ 1,98</td>
+          <td style="padding:10px 8px;text-align:right;color:#CFA544">2,35%</td>
+          <td style="padding:10px 8px;text-align:right;color:#888">1,76x</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a1770">
+          <td style="padding:10px 8px;color:#ccc">[CP NEW 2025] APTO IVAN 26/03</td>
+          <td style="padding:10px 8px"><span style="background:#2d1b4e;color:#c77dff;padding:2px 7px;border-radius:4px;font-size:0.68rem">Engajamento</span></td>
+          <td style="padding:10px 8px"><span style="background:#0b0950;color:#7b7ab0;padding:2px 7px;border-radius:4px;font-size:0.68rem;border:1px solid #1a1770">⏸ Pausada</span></td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8;font-weight:700">R$ 87,69</td>
+          <td style="padding:10px 8px;text-align:right">1.681</td>
+          <td style="padding:10px 8px;text-align:right">1.079</td>
+          <td style="padding:10px 8px;text-align:right">46</td>
+          <td style="padding:10px 8px;text-align:right">R$ 52,17</td>
+          <td style="padding:10px 8px;text-align:right">R$ 1,91</td>
+          <td style="padding:10px 8px;text-align:right;color:#CFA544">2,74%</td>
+          <td style="padding:10px 8px;text-align:right;color:#888">1,56x</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a1770">
+          <td style="padding:10px 8px;color:#ccc">CASAS 02 DORMS BAIRRO PLANEJADO</td>
+          <td style="padding:10px 8px"><span style="background:#2d1b4e;color:#c77dff;padding:2px 7px;border-radius:4px;font-size:0.68rem">Engajamento</span></td>
+          <td style="padding:10px 8px"><span style="background:#0b0950;color:#7b7ab0;padding:2px 7px;border-radius:4px;font-size:0.68rem;border:1px solid #1a1770">⏸ Pausada</span></td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8;font-weight:700">R$ 72,04</td>
+          <td style="padding:10px 8px;text-align:right">10.266</td>
+          <td style="padding:10px 8px;text-align:right">7.680</td>
+          <td style="padding:10px 8px;text-align:right">206</td>
+          <td style="padding:10px 8px;text-align:right">R$ 7,02</td>
+          <td style="padding:10px 8px;text-align:right">R$ 0,35</td>
+          <td style="padding:10px 8px;text-align:right;color:#888">2,01%</td>
+          <td style="padding:10px 8px;text-align:right;color:#888">1,34x</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a1770">
+          <td style="padding:10px 8px;color:#ccc">[Contato-Whatsapp-FB]</td>
+          <td style="padding:10px 8px"><span style="background:#2d1b4e;color:#c77dff;padding:2px 7px;border-radius:4px;font-size:0.68rem">Engajamento</span></td>
+          <td style="padding:10px 8px"><span style="background:#0b0950;color:#7b7ab0;padding:2px 7px;border-radius:4px;font-size:0.68rem;border:1px solid #1a1770">⏸ Pausada</span></td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8;font-weight:700">R$ 61,31</td>
+          <td style="padding:10px 8px;text-align:right">5.287</td>
+          <td style="padding:10px 8px;text-align:right">2.909</td>
+          <td style="padding:10px 8px;text-align:right">336</td>
+          <td style="padding:10px 8px;text-align:right">R$ 11,60</td>
+          <td style="padding:10px 8px;text-align:right">R$ 0,18</td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8;font-weight:700">6,36%</td>
+          <td style="padding:10px 8px;text-align:right;color:#888">1,82x</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1a1770">
+          <td style="padding:10px 8px;color:#ccc">[Contato-Whatsapp-IG]</td>
+          <td style="padding:10px 8px"><span style="background:#2d1b4e;color:#c77dff;padding:2px 7px;border-radius:4px;font-size:0.68rem">Engajamento</span></td>
+          <td style="padding:10px 8px"><span style="background:#0b0950;color:#7b7ab0;padding:2px 7px;border-radius:4px;font-size:0.68rem;border:1px solid #1a1770">⏸ Pausada</span></td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8;font-weight:700">R$ 60,39</td>
+          <td style="padding:10px 8px;text-align:right">3.506</td>
+          <td style="padding:10px 8px;text-align:right">2.618</td>
+          <td style="padding:10px 8px;text-align:right">25</td>
+          <td style="padding:10px 8px;text-align:right">R$ 17,22</td>
+          <td style="padding:10px 8px;text-align:right">R$ 2,42</td>
+          <td style="padding:10px 8px;text-align:right;color:#888">0,71%</td>
+          <td style="padding:10px 8px;text-align:right;color:#888">1,34x</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 8px;color:#ccc">APARTAMENTO 01 DORM GRAMADO</td>
+          <td style="padding:10px 8px"><span style="background:#2d1b4e;color:#c77dff;padding:2px 7px;border-radius:4px;font-size:0.68rem">Engajamento</span></td>
+          <td style="padding:10px 8px"><span style="background:#0b0950;color:#7b7ab0;padding:2px 7px;border-radius:4px;font-size:0.68rem;border:1px solid #1a1770">⏸ Pausada</span></td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8;font-weight:700">R$ 39,58</td>
+          <td style="padding:10px 8px;text-align:right">6.775</td>
+          <td style="padding:10px 8px;text-align:right">4.283</td>
+          <td style="padding:10px 8px;text-align:right">325</td>
+          <td style="padding:10px 8px;text-align:right">R$ 5,84</td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8">R$ 0,12</td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8;font-weight:700">4,80%</td>
+          <td style="padding:10px 8px;text-align:right;color:#888">1,58x</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr style="border-top:2px solid #333;color:#fff;font-weight:700">
+          <td style="padding:10px 8px" colspan="3">TOTAL</td>
+          <td style="padding:10px 8px;text-align:right;color:#1fbfa8">R$ 2.851,07</td>
+          <td style="padding:10px 8px;text-align:right">224.551</td>
+          <td style="padding:10px 8px;text-align:right">136.864</td>
+          <td style="padding:10px 8px;text-align:right">7.227</td>
+          <td style="padding:10px 8px;text-align:right">—</td>
+          <td style="padding:10px 8px;text-align:right">—</td>
+          <td style="padding:10px 8px;text-align:right">—</td>
+          <td style="padding:10px 8px;text-align:right">—</td>
+        </tr>
+      </tfoot>
+    </table>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="section-title">Melhor CTR por campanha</div>
+      <div class="bar-item">
+        <div class="label"><span>🏆 Contato-Whatsapp-FB</span><span>6,36%</span></div>
+        <div class="bar-track"><div class="bar-fill grad-green" style="width:100%"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="label"><span>Apto 01 Dorm Gramado</span><span>4,80%</span></div>
+        <div class="bar-track"><div class="bar-fill grad-green" style="width:75%"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="label"><span>[Publico-20a60] 10 Estados</span><span>3,59%</span></div>
+        <div class="bar-track"><div class="bar-fill grad-orange" style="width:56%"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="label"><span>LANÇAMENTO 21/01</span><span>2,68%</span></div>
+        <div class="bar-track"><div class="bar-fill grad-orange" style="width:42%"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="label"><span>APTO IVAN 26/03</span><span>2,74%</span></div>
+        <div class="bar-track"><div class="bar-fill grad-orange" style="width:43%"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="label"><span>Contato-Whatsapp-IG</span><span>0,71%</span></div>
+        <div class="bar-track"><div class="bar-fill grad-purple" style="width:11%"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">Melhor custo por clique (CPC)</div>
+      <div class="bar-item">
+        <div class="label"><span>🏆 [Publico-20a60] (R$ 0,06)</span><span>mais barato</span></div>
+        <div class="bar-track"><div class="bar-fill grad-green" style="width:100%"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="label"><span>Apto 01 Dorm (R$ 0,12)</span><span></span></div>
+        <div class="bar-track"><div class="bar-fill grad-green" style="width:90%"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="label"><span>Contato WPP FB (R$ 0,18)</span><span></span></div>
+        <div class="bar-track"><div class="bar-fill grad-green" style="width:82%"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="label"><span>Casas 02 Dorms (R$ 0,35)</span><span></span></div>
+        <div class="bar-track"><div class="bar-fill grad-orange" style="width:60%"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="label"><span>LANÇAMENTO (R$ 1,33)</span><span></span></div>
+        <div class="bar-track"><div class="bar-fill grad-orange" style="width:30%"></div></div>
+      </div>
+      <div class="bar-item">
+        <div class="label"><span>LANÇAMENTO 02 (R$ 3,27)</span><span>mais caro</span></div>
+        <div class="bar-track"><div class="bar-fill grad-purple" style="width:10%"></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ===== ABA: GOOGLE MEU NEGÓCIO ===== -->
+<div id="page-gmb" class="page">
+  <div class="container">
+
+    <!-- Barra do negócio -->
+    <div style="background:#0b0950;border:1px solid #1a1770;border-radius:14px;padding:16px 22px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="font-size:2.2rem">📍</div>
+      <div style="flex:1;min-width:0">
+        <div id="gmb-biz-name" style="font-size:1rem;font-weight:700">—</div>
+        <div id="gmb-biz-addr" style="font-size:0.78rem;color:#888;margin-top:3px">—</div>
+      </div>
+      <div style="text-align:right">
+        <div id="gmb-rating" style="font-size:1.4rem;font-weight:800;color:#FBBC04">—</div>
+        <div id="gmb-reviews" style="font-size:0.72rem;color:#888">avaliações</div>
+      </div>
+      <div style="text-align:right;margin-left:8px">
+        <div id="gmb-updated" style="font-size:0.68rem;color:#555">—</div>
+        <div style="font-size:0.65rem;color:#444">Business Profile API</div>
+        <button onclick="refreshGMB()" id="gmb-refresh-btn" style="margin-top:6px;background:linear-gradient(135deg,#4285F4,#34A853);border:none;color:#fff;padding:5px 12px;border-radius:6px;font-size:0.68rem;cursor:pointer;font-weight:600">⟳ Atualizar</button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="insight-kpi" style="margin-bottom:20px">
+      <div class="ikpi"><div class="ival gmb-kpi-g" id="gmb-views-total">—</div><div class="ilabel">Visualizações Totais</div></div>
+      <div class="ikpi"><div class="ival gmb-kpi-gr" id="gmb-search-views">—</div><div class="ilabel">Views na Busca</div></div>
+      <div class="ikpi"><div class="ival gmb-kpi-r" id="gmb-maps-views">—</div><div class="ilabel">Views no Maps</div></div>
+      <div class="ikpi"><div class="ival gmb-kpi-y" id="gmb-calls">—</div><div class="ilabel">Cliques p/ Ligar</div></div>
+      <div class="ikpi"><div class="ival gmb-kpi-g" id="gmb-directions">—</div><div class="ilabel">Rotas Solicitadas</div></div>
+      <div class="ikpi"><div class="ival gmb-kpi-gr" id="gmb-website">—</div><div class="ilabel">Cliques no Site</div></div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="two-col">
+      <div class="card">
+        <div class="section-title">Visualizações diárias (30 dias)</div>
+        <div class="chart-wrap"><canvas id="gmbViewsChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-title">Interações diárias (30 dias)</div>
+        <div class="chart-wrap"><canvas id="gmbActionsChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Splits -->
+    <div class="two-col">
+      <div class="card">
+        <div class="section-title">Por dispositivo</div>
+        <div style="display:flex;gap:24px;justify-content:center;align-items:center;padding:20px 0">
+          <div style="text-align:center"><div style="font-size:1.8rem;font-weight:800;color:#4285F4" id="gmb-mobile-pct">—</div><div style="font-size:0.72rem;color:#888;margin-top:5px">📱 Mobile</div></div>
+          <div style="width:1px;height:50px;background:#333"></div>
+          <div style="text-align:center"><div style="font-size:1.8rem;font-weight:800;color:#34A853" id="gmb-desktop-pct">—</div><div style="font-size:0.72rem;color:#888;margin-top:5px">💻 Desktop</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Busca × Maps</div>
+        <div style="display:flex;gap:24px;justify-content:center;align-items:center;padding:20px 0">
+          <div style="text-align:center"><div style="font-size:1.8rem;font-weight:800;color:#EA4335" id="gmb-search-pct">—</div><div style="font-size:0.72rem;color:#888;margin-top:5px">🔍 Google Busca</div></div>
+          <div style="width:1px;height:50px;background:#333"></div>
+          <div style="text-align:center"><div style="font-size:1.8rem;font-weight:800;color:#FBBC04" id="gmb-maps-pct">—</div><div style="font-size:0.72rem;color:#888;margin-top:5px">🗺 Google Maps</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="footer">
+  Dashboard KPG Imóveis · Dados via <span style="color:#666">Meta Graph API v19.0</span> · Gerado por <span style="color:#666">Claude Code</span> · 24/04/2026
+</div>
+
+<script>
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['perfil','insights','posts','campanhas','gmb'][i] === name));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+}
+
+// =============================================
+// GOOGLE MEU NEGÓCIO — dados injetados por fetch_gmb.py
+// Para atualizar: execute python fetch_gmb.py na pasta OAB
+// =============================================
+// GMB_DATA — injetado pelo servidor Flask
+const gmbData = {{ gmb_data|safe }};
+
+function renderGMB() {
+  const d = gmbData;
+  const fmt = n => typeof n === 'number' ? n.toLocaleString('pt-BR') : n;
+  document.getElementById('gmb-biz-name').textContent    = d.bizName;
+  document.getElementById('gmb-biz-addr').textContent    = d.bizAddr;
+  document.getElementById('gmb-rating').textContent      = d.rating;
+  document.getElementById('gmb-reviews').textContent     = d.reviews;
+  document.getElementById('gmb-updated').textContent     = d.updated;
+  document.getElementById('gmb-views-total').textContent = fmt(d.totalViews);
+  document.getElementById('gmb-search-views').textContent= fmt(d.searchViews);
+  document.getElementById('gmb-maps-views').textContent  = fmt(d.mapsViews);
+  document.getElementById('gmb-calls').textContent       = fmt(d.calls);
+  document.getElementById('gmb-directions').textContent  = fmt(d.directions);
+  document.getElementById('gmb-website').textContent     = fmt(d.website);
+  document.getElementById('gmb-mobile-pct').textContent  = d.mobilePct;
+  document.getElementById('gmb-desktop-pct').textContent = d.desktopPct;
+  document.getElementById('gmb-search-pct').textContent  = d.searchPct;
+  document.getElementById('gmb-maps-pct').textContent    = d.mapsPct;
+
+  if (d.labels.length) {
+    ['gmbViewsChart','gmbActionsChart'].forEach(id => { const c = Chart.getChart(id); if(c) c.destroy(); });
+    new Chart(document.getElementById('gmbViewsChart'), {
+      type: 'line',
+      data: { labels: d.labels, datasets: [{ data: d.dailyViews, borderColor: '#4285F4', backgroundColor: '#4285F422', fill: true, tension: 0.4, pointRadius: 2 }] },
+      options: { ...chartDefaults }
+    });
+    new Chart(document.getElementById('gmbActionsChart'), {
+      type: 'bar',
+      data: { labels: d.labels, datasets: [{ data: d.dailyActions, backgroundColor: '#34A85355', borderColor: '#34A853', borderWidth: 1 }] },
+      options: { ...chartDefaults }
+    });
+  }
+}
+
+window.addEventListener('load', renderGMB);
+
+const labels28 = ['27/3','28/3','29/3','30/3','31/3','1/4','2/4','3/4','4/4','5/4','6/4','7/4','8/4','9/4','10/4','11/4','12/4','13/4','14/4','15/4','16/4','17/4','18/4','19/4','20/4','21/4','22/4','23/4'];
+const reachData = [130,108,92,418,217,98,83,115,334,285,154,117,176,239,109,83,127,192,163,52,199,43,17,17,305,161,174,354];
+const followerData = [1,0,1,3,3,0,0,2,0,2,2,0,1,0,4,1,0,2,1,1,1,0,0,0,0,0,0,0];
+
+const chartDefaults = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { ticks: { color:'#7b7ab0', font:{size:9} }, grid: { color:'#1a1770' } },
+    y: { ticks: { color:'#7b7ab0', font:{size:9} }, grid: { color:'#1a1770' } }
+  }
+};
+
+function makeLineChart(id, data, color) {
+  new Chart(document.getElementById(id), {
+    type:'line',
+    data: { labels: labels28, datasets:[{ data, borderColor: color, backgroundColor: color+'22', fill:true, tension:0.4, pointRadius:2, pointHoverRadius:5 }] },
+    options: { ...chartDefaults }
+  });
+}
+
+makeLineChart('reachChart', reachData, '#BD851F');
+makeLineChart('followerChart', followerData, '#1fbfa8');
+makeLineChart('reachChartFull', reachData, '#BD851F');
+makeLineChart('followerChartFull', followerData, '#1fbfa8');
+
+// =============================================
+// DADOS DOS POSTS (todos os 12 coletados da API)
+// =============================================
+const allPosts = [
+  { date:'2026-04-16', likes:33, comments:18, type:'IMAGE',    label:'Aniversário Paula',       img:'https://scontent.cdninstagram.com/v/t51.82787-15/670797621_18264370492294899_6337783890867650350_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=108&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiRkVFRC5iZXN0X2ltYWdlX3VybGdlbi5DMyJ9&_nc_ohc=srtCOeJ6B_IQ7kNvwEnRuNf&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Af0coGMCQEBLlFRP5EmZ0iGAgtaCAVE3Y65uhQiR7Wb2EA&oe=69F13CA6', url:'https://www.instagram.com/p/DXM2QP7jt3q/' },
+  { date:'2026-03-30', likes:57, comments:11, type:'VIDEO',    label:'Parceria KPG + Viva Serra',img:'https://scontent.cdninstagram.com/v/t51.71878-15/659119242_998404372525618_4187989698430248367_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=101&ccb=7-5&_nc_sid=18de74&_nc_ohc=fIHTjmLnf64Q7kNvwE-f06l&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Af0Ye87S-WUwlghodiCqAilgH1babxmxey2oV9ZY5A31Pw&oe=69F14384', url:'https://www.instagram.com/reel/DWhW1CAiZkj/' },
+  { date:'2026-03-23', likes:16, comments:2,  type:'CAROUSEL', label:'ChocoPáscoa Gramado',     img:'https://scontent.cdninstagram.com/v/t51.82787-15/656052245_18261323941294899_4842568630833516006_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=108&ccb=7-5&_nc_sid=18de74&_nc_ohc=B8XM60nOza8Q7kNvwE9Isbe&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Af2H3WXNGm7PinnWWhQJFziFn8t4CMZYASdDyay00iT5xw&oe=69F17153', url:'https://www.instagram.com/p/DWPNVy8iVed/' },
+  { date:'2026-03-12', likes:15, comments:3,  type:'CAROUSEL', label:'Apto 2 dorms mobiliado',  img:'https://scontent.cdninstagram.com/v/t51.82787-15/649245153_18259663687294899_2787676002961089889_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=102&ccb=7-5&_nc_sid=18de74&_nc_ohc=cT7ZaQIZzy0Q7kNvwFA6RiV&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Af0ggsjz1Ir9zWgfqGHneQSUb751v00AOLn66zjmrL32ZQ&oe=69F162BC', url:'https://www.instagram.com/p/DVycB2yjk8e/' },
+  { date:'2025-12-24', likes:7,  comments:0,  type:'IMAGE',    label:'Feliz Natal',             img:'https://scontent.cdninstagram.com/v/t51.82787-15/587782119_18251294692294899_2539230207362419107_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=108&ccb=7-5&_nc_sid=18de74&_nc_ohc=A8hgBY-sUQQQ7kNvwEDwAh-&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Af1OUbOokZsFgvcRH2zwQIKP4esK4eVNQMTepLecv4ZUVA&oe=69F162F4', url:'https://www.instagram.com/p/DSqEonOia2_/' },
+  { date:'2025-12-01', likes:9,  comments:0,  type:'CAROUSEL', label:'Apto 2 dorms oportunidade',img:'https://scontent.cdninstagram.com/v/t39.30808-6/591465084_1397329982392614_1702472635627176223_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=111&ccb=7-5&_nc_sid=18de74&_nc_ohc=s8LNwEcCmQMQ7kNvwGQgweY&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Af1H1hv2HvA2vALc6Y4ynLvWzwIGRklp2AAueNfZCw8WYQ&oe=69F15125', url:'https://www.instagram.com/p/DRu-1TjjQSJ/' },
+  { date:'2025-11-27', likes:9,  comments:0,  type:'VIDEO',    label:'Apto 1 dorm lareira',    img:'https://scontent.cdninstagram.com/v/t51.71878-15/589194299_826049193679494_7130729456514979384_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=106&ccb=7-5&_nc_sid=18de74&_nc_ohc=p3ZgI0X1PcIQ7kNvwEQ1DCd&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Af11Dj3Avy0162Px0QYgwL8R6MaALStZhIiUmejE964uZA&oe=69F15A90', url:'https://www.instagram.com/reel/DRkqDbmiYid/' },
+  { date:'2025-11-18', likes:7,  comments:2,  type:'CAROUSEL', label:'Aluguel temporada Gramado',img:'https://scontent.cdninstagram.com/v/t39.30808-6/585331187_1386425220149757_7837912053863046050_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=103&ccb=7-5&_nc_sid=18de74&_nc_ohc=sFvAyfqI4UcQ7kNvwEhh0wd&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Af3ejbB42j4Hci_5nhR5pj2KYgKpl4Qb6xljuZQvx9Fcaw&oe=69F13EB1', url:'https://www.instagram.com/p/DRNeQ7TD3g1/' },
+  { date:'2025-11-15', likes:6,  comments:0,  type:'CAROUSEL', label:'Black November',          img:'https://scontent.cdninstagram.com/v/t39.30808-6/582102819_1383716720420607_8960966289505714800_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=100&ccb=7-5&_nc_sid=18de74&_nc_ohc=macdmcye3e8Q7kNvwHmIAOL&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Af1xs-73vepQdTw7Jlp9_lEWtsZz1oeObHXmVu4dTNutcA&oe=69F162D4', url:'https://www.instagram.com/p/DRFUDBqj7Fb/' },
+  { date:'2025-10-08', likes:15, comments:5,  type:'VIDEO',    label:'Reserva Park Canella',   img:'https://scontent.cdninstagram.com/v/t51.71878-15/561174950_1134350918244394_4569757773939200414_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=106&ccb=7-5&_nc_sid=18de74&_nc_ohc=ZmFfWALTOegQ7kNvwErdRRt&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Af1mbHVdeMdKxEyNIm6c-pTuBKUthWhlTq48vUtcyJSuyw&oe=69F15C79', url:'https://www.instagram.com/reel/DPjtG_UifYF/' },
+  { date:'2025-08-27', likes:69, comments:16, type:'IMAGE',    label:'Dia do Corretor',        img:'https://scontent.cdninstagram.com/v/t51.82787-15/539455992_18236741596294899_4214338548146159887_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=101&ccb=7-5&_nc_sid=18de74&_nc_ohc=31jCnW8SSnsQ7kNvwEG27tO&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Af1I7O2IzmngyZ5WOzoBSOTnkp82sMSFL52S7Znrl1f1sg&oe=69F13AF7', url:'https://www.instagram.com/p/DN3n9Zu0r-g/' },
+  { date:'2025-08-15', likes:12, comments:2,  type:'CAROUSEL', label:'Havitá Canela',           img:'https://scontent.cdninstagram.com/v/t51.82787-15/532100770_18235566529294899_6985797141904295262_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=107&ccb=7-5&_nc_sid=18de74&_nc_ohc=77vyBQ4bWMQQ7kNvwHr5Spu&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&oh=00_Af0MdZs_yP5JdhyneAzbZ8xLSZDTj84obK84elZ6OaDqsQ&oe=69F13A49', url:'https://www.instagram.com/p/DNYz7R1RF9H/' },
+];
+
+// Estado dos filtros
+let filterPeriod = '30d';
+let filterType   = 'all';
+let filterSort   = 'likes';
+
+// Instâncias dos gráficos dinâmicos
+let chartEngByType = null, chartLikesByPost = null, chartDayOfWeek = null;
+let chartTypeDonut = null, chartReachVsEng = null;
+
+function getFilteredPosts() {
+  const now = new Date('2026-04-24');
+  return allPosts.filter(p => {
+    const d = new Date(p.date);
+    const diff = (now - d) / (1000*60*60*24);
+    if (filterPeriod === '30d' && diff > 30) return false;
+    if (filterPeriod === '90d' && diff > 90) return false;
+    if (filterType !== 'all' && p.type !== filterType) return false;
+    return true;
+  }).sort((a,b) => {
+    if (filterSort === 'likes')    return b.likes - a.likes;
+    if (filterSort === 'comments') return b.comments - a.comments;
+    return (b.likes+b.comments) - (a.likes+a.comments);
+  });
+}
+
+function typeColor(t) {
+  return t === 'IMAGE' ? '#020067' : t === 'VIDEO' ? '#BD851F' : '#CFA544';
+}
+function typeLabel(t) {
+  return t === 'IMAGE' ? '🖼 Imagem' : t === 'VIDEO' ? '▶ Vídeo' : '🎠 Carrossel';
+}
+
+function updateOverview() {
+  const posts = getFilteredPosts();
+  const n = posts.length;
+  if (n === 0) return;
+
+  // KPIs
+  const totalLikes    = posts.reduce((s,p) => s+p.likes, 0);
+  const totalComments = posts.reduce((s,p) => s+p.comments, 0);
+  const avgLikes      = (totalLikes/n).toFixed(1);
+  const engRate       = ((totalLikes+totalComments)/(n*7543)*100).toFixed(2)+'%';
+  const best          = posts[0];
+
+  document.getElementById('kpi-likes').textContent    = totalLikes;
+  document.getElementById('kpi-comments').textContent = totalComments;
+  document.getElementById('kpi-avg-likes').textContent = avgLikes;
+  document.getElementById('kpi-eng-rate').textContent  = engRate;
+  document.getElementById('kpi-best').textContent      = best.likes;
+  document.getElementById('kpi-best-label').textContent= best.label;
+  document.getElementById('kpi-count').textContent     = n;
+
+  const periodTxt = filterPeriod==='30d'?'30d':filterPeriod==='90d'?'90d':'todos';
+  const typeTxt   = filterType==='all'?'todos os tipos':typeLabel(filterType);
+  document.getElementById('filter-summary').textContent = `Exibindo ${n} posts · ${typeTxt} · ${periodTxt}`;
+  document.getElementById('likes-chart-title').textContent = `Curtidas por Post (${typeTxt})`;
+
+  // ---- Gráfico: curtidas por post ----
+  if (chartLikesByPost) chartLikesByPost.destroy();
+  chartLikesByPost = new Chart(document.getElementById('likesByPostChart'), {
+    type:'bar',
+    data:{
+      labels: posts.map(p => p.label.length>16 ? p.label.slice(0,16)+'…' : p.label),
+      datasets:[{ data: posts.map(p=>p.likes), backgroundColor: posts.map(p=>typeColor(p.type)), borderRadius:5 }]
+    },
+    options:{ ...chartDefaults, plugins:{legend:{display:false}}, scales:{
+      x:{ticks:{color:'#7b7ab0',font:{size:8}},grid:{color:'#1a1770'}},
+      y:{ticks:{color:'#7b7ab0',font:{size:9}},grid:{color:'#1a1770'}}
+    }}
+  });
+
+  // ---- Gráfico: engajamento por tipo ----
+  const types = ['IMAGE','VIDEO','CAROUSEL'];
+  const typeNames = ['Imagem','Vídeo','Carrossel'];
+  const avgByType = types.map(t => {
+    const tp = allPosts.filter(p=>p.type===t);
+    return tp.length ? +(tp.reduce((s,p)=>s+p.likes+p.comments,0)/tp.length).toFixed(1) : 0;
+  });
+  if (chartEngByType) chartEngByType.destroy();
+  chartEngByType = new Chart(document.getElementById('engByTypeChart'), {
+    type:'bar',
+    data:{
+      labels: typeNames,
+      datasets:[{ data: avgByType, backgroundColor:['#020067','#BD851F','#CFA544'], borderRadius:8 }]
+    },
+    options:{ ...chartDefaults, plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#c0bfe0',font:{size:11}}},y:{ticks:{color:'#7b7ab0',font:{size:9}},grid:{color:'#1a1770'}}}
+    }
+  });
+
+  // ---- Gráfico: melhor dia da semana ----
+  const days = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const dayLikes = Array(7).fill(0), dayCnt = Array(7).fill(0);
+  allPosts.forEach(p => {
+    const d = new Date(p.date).getDay();
+    dayLikes[d] += p.likes + p.comments;
+    dayCnt[d]++;
+  });
+  const dayAvg = dayLikes.map((v,i) => dayCnt[i] ? +(v/dayCnt[i]).toFixed(1) : 0);
+  const maxDay = dayAvg.indexOf(Math.max(...dayAvg));
+  if (chartDayOfWeek) chartDayOfWeek.destroy();
+  chartDayOfWeek = new Chart(document.getElementById('dayOfWeekChart'), {
+    type:'bar',
+    data:{
+      labels: days,
+      datasets:[{ data: dayAvg, backgroundColor: dayAvg.map((_,i)=>i===maxDay?'#BD851F':'#0b0950'), borderRadius:6 }]
+    },
+    options:{ ...chartDefaults, plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:'#c0bfe0',font:{size:11}}},y:{ticks:{color:'#7b7ab0',font:{size:9}},grid:{color:'#1a1770'}}}
+    }
+  });
+
+  // ---- Donut: mix de conteúdo filtrado ----
+  const typeCounts = types.map(t => posts.filter(p=>p.type===t).length);
+  if (chartTypeDonut) chartTypeDonut.destroy();
+  chartTypeDonut = new Chart(document.getElementById('typeChart'), {
+    type:'doughnut',
+    data:{
+      labels: typeNames,
+      datasets:[{ data: typeCounts, backgroundColor:['#020067','#BD851F','#CFA544'], borderWidth:0, hoverOffset:6 }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'68%'}
+  });
+
+  // Legenda donut
+  const legendHtml = types.map((t,i) => `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:0.78rem">
+      <div style="width:10px;height:10px;border-radius:50%;background:${typeColor(t)};flex-shrink:0"></div>
+      <span style="color:#ccc">${typeNames[i]}</span>
+      <strong style="margin-left:auto">${typeCounts[i]}</strong>
+      <span style="color:#555">${n?Math.round(typeCounts[i]/n*100):0}%</span>
+    </div>`).join('');
+  document.getElementById('type-legend').innerHTML = legendHtml;
+
+  // Barras de média por tipo
+  const maxAvg = Math.max(...avgByType.filter(v=>v>0));
+  const barsHtml = types.map((t,i) => avgByType[i]>0 ? `
+    <div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:#888;margin-bottom:3px">
+        <span>${typeLabel(t)}</span><span>${avgByType[i]}</span>
+      </div>
+      <div style="background:#1a1770;border-radius:99px;height:6px">
+        <div style="height:6px;border-radius:99px;background:${typeColor(t)};width:${maxAvg?Math.round(avgByType[i]/maxAvg*100):0}%"></div>
+      </div>
+    </div>` : '').join('');
+  document.getElementById('type-avg-bars').innerHTML = barsHtml;
+
+  // ---- Ranking de posts ----
+  const rankHtml = posts.slice(0,7).map((p,i) => `
+    <div class="rank-row">
+      <div class="rank-num">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
+      <img class="rank-img" src="${p.img}" onerror="this.style.background='#2a2a2a'" alt="">
+      <div class="rank-info">
+        <div class="rank-caption">${p.label}</div>
+        <div class="rank-meta">${p.date.slice(0,10)} · <span style="color:${typeColor(p.type)}">${typeLabel(p.type)}</span></div>
+      </div>
+      <div class="rank-val">❤️ ${p.likes}</div>
+      <div class="rank-val" style="color:#888;font-size:0.75rem;margin-left:4px">💬 ${p.comments}</div>
+    </div>`).join('');
+  document.getElementById('posts-ranking').innerHTML = rankHtml || '<div style="color:#555;font-size:0.8rem;padding:12px">Nenhum post no filtro selecionado.</div>';
+
+  // ---- Alcance vs Interações (scatter simulado com barras) ----
+  if (chartReachVsEng) chartReachVsEng.destroy();
+  chartReachVsEng = new Chart(document.getElementById('reachVsEngChart'), {
+    type:'line',
+    data:{
+      labels: posts.map(p=>p.label.slice(0,12)+'…'),
+      datasets:[
+        { label:'Curtidas', data:posts.map(p=>p.likes), borderColor:'#BD851F', backgroundColor:'#BD851F22', fill:false, tension:0.3, pointRadius:4 },
+        { label:'Coments',  data:posts.map(p=>p.comments), borderColor:'#CFA544', backgroundColor:'#CFA54422', fill:false, tension:0.3, pointRadius:4 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:true, labels:{color:'#888',font:{size:10}} } },
+      scales:{
+        x:{ticks:{color:'#7b7ab0',font:{size:7}},grid:{color:'#1a1770'}},
+        y:{ticks:{color:'#7b7ab0',font:{size:9}},grid:{color:'#1a1770'}}
+      }
+    }
+  });
+}
+
+// Funções de filtro
+function setPeriod(v, btn) {
+  filterPeriod = v;
+  document.querySelectorAll('#filter-period .fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateOverview();
+}
+function setType(v, btn) {
+  filterType = v;
+  document.querySelectorAll('#filter-type .fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateOverview();
+}
+function setSort(v, btn) {
+  filterSort = v;
+  document.querySelectorAll('#filter-sort .fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateOverview();
+}
+
+// Inicializa
+updateOverview();
+// Gráfico gasto mensal
+new Chart(document.getElementById('monthlySpendChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Mar/23','Abr/23','Mai/23','Jun/23','Jan/25','Fev/25','Mar/25','Abr/25'],
+    datasets: [
+      { label: 'Gasto (R$)', data: [58.21,53.41,101.05,332.02,378.59,968.12,947.55,12.12],
+        backgroundColor: [58.21,53.41,101.05,332.02,378.59,968.12,947.55,12.12].map(v => v > 500 ? '#020067' : v > 200 ? '#BD851F' : v > 50 ? '#CFA544' : '#0b0950'),
+        borderRadius: 6, yAxisID: 'y' },
+      { label: 'Cliques', data: [352,179,2858,2598,213,568,458,1],
+        type: 'line', borderColor: '#1fbfa8', backgroundColor: '#1fbfa822', fill: true,
+        tension: 0.4, pointRadius: 4, yAxisID: 'y1' }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#888', font: { size: 11 } } } },
+    scales: {
+      x: { ticks: { color: '#7b7ab0', font: { size: 10 } }, grid: { color: '#1a1770' } },
+      y: { ticks: { color: '#7b7ab0', font: { size: 9 }, callback: v => 'R$'+v }, grid: { color: '#1a1770' }, position: 'left' },
+      y1: { ticks: { color: '#1fbfa8', font: { size: 9 } }, grid: { display: false }, position: 'right' }
+    }
+  }
+});
+
+const campLabels =['LANÇAMENTO\n21/01','FLOW\n28/02','LANÇAMENTO 02\n27/01','20a60\n10Est','ESSENCE\n17/03','APTO IVAN\n26/03','CASAS\n02Dorms','WPP FB','WPP IG','APTO 01\nGramado'];
+const campSpend = [817.55, 610.65, 522.85, 311.37, 267.64, 87.69, 72.04, 61.31, 60.39, 39.58];
+const campImpressions = [23013, 14119, 11257, 141913, 5734, 1681, 10266, 5287, 3506, 6775];
+
+new Chart(document.getElementById('spendChart'), {
+  type:'bar',
+  data: { labels: campLabels, datasets:[{ data: campSpend, backgroundColor: campSpend.map(v => v > 500 ? '#020067' : v > 200 ? '#BD851F' : '#CFA544'), borderRadius: 5 }] },
+  options: { ...chartDefaults, plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx => 'R$ '+ctx.raw.toFixed(2) } } }, scales:{ x:{ticks:{color:'#7b7ab0',font:{size:8}}}, y:{ticks:{color:'#7b7ab0',font:{size:9}, callback: v => 'R$'+v}} } }
+});
+
+new Chart(document.getElementById('impressionsChart'), {
+  type:'bar',
+  data: { labels: campLabels, datasets:[{ data: campImpressions, backgroundColor: '#4776e688', borderColor:'#4776e6', borderWidth:1, borderRadius: 5 }] },
+  options: { ...chartDefaults, plugins:{ legend:{display:false} }, scales:{ x:{ticks:{color:'#7b7ab0',font:{size:8}}}, y:{ticks:{color:'#7b7ab0',font:{size:9}, callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v}} } }
+});
+
+new Chart(document.getElementById('interactionsChart'), {
+  type:'bar',
+  data: {
+    labels:['Curtidas','Coment.','Compart.','Salvos'],
+    datasets:[{ data:[111,31,5,2], backgroundColor:['#BD851F','#020067','#CFA544','#1fbfa8'], borderRadius:6 }]
+  },
+  options: {
+    ...chartDefaults,
+    plugins: { legend:{display:false} }
+  }
+});
+
+// ── Atualizar Google Meu Negócio via servidor ────────────────────────────────
+async function refreshGMB() {
+  const btn = document.getElementById('gmb-refresh-btn');
+  const orig = btn.style.background;
+  btn.textContent = '⟳ Buscando...';
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  const reset = (txt, bg) => { btn.textContent=txt; btn.disabled=false; btn.style.opacity='1'; btn.style.background=bg||orig; };
+  try {
+    const r = await fetch('/api/refresh-gmb', { method: 'POST' });
+    const data = await r.json();
+    if (data.success) {
+      btn.textContent = '✓ Atualizado!';
+      btn.style.background = '#34A853';
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      const isLimit = (data.error||'').toLowerCase().includes('rate') || (data.error||'').toLowerCase().includes('429') || (data.error||'').toLowerCase().includes('quota');
+      btn.style.background = '#EA4335';
+      if (isLimit) {
+        btn.textContent = '✗ Cota da API esgotada';
+        alert('⚠️ Limite diário da API do Google atingido.\n\nTente novamente mais tarde (a cota reseta à meia-noite).\n\nEsse limite é do Google — aconteceu por causa dos muitos testes de hoje.');
+      } else {
+        btn.textContent = '✗ Erro';
+        alert('Erro:\n' + (data.error || 'Verifique o servidor'));
+      }
+      setTimeout(() => reset('⟳ Atualizar'), 4000);
+    }
+  } catch(e) {
+    setTimeout(() => reset('⟳ Atualizar'), 3000);
+  }
+}
+</script>
+</body>
+</html>
