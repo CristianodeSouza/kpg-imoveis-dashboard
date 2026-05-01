@@ -21,6 +21,15 @@ os.makedirs(DATA_DIR, exist_ok=True)
 app = Flask(__name__)
 app.secret_key = 'kpg_imoveis_dashboard_2026_secret'
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    return jsonify({'erro': str(e), 'detalhe': traceback.format_exc()[-800:]}), 500
+
+@app.errorhandler(500)
+def handle_500(e):
+    return jsonify({'erro': str(e)}), 500
+
 @app.context_processor
 def inject_version():
     return dict(
