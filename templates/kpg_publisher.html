@@ -567,7 +567,7 @@ async function buscarImovel() {
 
     _codigo = codigo;
     _nome   = d.nome;
-    _fotos  = d.fotos || [];
+    _fotos  = (d.fotos || []).slice(0, 4);
 
     document.getElementById('propPerfil').textContent = d.perfil || '';
     document.getElementById('propNome').textContent   = d.nome || '—';
@@ -613,7 +613,7 @@ function renderFotos() {
       <button class="photo-remove" title="Remover" onclick="removerFoto(${i})">✕</button>`;
     grid.appendChild(div);
   });
-  document.getElementById('photoCount').textContent = `${_fotos.length} foto${_fotos.length !== 1 ? 's' : ''} (máx 10)`;
+  document.getElementById('photoCount').textContent = `${_fotos.length} foto${_fotos.length !== 1 ? 's' : ''} (máx 4)`;
   if (window._sortable) window._sortable.destroy();
   window._sortable = Sortable.create(grid, {
     animation: 150,

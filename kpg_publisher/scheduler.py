@@ -36,7 +36,7 @@ def _publicar_carrossel(fotos: list, caption: str, token: str, ig_id: str, job_i
     meta = _load_meta()
     try:
         container_ids = []
-        for url in fotos[:10]:
+        for url in fotos[:4]:
             data = urllib.parse.urlencode({
                 'image_url': url,
                 'is_carousel_item': 'true',

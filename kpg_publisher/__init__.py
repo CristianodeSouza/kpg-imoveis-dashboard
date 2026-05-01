@@ -331,11 +331,11 @@ def publicar():
         # Montar URLs finais (originais ou processadas)
         fotos_urls = []
         if redimensionar:
-            for url_orig in fotos_originais[:10]:
+            for url_orig in fotos_originais[:4]:
                 pub_url = _processar_e_hospedar(url_orig)
                 fotos_urls.append(pub_url if pub_url else url_orig)
         else:
-            fotos_urls = fotos_originais[:10]
+            fotos_urls = fotos_originais[:4]
 
         container_ids = []
         for url in fotos_urls:
