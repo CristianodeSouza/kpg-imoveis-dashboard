@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+1<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1235,5 +1235,22 @@ async function refreshGMB() {
   }
 }
 </script>
+  <!-- ──────────────────────────────────────────────────────────────────────────────
+       PROXY DE IMAGENS — Auto-redirecionar imagens Instagram para rota /proxy-img
+      ────────────────────────────────────────────────────────────────────────────── -->
+  <script>
+      window.addEventListener('load', function() {
+            // Auto-proxy todas as imagens da classe .post-img ou .avatar
+            document.querySelectorAll('.post-img, .avatar').forEach(function(img) {
+                    const originalSrc = img.src;
+                    // Verificar se é URL do Instagram CDN
+                    if (originalSrc && (originalSrc.includes('fbcdn.net') || originalSrc.includes('cdninstagram.com') || originalSrc.includes('instagram.com') || originalSrc.includes('scontent.'))) {
+                              // Redirecionar para a rota proxy
+                              img.src = '/proxy-img?url=' + encodeURIComponent(originalSrc);
+                    }
+            });
+      });
+  </script>
+  </script>
 </body>
 </html>
