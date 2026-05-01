@@ -129,9 +129,9 @@ def proxy_img():
     url = request.args.get('url', '')
     if not url:
         return '', 400
-    allowed = ('fbcdn.net', 'cdninstagram.com', 'instagram.com', 'scontent.')
+    allowed = ('fbcdn.net', 'cdninstagram.com', 'instagram.com', 'scontent.', 'fbsbx.com', 'fb.com')
     if not any(d in url for d in allowed):
-        return '', 400
+        return jsonify({'erro': f'Domínio não permitido: {url[:80]}'}), 400
     try:
         req = _urllib_req.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with _urllib_req.urlopen(req, timeout=10) as r:
