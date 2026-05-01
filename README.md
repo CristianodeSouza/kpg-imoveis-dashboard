@@ -121,6 +121,33 @@ python app.py
 
 ---
 
+## Controle de Versão
+
+A versão atual é exibida no **rodapé do dashboard** com três informações:
+
+| Campo | Descrição |
+|-------|-----------|
+| `v1.x.x` | Número da versão semântica |
+| Descrição | O que mudou neste release |
+| Servidor iniciado | Data/hora exata em que o processo subiu no Render |
+
+Para atualizar a versão em um novo release, edite as duas linhas em `app.py`:
+
+```python
+APP_VERSION      = "1.3.0"
+APP_VERSION_DATE = "15/05/2026 — Descrição da nova funcionalidade"
+```
+
+### Histórico de versões
+
+| Versão | Data | Descrição |
+|--------|------|-----------|
+| v1.0.0 | 25/04/2026 | Setup inicial — Flask + GMB Dashboard |
+| v1.1.0 | 30/04/2026 | KPG Publisher — publicação no Instagram |
+| v1.2.0 | 01/05/2026 | Dashboard unificado Analytics + Publisher |
+
+---
+
 ## Observações
 
 - **CREDENCIAIS.md** — arquivo local com todos os tokens/IDs reais (não versionado pelo `.gitignore`)
