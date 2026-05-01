@@ -670,6 +670,10 @@ async function publicarAgora() {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({fotos, caption, codigo: _codigo, redimensionar})
     });
+    const ct = r.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) {
+      throw new Error(`Erro ${r.status} — tempo limite excedido. Tente com menos fotos ou desmarque "Redimensionar".`);
+    }
     const d = await r.json();
     if (d.erro) { showAlert('alertPublicar','error', d.erro); return; }
     showAlert('alertPublicar','success',`✅ Publicado! Post ID: ${d.post_id}`);
