@@ -29,3 +29,6 @@ Thumbs.db
 # Data local
 data/
 *.log
+
+# Credenciais locais (nunca commitar)
+CREDENCIAIS.md

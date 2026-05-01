@@ -429,6 +429,44 @@ def cancelar_agendamento(job_id):
     return jsonify({'sucesso': True})
 
 
+@kpg_bp.route('/api/instagram/perfil')
+def instagram_perfil():
+    if not _logged():
+        return jsonify({'erro': 'Não autorizado'}), 401
+    token = _token()
+    ig_id = _ig_id()
+    try:
+        url = (
+            f'https://graph.facebook.com/v19.0/{ig_id}'
+            f'?fields=name,username,biography,followers_count,media_count,profile_picture_url,website'
+            f'&access_token={token}'
+        )
+        with urllib.request.urlopen(url, timeout=15) as r:
+            data = json.loads(r.read())
+        return jsonify({'sucesso': True, 'perfil': data})
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+
+@kpg_bp.route('/api/instagram/posts')
+def instagram_posts():
+    if not _logged():
+        return jsonify({'erro': 'Não autorizado'}), 401
+    token = _token()
+    ig_id = _ig_id()
+    try:
+        url = (
+            f'https://graph.facebook.com/v19.0/{ig_id}/media'
+            f'?fields=id,media_type,thumbnail_url,media_url,caption,timestamp,like_count,comments_count,permalink'
+            f'&limit=12&access_token={token}'
+        )
+        with urllib.request.urlopen(url, timeout=15) as r:
+            data = json.loads(r.read())
+        return jsonify({'sucesso': True, 'posts': data.get('data', [])})
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+
 def init_app(app):
     iniciar()
     app.register_blueprint(kpg_bp)

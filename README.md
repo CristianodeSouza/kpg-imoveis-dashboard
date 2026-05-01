@@ -1,108 +1,132 @@
-# KPG Imóveis Dashboard
+# KPG Imóveis — Dashboard & Instagram Publisher
 
-Dashboard web executivo para gerenciamento de dados de marketing da KPG Imóveis, com integração Google My Business, Instagram e campanhas de publicidade.
+Dashboard executivo para a **KPG Imóveis** com analytics de redes sociais e publicação automatizada no Instagram.
 
-## 🎨 Design
+**URL em produção:** https://csrtecnologia.com.br/kpg
 
-- **Cores Corporativas**: Navy (#020067) + Gold (#BD851F)
-- **Layout Responsivo**: Otimizado para desktop e dispositivos móveis
-- **Interface Moderna**: Tabs para organização de dados
+---
 
-## 🚀 Funcionalidades
+## Funcionalidades
 
-- ✅ **Google My Business (GMB)**: Dados de performance, avaliações e métricas
-- ✅ **Instagram**: Seguidores, engajamento e análises
-- ✅ **Campanhas**: Gastos e performance de campanhas
-- ✅ **Autenticação**: Login seguro com senha
-- ✅ **Acesso Remoto**: Compartilhe via rede local
+### 📊 Analytics
+- Perfil Instagram ao vivo (seguidores, posts, bio, avatar)
+- Grid com últimas 12 publicações (curtidas, comentários, tipo)
+- KPIs: total de curtidas, comentários, engajamento médio, melhor post
+- Lista de posts agendados
 
-## 📋 Requisitos
+### 📸 Publicar no Instagram
+- Busca de imóvel pelo código SIGA CRM
+- Grid de fotos com drag & drop para reordenar
+- Geração automática de legenda com hashtags
+- Publicação imediata com redimensionamento 1:1 (blur-fill)
+- Agendamento de posts com data/hora
+- Cancelamento de agendamentos
 
-- Python 3.8+
-- pip (gerenciador de pacotes Python)
-- Navegador moderno (Chrome, Firefox, Safari, Edge)
+---
 
-## 🔧 Instalação
+## Arquitetura
 
-1. **Clone o repositório:**
-```bash
-git clone https://github.com/seu-usuario/kpg-imoveis-dashboard.git
-cd kpg-imoveis-dashboard
+```
+app.py                        ← Flask (porta 5000) — entry point
+kpg_publisher/
+  __init__.py                 ← Blueprint Flask em /kpg
+  scheduler.py                ← APScheduler + SQLite para agendamentos
+templates/
+  kpg_publisher.html          ← Dashboard unificado (Analytics + Publisher)
+  login_v2.html               ← Tela de login
+scripts/
+  fetch_gmb.py                ← Busca dados Google Meu Negócio
+  gerar_token_manual.py       ← Gera OAuth token GMB sem browser local
+backend/                      ← FastAPI (porta 8000) — publisher alternativo
+data/                         ← JSONs de cache (ignorado pelo Git)
 ```
 
-2. **Instale as dependências:**
+---
+
+## Endpoints principais (`/kpg`)
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/kpg/` | Dashboard principal |
+| POST | `/kpg/api/preview` | Busca imóvel no SIGA CRM |
+| POST | `/kpg/api/publicar` | Publica no Instagram |
+| POST | `/kpg/api/agendar` | Agenda publicação |
+| GET | `/kpg/api/agendados` | Lista agendamentos |
+| DELETE | `/kpg/api/agendados/<id>` | Cancela agendamento |
+| GET | `/kpg/api/token/status` | Verifica token Meta |
+| GET | `/kpg/api/instagram/perfil` | Perfil Instagram ao vivo |
+| GET | `/kpg/api/instagram/posts` | Últimas 12 publicações |
+
+---
+
+## Configuração local
+
+### 1. Instalar dependências
 ```bash
 pip install -r requirements.txt
 ```
 
-3. **Configure as credenciais do Google:**
-   - Coloque o arquivo `client_secret.json` na raiz do projeto
-   - (Obtenha em: Google Cloud Console > Credenciais)
+### 2. Criar arquivo `.env` na raiz
+```env
+SIGA_TOKEN=seu_token_siga
+INSTAGRAM_ACCESS_TOKEN=seu_token_meta
+INSTAGRAM_ACCOUNT_ID=id_da_conta_instagram
+FACEBOOK_PAGE_ID=id_da_pagina_facebook
+FACEBOOK_AD_ACCOUNT_ID=id_conta_anuncios
+IMGBB_API_KEY=sua_chave_imgbb        # opcional
+ANTHROPIC_API_KEY=sua_chave_claude   # opcional
+```
 
-4. **Inicie o servidor:**
+### 3. Iniciar servidor
 ```bash
 python app.py
+# Acesse: http://localhost:5000/kpg
+# Senha padrão: kpg2026
 ```
 
-5. **Acesse no navegador:**
-   - Local: `http://localhost:5000`
-   - Rede: `http://192.168.x.x:5000` (veja o IP exibido no terminal)
+---
 
-## 🔑 Senha Padrão
+## Deploy (Render + Cloudflare)
 
-- Senha: `kpg2026`
-- Altere em: `data/config.json` (campo `password`)
+| Componente | Serviço |
+|------------|---------|
+| Servidor Python | Render.com (Web Service) |
+| DNS + SSL | Cloudflare (modo Flexível) |
+| CI/CD | Auto-deploy a cada push no `main` |
 
-## 📂 Estrutura do Projeto
+**Start command no Render:** `gunicorn app:app`
 
-```
-KPG IMOVEIS/
-├── app.py                      # Servidor Flask principal
-├── requirements.txt            # Dependências Python
-├── scripts/
-│   └── fetch_gmb.py           # Script para atualizar dados GMB
-├── templates/
-│   ├── dashboard.html         # Dashboard principal
-│   ├── login.html             # Página de login
-│   └── login_v2.html          # Login com design atualizado
-├── data/                      # Dados armazenados (gerado automaticamente)
-│   ├── config.json            # Configurações da aplicação
-│   ├── gmb.json              # Dados do Google My Business
-│   ├── instagram.json        # Dados do Instagram
-│   └── ads.json              # Dados de campanhas
-└── backend/                   # Scripts adicionais de automação
-```
+**Variáveis de ambiente:** configuradas no painel do Render → Environment.
 
-## 🔐 Segurança
+---
 
-⚠️ **Importante:**
-- Os tokens OAuth são salvos em `gmb_token.json` (NÃO commitar no Git)
-- Senhas são armazenadas em `data/config.json` (proteger esse arquivo)
-- Use HTTPS em produção (não recomendado para dev)
+## Integrações
 
-## 📊 APIs Utilizadas
+### Meta / Instagram Graph API
+- Versão: v19.0
+- Token: System User (não expira)
+- Permissões: `instagram_content_publish`, `ads_management`, `pages_read_engagement`
+- Conta: @kpgimoveis (Instagram Business)
+- Instagram Business Account ID: `17841408846946904`
 
-- **Google My Business API**: Performance e insights
-- **Business Account Management API**: Dados da conta
-- **Instagram Graph API**: Publicação de posts, stories e reels — [ver documentação completa](INSTAGRAM_INTEGRACAO.md)
-- **Meta Ads API**: Leitura de campanhas e performance (conta `act_609918289087466`)
+### SIGA CRM
+- Acesso via proxy: `https://www.kpgimoveis.com.br/api/imovel/{codigo}`
+- Headers: User-Agent de navegador + Referer do site KPG
 
-## 🤝 Compartilhamento em Rede
+### Google Meu Negócio
+- OAuth 2.0 com refresh token
+- Token salvo em `scripts/gmb_token.json` (não versionado)
+- Projeto Google Cloud: `firm-modem-494317-e1`
+- Status: quota da API `mybusinessaccountmanagement` precisa ser aumentada no Google Cloud Console
 
-Compartilhe o endereço exibido no terminal com seus colegas:
-```
-🌐 Rede: http://192.168.3.x:5000
-```
+---
 
-**Requisitos para colegas:**
-- Estar na mesma rede local
-- Digitar a URL no navegador
-- Usar a senha configurada
+## Observações
 
-## 📝 Licença
+- **CREDENCIAIS.md** — arquivo local com todos os tokens/IDs reais (não versionado pelo `.gitignore`)
+- **ImgBB** — necessário apenas para redimensionamento de fotos. Sem ele, publica direto pelas URLs do CDN SIGA
+- **Render Free** — servidor "dorme" após 15 min sem uso; primeira visita pode levar ~30s
 
-Todos os direitos reservados © KPG Imóveis 2026
+---
 
-## 👤 Autor
-
-Desenvolvido para KPG Imóveis
+© 2026 KPG Imóveis · Desenvolvido por CSR Tecnologia
