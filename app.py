@@ -58,7 +58,7 @@ def login():
         if request.form.get('password') == get_password():
             session['logged_in'] = True
             session['user'] = request.form.get('user', 'Equipe')
-            return redirect(url_for('index'))
+            return redirect(url_for('kpg.index'))
         error = 'Senha incorreta. Tente novamente.'
     return render_template('login_v2.html', error=error)
 
@@ -69,27 +69,8 @@ def logout():
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 @app.route('/')
-@no_cache
 def index():
-    if not logged_in():
-        return redirect(url_for('login'))
-    gmb = load_json('gmb', {
-        "bizName": "—", "bizAddr": "—", "rating": "—", "reviews": "—",
-        "totalViews": 0, "searchViews": 0, "mapsViews": 0,
-        "calls": 0, "directions": 0, "website": 0,
-        "mobilePct": "—", "desktopPct": "—", "searchPct": "—", "mapsPct": "—",
-        "labels": [], "dailyViews": [], "dailyActions": [],
-        "updated": "Dados não carregados ainda"
-    })
-    instagram = load_json('instagram', {})
-    ads       = load_json('ads', {})
-    return render_template('dashboard.html',
-        gmb_data=json.dumps(gmb, ensure_ascii=False),
-        instagram=instagram,
-        ads=ads,
-        user=session.get('user', 'Equipe'),
-        now=datetime.now().strftime('%d/%m/%Y %H:%M')
-    )
+    return redirect(url_for('kpg.index'))
 
 # ── API ───────────────────────────────────────────────────────────────────────
 @app.route('/api/gmb')
