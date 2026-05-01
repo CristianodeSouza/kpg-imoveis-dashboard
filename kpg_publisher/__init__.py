@@ -42,7 +42,7 @@ def _imgbb_key():
 def _processar_e_hospedar(url: str) -> str | None:
     """
     Baixa, aplica blur-fill 1:1 e sobe para ImgBB.
-    Retorna a URL pública da imagem processada (ou None se falhar).
+    Retorna a URL pÃºblica da imagem processada (ou None se falhar).
     """
     imgbb = _imgbb_key()
     if not imgbb:
@@ -53,16 +53,19 @@ def _processar_e_hospedar(url: str) -> str | None:
         resp = req_lib.get(url, timeout=20, headers={'User-Agent': 'Mozilla/5.0'})
         resp.raise_for_status()
         img = Image.open(io.BytesIO(resp.content)).convert('RGB')
-
+        # Limitar tamanho antes de processar (economiza RAM no plano Free)
+        if img.width > 1920 or img.height > 1920:
+            img.thumbnail((1920, 1920), Image.LANCZOS)
         w, h = img.size
         ratio = w / h
 
         if abs(ratio - 1.0) >= 0.02:
             # Canvas quadrado com blur-fill
             canvas = Image.new('RGB', (IG_SIZE, IG_SIZE))
-            bg = img.resize((IG_SIZE, IG_SIZE), Image.LANCZOS)
-            bg = bg.filter(ImageFilter.GaussianBlur(radius=28))
+            bg = img.resize((IG_SIZE, IG_SIZE), Image.BILINEAR)
+            bg = bg.filter(ImageFilter.GaussianBlur(radius=20))
             canvas.paste(bg, (0, 0))
+            del bg
 
             if ratio > 1:
                 new_w, new_h = IG_SIZE, int(IG_SIZE / ratio)
@@ -72,6 +75,7 @@ def _processar_e_hospedar(url: str) -> str | None:
             img_resized = img.resize((new_w, new_h), Image.LANCZOS)
             x, y = (IG_SIZE - new_w) // 2, (IG_SIZE - new_h) // 2
             canvas.paste(img_resized, (x, y))
+            del img_resized
             img = canvas
 
         # Salvar em buffer
@@ -95,10 +99,10 @@ def _processar_e_hospedar(url: str) -> str | None:
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ENV_PATH = os.path.join(BASE_DIR, '.env')
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# ââ Helpers âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def _token():
-    """Lê token: variável de ambiente (Render) ou .env local."""
+    """LÃª token: variÃ¡vel de ambiente (Render) ou .env local."""
     val = os.environ.get('INSTAGRAM_ACCESS_TOKEN', '')
     if val:
         return val
@@ -186,50 +190,50 @@ def _gerar_caption(data, telefone=''):
     desc = re.sub(r'<[^>]+>', '', desc_raw).strip()
     desc_trecho = desc[:300].rstrip(',').strip()
 
-    linhas = [f'✨ {nome}', '']
+    linhas = [f'â¨ {nome}', '']
     if desc_trecho:
         linhas += [desc_trecho + ('...' if len(desc) > 300 else ''), '']
 
     local = ', '.join(filter(None, [bairro, cidade]))
     if local:
-        linhas.append(f'📍 {local} - {uf}')
+        linhas.append(f'ð {local} - {uf}')
     if perfil:
-        linhas.append(f'🏷 {perfil}')
+        linhas.append(f'ð· {perfil}')
     linhas.append('')
 
     specs = []
     if dorms:
-        specs.append(f'🛏 {dorms} dorm{"s" if int(str(dorms)) > 1 else ""}')
+        specs.append(f'ð {dorms} dorm{"s" if int(str(dorms)) > 1 else ""}')
     if suites:
         try:
             s = int(str(suites))
             if s:
-                specs.append(f'🛁 {s} suíte{"s" if s > 1 else ""}')
+                specs.append(f'ð {s} suÃ­te{"s" if s > 1 else ""}')
         except Exception:
             pass
     if area:
-        specs.append(f'📐 {area} m²')
+        specs.append(f'ð {area} mÂ²')
     if garagem:
         try:
             g = int(str(garagem))
             if g:
-                specs.append(f'🚗 {g} vaga{"s" if g > 1 else ""}')
+                specs.append(f'ð {g} vaga{"s" if g > 1 else ""}')
         except Exception:
             pass
     if specs:
         linhas += [' | '.join(specs), '']
 
     if valor:
-        linhas += [f'💰 A partir de R$ {valor}', '']
+        linhas += [f'ð° A partir de R$ {valor}', '']
 
     if telefone:
-        linhas += ['📲 Agende sua visita:', f'wa.me/{telefone}', '']
+        linhas += ['ð² Agende sua visita:', f'wa.me/{telefone}', '']
 
     hashtags = ['#KPGImoveis']
     if cidade:
         hashtags.append(f'#{cidade.replace(" ", "")}Imoveis')
     if perfil:
-        tag = perfil.replace(' ', '').replace('ã', 'a').replace('â', 'a').replace('ç', 'c')
+        tag = perfil.replace(' ', '').replace('Ã£', 'a').replace('Ã¢', 'a').replace('Ã§', 'c')
         hashtags.append(f'#{tag}')
     hashtags += ['#SerraGaucha', '#ImoveisRS', '#AltoPadrao', '#CorretorDeImoveis']
     linhas.append(' '.join(hashtags))
@@ -237,11 +241,11 @@ def _gerar_caption(data, telefone=''):
     return '\n'.join(linhas)
 
 
-# ── Rotas ─────────────────────────────────────────────────────────────────────
+# ââ Rotas âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 @kpg_bp.route('/img/<fname>')
 def temp_img(fname):
-    """Serve imagens processadas para o Instagram acessar via URL pública."""
+    """Serve imagens processadas para o Instagram acessar via URL pÃºblica."""
     path = os.path.join(TEMP_DIR, fname)
     if not os.path.exists(path):
         return '', 404
@@ -276,13 +280,13 @@ def token_status():
 @kpg_bp.route('/api/preview', methods=['POST'])
 def preview():
     if not _logged():
-        return jsonify({'erro': 'Não autorizado'}), 401
+        return jsonify({'erro': 'NÃ£o autorizado'}), 401
     body = request.get_json() or {}
     codigo = str(body.get('codigo', '')).strip()
     telefone = str(body.get('telefone', '')).strip()
 
     if not codigo:
-        return jsonify({'erro': 'Código obrigatório'}), 400
+        return jsonify({'erro': 'CÃ³digo obrigatÃ³rio'}), 400
     try:
         data = _buscar_imovel(codigo)
         fotos = _extrair_fotos(data)
@@ -303,13 +307,13 @@ def preview():
             'caption': caption,
         })
     except Exception as e:
-        return jsonify({'erro': f'Erro ao buscar imóvel: {str(e)}'}), 500
+        return jsonify({'erro': f'Erro ao buscar imÃ³vel: {str(e)}'}), 500
 
 
 @kpg_bp.route('/api/publicar', methods=['POST'])
 def publicar():
     if not _logged():
-        return jsonify({'erro': 'Não autorizado'}), 401
+        return jsonify({'erro': 'NÃ£o autorizado'}), 401
     body = request.get_json() or {}
     fotos_originais = body.get('fotos', [])
     caption = body.get('caption', '')
@@ -319,10 +323,10 @@ def publicar():
     if not fotos_originais:
         return jsonify({'erro': 'Nenhuma foto selecionada'}), 400
     if not caption.strip():
-        return jsonify({'erro': 'Legenda não pode estar vazia'}), 400
+        return jsonify({'erro': 'Legenda nÃ£o pode estar vazia'}), 400
 
     if redimensionar and not _imgbb_key():
-        return jsonify({'erro': 'Configure IMGBB_API_KEY no arquivo .env para usar redimensionamento. Chave gratuita em imgbb.com → API → My API Key'}), 400
+        return jsonify({'erro': 'Configure IMGBB_API_KEY no arquivo .env para usar redimensionamento. Chave gratuita em imgbb.com â API â My API Key'}), 400
 
     token = _token()
     ig_id = _ig_id()
@@ -355,11 +359,12 @@ def publicar():
             time.sleep(1)
 
         if not container_ids:
-            return jsonify({'erro': 'Falha ao criar containers de mídia'}), 500
+            return jsonify({'erro': 'Falha ao criar containers de mÃ­dia'}), 500
 
         if len(container_ids) == 1:
             pub_data = urllib.parse.urlencode({
                 'creation_id': container_ids[0],
+                'caption': caption,
                 'access_token': token,
             }).encode()
         else:
@@ -400,7 +405,7 @@ def publicar():
 @kpg_bp.route('/api/agendar', methods=['POST'])
 def agendar_post():
     if not _logged():
-        return jsonify({'erro': 'Não autorizado'}), 401
+        return jsonify({'erro': 'NÃ£o autorizado'}), 401
     body = request.get_json() or {}
     fotos = body.get('fotos', [])
     caption = body.get('caption', '')
@@ -409,14 +414,14 @@ def agendar_post():
     data_hora_str = body.get('data_hora', '')
 
     if not fotos or not caption.strip() or not data_hora_str:
-        return jsonify({'erro': 'Fotos, legenda e data/hora são obrigatórios'}), 400
+        return jsonify({'erro': 'Fotos, legenda e data/hora sÃ£o obrigatÃ³rios'}), 400
 
     try:
         data_hora = datetime.fromisoformat(data_hora_str)
         if data_hora <= datetime.now():
             return jsonify({'erro': 'Data/hora deve ser no futuro'}), 400
     except ValueError:
-        return jsonify({'erro': 'Formato de data/hora inválido'}), 400
+        return jsonify({'erro': 'Formato de data/hora invÃ¡lido'}), 400
 
     job_id = str(uuid.uuid4())[:8]
     token = _token()
@@ -434,14 +439,14 @@ def agendar_post():
 @kpg_bp.route('/api/agendados')
 def agendados():
     if not _logged():
-        return jsonify({'erro': 'Não autorizado'}), 401
+        return jsonify({'erro': 'NÃ£o autorizado'}), 401
     return jsonify(listar())
 
 
 @kpg_bp.route('/api/agendados/<job_id>', methods=['DELETE'])
 def cancelar_agendamento(job_id):
     if not _logged():
-        return jsonify({'erro': 'Não autorizado'}), 401
+        return jsonify({'erro': 'NÃ£o autorizado'}), 401
     cancelar(job_id)
     return jsonify({'sucesso': True})
 
@@ -449,20 +454,20 @@ def cancelar_agendamento(job_id):
 @kpg_bp.route('/api/debug')
 def debug_env():
     if not _logged():
-        return jsonify({'erro': 'Não autorizado'}), 401
+        return jsonify({'erro': 'NÃ£o autorizado'}), 401
     token = _token()
     ig_id = _ig_id()
     # Testa a API do Meta diretamente
     resultado = {}
     if not token:
-        resultado['token'] = 'AUSENTE — INSTAGRAM_ACCESS_TOKEN não encontrado'
+        resultado['token'] = 'AUSENTE â INSTAGRAM_ACCESS_TOKEN nÃ£o encontrado'
     else:
-        resultado['token'] = f'OK — {token[:12]}...{token[-6:]}'
+        resultado['token'] = f'OK â {token[:12]}...{token[-6:]}'
         try:
             url = f'https://graph.facebook.com/v19.0/{ig_id}?fields=username&access_token={token}'
             with urllib.request.urlopen(url, timeout=10) as r:
                 data = json.loads(r.read())
-            resultado['meta_api'] = f'OK — username: {data.get("username", "?")}'
+            resultado['meta_api'] = f'OK â username: {data.get("username", "?")}'
         except urllib.error.HTTPError as e:
             body = e.read().decode('utf-8', errors='replace')
             resultado['meta_api'] = f'ERRO {e.code}: {body}'
@@ -475,11 +480,11 @@ def debug_env():
 @kpg_bp.route('/api/instagram/perfil')
 def instagram_perfil():
     if not _logged():
-        return jsonify({'erro': 'Não autorizado'}), 401
+        return jsonify({'erro': 'NÃ£o autorizado'}), 401
     token = _token()
     ig_id = _ig_id()
     if not token:
-        return jsonify({'erro': 'INSTAGRAM_ACCESS_TOKEN não configurado no ambiente'}), 500
+        return jsonify({'erro': 'INSTAGRAM_ACCESS_TOKEN nÃ£o configurado no ambiente'}), 500
     try:
         url = (
             f'https://graph.facebook.com/v19.0/{ig_id}'
@@ -499,11 +504,11 @@ def instagram_perfil():
 @kpg_bp.route('/api/instagram/posts')
 def instagram_posts():
     if not _logged():
-        return jsonify({'erro': 'Não autorizado'}), 401
+        return jsonify({'erro': 'NÃ£o autorizado'}), 401
     token = _token()
     ig_id = _ig_id()
     if not token:
-        return jsonify({'erro': 'INSTAGRAM_ACCESS_TOKEN não configurado no ambiente'}), 500
+        return jsonify({'erro': 'INSTAGRAM_ACCESS_TOKEN nÃ£o configurado no ambiente'}), 500
     try:
         url = (
             f'https://graph.facebook.com/v19.0/{ig_id}/media'
