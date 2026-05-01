@@ -9,8 +9,20 @@ from flask import Flask, render_template, request, session, redirect, url_for, j
 from datetime import datetime
 from flask import make_response
 
+APP_VERSION    = "1.2.0"
+APP_VERSION_DATE = "01/05/2026 — Dashboard unificado Analytics + Publisher"
+SERVER_STARTED = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
 app = Flask(__name__)
 app.secret_key = 'kpg_imoveis_dashboard_2026_secret'
+
+@app.context_processor
+def inject_version():
+    return dict(
+        app_version=APP_VERSION,
+        app_version_date=APP_VERSION_DATE,
+        server_started=SERVER_STARTED,
+    )
 
 # ── KPG Publisher (Instagram) ─────────────────────────────────────────────────
 from kpg_publisher import init_app as init_publisher
