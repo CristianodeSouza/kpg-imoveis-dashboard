@@ -306,7 +306,7 @@ def preview():
         return jsonify({'erro': f'Erro ao buscar imóvel: {str(e)}'}), 500
 
 
-@kpg_bp.route('/api/publicar', methods=['POST']), strict_slashes=False)
+@kpg_bp.route('/api/publicar', methods=['POST'])
 def publicar():
     if not _logged():
         return jsonify({'erro': 'Não autorizado'}), 401
