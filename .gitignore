@@ -32,3 +32,9 @@ data/
 
 # Credenciais locais (nunca commitar)
 CREDENCIAIS.md
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
