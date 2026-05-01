@@ -451,6 +451,8 @@ def instagram_perfil():
         return jsonify({'erro': 'Não autorizado'}), 401
     token = _token()
     ig_id = _ig_id()
+    if not token:
+        return jsonify({'erro': 'INSTAGRAM_ACCESS_TOKEN não configurado no ambiente'}), 500
     try:
         url = (
             f'https://graph.facebook.com/v19.0/{ig_id}'
@@ -460,6 +462,9 @@ def instagram_perfil():
         with urllib.request.urlopen(url, timeout=15) as r:
             data = json.loads(r.read())
         return jsonify({'sucesso': True, 'perfil': data})
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8', errors='replace')
+        return jsonify({'erro': f'Meta API {e.code}: {body}'}), 500
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
 
@@ -470,6 +475,8 @@ def instagram_posts():
         return jsonify({'erro': 'Não autorizado'}), 401
     token = _token()
     ig_id = _ig_id()
+    if not token:
+        return jsonify({'erro': 'INSTAGRAM_ACCESS_TOKEN não configurado no ambiente'}), 500
     try:
         url = (
             f'https://graph.facebook.com/v19.0/{ig_id}/media'
@@ -479,6 +486,9 @@ def instagram_posts():
         with urllib.request.urlopen(url, timeout=15) as r:
             data = json.loads(r.read())
         return jsonify({'sucesso': True, 'posts': data.get('data', [])})
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8', errors='replace')
+        return jsonify({'erro': f'Meta API {e.code}: {body}'}), 500
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
 
