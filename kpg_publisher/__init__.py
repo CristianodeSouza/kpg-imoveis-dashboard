@@ -24,6 +24,9 @@ IG_SIZE = 1080
 
 
 def _imgbb_key():
+    val = os.environ.get('IMGBB_API_KEY', '')
+    if val and 'CHAVE' not in val:
+        return val
     try:
         with open(ENV_PATH, 'r', encoding='utf-8') as f:
             for line in f:
@@ -31,7 +34,8 @@ def _imgbb_key():
                     k = line.split('=', 1)[1].strip()
                     return k if k and 'CHAVE' not in k else ''
     except Exception:
-        return ''
+        pass
+    return ''
 
 
 def _processar_e_hospedar(url: str) -> str | None:
@@ -93,19 +97,31 @@ ENV_PATH = os.path.join(BASE_DIR, '.env')
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _token():
-    """Lê token do .env em tempo real."""
-    with open(ENV_PATH, 'r', encoding='utf-8') as f:
-        for line in f:
-            if line.startswith('INSTAGRAM_ACCESS_TOKEN='):
-                return line.split('=', 1)[1].strip()
+    """Lê token: variável de ambiente (Render) ou .env local."""
+    val = os.environ.get('INSTAGRAM_ACCESS_TOKEN', '')
+    if val:
+        return val
+    try:
+        with open(ENV_PATH, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.startswith('INSTAGRAM_ACCESS_TOKEN='):
+                    return line.split('=', 1)[1].strip()
+    except Exception:
+        pass
     return ''
 
 
 def _ig_id():
-    with open(ENV_PATH, 'r', encoding='utf-8') as f:
-        for line in f:
-            if line.startswith('INSTAGRAM_ACCOUNT_ID='):
-                return line.split('=', 1)[1].strip()
+    val = os.environ.get('INSTAGRAM_ACCOUNT_ID', '')
+    if val:
+        return val
+    try:
+        with open(ENV_PATH, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.startswith('INSTAGRAM_ACCOUNT_ID='):
+                    return line.split('=', 1)[1].strip()
+    except Exception:
+        pass
     return '17841408846946904'
 
 
