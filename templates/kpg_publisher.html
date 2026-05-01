@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KPG — Publicador de Imóveis</title>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<style>
+  :root {
+    --navy: #020067;
+    --navy-light: #0a0090;
+    --gold: #BD851F;
+    --gold-light: #d4972a;
+    --bg: #f0f2f7;
+    --card: #ffffff;
+    --border: #dde3f0;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --warning: #d97706;
+    --radius: 12px;
+    --shadow: 0 2px 16px rgba(2,0,103,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Header */
+  .header { background: var(--navy); color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+  .header h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: .5px; }
+  .header h1 span { color: var(--gold); }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .token-badge { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: .78rem; font-weight: 600; background: rgba(255,255,255,.1); }
+  .token-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: #9ca3af; }
+  .token-badge.ok .dot { background: #4ade80; }
+  .token-badge.ok { background: rgba(74,222,128,.12); color: #4ade80; }
+  .token-badge.erro .dot { background: #f87171; }
+  .token-badge.erro { background: rgba(248,113,113,.12); color: #f87171; }
+  .btn-logout { color: rgba(255,255,255,.6); text-decoration: none; font-size: .8rem; }
+  .btn-logout:hover { color: #fff; }
+
+  /* Layout */
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width: 760px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* Cards */
+  .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; }
+  .card-title { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--navy); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .card-title::before { content: ''; display: block; width: 3px; height: 14px; background: var(--gold); border-radius: 2px; }
+
+  /* Busca */
+  .search-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .input-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 120px; }
+  .input-group label { font-size: .75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  input[type=text], input[type=datetime-local], textarea {
+    border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 12px;
+    font-size: .9rem; width: 100%; color: var(--text); outline: none; transition: border .2s;
+    font-family: inherit;
+  }
+  input:focus, textarea:focus { border-color: var(--navy); }
+  textarea { resize: vertical; min-height: 160px; line-height: 1.5; }
+
+  /* Botões */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: .88rem; cursor: pointer; border: none; transition: .18s; text-decoration: none; white-space: nowrap; }
+  .btn-primary { background: var(--navy); color: #fff; }
+  .btn-primary:hover { background: var(--navy-light); }
+  .btn-gold { background: var(--gold); color: #fff; }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+  .btn-outline:hover { border-color: var(--navy); color: var(--navy); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #b91c1c; }
+  .btn-sm { padding: 5px 12px; font-size: .78rem; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-full { width: 100%; }
+
+  /* Painel de propriedade */
+  .prop-info { display: none; }
+  .prop-info.visible { display: block; }
+  .prop-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: .72rem; font-weight: 700; background: rgba(2,0,103,.08); color: var(--navy); margin-bottom: 8px; }
+  .prop-name { font-size: 1.1rem; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+  .prop-location { font-size: .85rem; color: var(--muted); margin-bottom: 12px; }
+  .prop-specs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .spec-chip { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: .78rem; color: var(--text); }
+  .prop-valor { font-size: 1rem; font-weight: 700; color: var(--gold); }
+
+  /* Grade de fotos */
+  .photos-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .photos-hint { font-size: .73rem; color: var(--muted); }
+  .photos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+  .photo-item { position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 1; cursor: grab; border: 2px solid transparent; transition: .2s; user-select: none; }
+  .photo-item:hover { border-color: var(--navy); }
+  .photo-item.cover { border-color: var(--gold); }
+  .photo-item img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+  .photo-item .photo-num { position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,.65); color: #fff; font-size: .65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+  .photo-item.cover .photo-num { background: var(--gold); }
+  .cover-label { position: absolute; bottom: 0; left: 0; right: 0; background: var(--gold); color: #fff; font-size: .62rem; font-weight: 700; text-align: center; padding: 2px; text-transform: uppercase; letter-spacing: .5px; }
+  .photo-item .photo-remove { position: absolute; top: 4px; right: 4px; background: rgba(220,38,38,.85); color: #fff; border: none; border-radius: 4px; width: 20px; height: 20px; font-size: .7rem; cursor: pointer; display: none; align-items: center; justify-content: center; }
+  .photo-item:hover .photo-remove { display: flex; }
+  .photo-item.sortable-ghost { opacity: .4; }
+  .photo-item.sortable-drag { border-color: var(--gold); box-shadow: 0 4px 20px rgba(2,0,103,.3); }
+
+  /* Legenda */
+  .caption-actions { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .char-count { font-size: .72rem; color: var(--muted); text-align: right; margin-top: 4px; }
+  .char-count.over { color: var(--danger); }
+
+  /* Ações */
+  .actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media(max-width: 500px) { .actions-grid { grid-template-columns: 1fr; } }
+  .action-card { border: 1.5px solid var(--border); border-radius: 10px; padding: 16px; }
+  .action-card h3 { font-size: .85rem; font-weight: 700; margin-bottom: 12px; color: var(--navy); }
+
+  /* Agendamentos */
+  .schedule-list { display: flex; flex-direction: column; gap: 8px; }
+  .schedule-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); font-size: .82rem; }
+  .schedule-item .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .status-agendado .status-dot { background: var(--gold); }
+  .status-publicado .status-dot { background: var(--success); }
+  .status-erro .status-dot { background: var(--danger); }
+  .status-cancelado .status-dot { background: #9ca3af; }
+  .schedule-info { flex: 1; min-width: 0; }
+  .schedule-info strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--navy); }
+  .schedule-info small { color: var(--muted); }
+
+  /* Alertas */
+  .alert { padding: 10px 14px; border-radius: 8px; font-size: .84rem; margin-bottom: 12px; display: none; }
+  .alert.show { display: block; }
+  .alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+  .alert-info { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+
+  /* Spinner */
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 24px; color: var(--muted); font-size: .85rem; }
+
+  /* Seção */
+  .section-gap { margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div style="font-size:.65rem;color:rgba(255,255,255,.5);letter-spacing:1px;text-transform:uppercase">KPG Imóveis</div>
+    <h1>Publicador <span>Instagram</span></h1>
+  </div>
+  <div class="header-right">
+    <div class="token-badge" id="tokenBadge">
+      <span class="dot"></span>
+      <span id="tokenText">Verificando...</span>
+    </div>
+    <a href="/logout" class="btn-logout">Sair</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- BUSCA -->
+  <div class="card">
+    <div class="card-title">Buscar Imóvel</div>
+    <div id="alertBusca" class="alert"></div>
+    <div class="search-row">
+      <div class="input-group" style="max-width:160px">
+        <label>Código SIGA</label>
+        <input type="text" id="inputCodigo" placeholder="Ex: 2428" />
+      </div>
+      <div class="input-group" style="max-width:220px">
+        <label>WhatsApp (com DDI)</label>
+        <input type="text" id="inputTelefone" placeholder="5551984005467" value="5551984005467" />
+      </div>
+      <div class="input-group" style="max-width:160px;justify-content:flex-end">
+        <label>&nbsp;</label>
+        <button class="btn btn-primary" id="btnBuscar" onclick="buscarImovel()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          Buscar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PREVIEW (aparece após busca) -->
+  <div class="prop-info section-gap" id="propInfo">
+
+    <div class="grid-2">
+
+      <!-- Coluna esquerda: info + fotos -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+
+        <!-- Info do imóvel -->
+        <div class="card">
+          <div class="card-title">Imóvel Encontrado</div>
+          <span class="prop-badge" id="propPerfil"></span>
+          <div class="prop-name" id="propNome"></div>
+          <div class="prop-location" id="propLocal"></div>
+          <div class="prop-specs" id="propSpecs"></div>
+          <div class="prop-valor" id="propValor"></div>
+        </div>
+
+        <!-- Fotos -->
+        <div class="card">
+          <div class="card-title">Fotos do Carrossel</div>
+          <div class="photos-header">
+            <span class="photos-hint">Arraste para reordenar • Primeira foto = capa</span>
+            <span id="photoCount" style="font-size:.75rem;color:var(--muted)"></span>
+          </div>
+          <div id="photosGrid" class="photos-grid"></div>
+        </div>
+
+      </div>
+
+      <!-- Coluna direita: legenda + ações -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+
+        <!-- Legenda -->
+        <div class="card" style="flex:1">
+          <div class="card-title">Legenda</div>
+          <div class="caption-actions">
+            <button class="btn btn-outline btn-sm" onclick="regenerarCaption()">
+              ↺ Regenerar
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="copiarCaption()">
+              ⎘ Copiar
+            </button>
+          </div>
+          <textarea id="captionText" placeholder="A legenda gerada aparecerá aqui..." oninput="atualizarCharCount()"></textarea>
+          <div class="char-count" id="charCount">0 / 2200 caracteres</div>
+        </div>
+
+        <!-- Ações -->
+        <div class="card">
+          <div class="card-title">Publicar</div>
+          <div id="alertPublicar" class="alert"></div>
+          <div class="actions-grid">
+
+            <div class="action-card">
+              <h3>⚡ Agora</h3>
+              <label style="display:flex;align-items:center;gap:7px;font-size:.75rem;color:var(--muted);margin-bottom:10px;cursor:pointer">
+                <input type="checkbox" id="chkRedimensionar" checked style="width:14px;height:14px;accent-color:var(--navy)">
+                Preencher quadrado (blur-fill)
+              </label>
+              <button class="btn btn-gold btn-full" id="btnPublicar" onclick="publicarAgora()">
+                Publicar Agora
+              </button>
+            </div>
+
+            <div class="action-card">
+              <h3>🗓 Agendar</h3>
+              <div style="margin-bottom:10px">
+                <input type="datetime-local" id="inputDataHora" />
+              </div>
+              <button class="btn btn-primary btn-full" id="btnAgendar" onclick="agendarPublicacao()">
+                Agendar
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- AGENDAMENTOS -->
+  <div class="card section-gap">
+    <div class="card-title" style="justify-content:space-between">
+      <span>Publicações Agendadas</span>
+      <button class="btn btn-outline btn-sm" onclick="carregarAgendados()">↺ Atualizar</button>
+    </div>
+    <div id="listaAgendados">
+      <div class="empty">Nenhuma publicação agendada.</div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ── Estado ────────────────────────────────────────────────────────────────────
+let _fotos = [];   // [{url, titulo, pasta}]
+let _codigo = '';
+let _nome = '';
+
+// ── Token ─────────────────────────────────────────────────────────────────────
+async function verificarToken() {
+  try {
+    const r = await fetch('/kpg/api/token/status');
+    const d = await r.json();
+    const badge = document.getElementById('tokenBadge');
+    const txt   = document.getElementById('tokenText');
+    if (d.valido) {
+      badge.className = 'token-badge ok';
+      txt.textContent = d.permanente ? 'Token Permanente ✓' : `Token válido`;
+    } else {
+      badge.className = 'token-badge erro';
+      txt.textContent = 'Token inválido!';
+    }
+  } catch(e) {
+    document.getElementById('tokenText').textContent = 'Sem conexão';
+  }
+}
+
+// ── Buscar imóvel ─────────────────────────────────────────────────────────────
+async function buscarImovel() {
+  const codigo   = document.getElementById('inputCodigo').value.trim();
+  const telefone = document.getElementById('inputTelefone').value.trim();
+  if (!codigo) { showAlert('alertBusca','error','Informe o código do imóvel.'); return; }
+
+  const btn = document.getElementById('btnBuscar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Buscando...';
+  hideAlert('alertBusca');
+
+  try {
+    const r = await fetch('/kpg/api/preview', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({codigo, telefone})
+    });
+    const d = await r.json();
+    if (d.erro) { showAlert('alertBusca','error', d.erro); return; }
+
+    _codigo = codigo;
+    _nome   = d.nome;
+    _fotos  = d.fotos || [];
+
+    // Preencher info
+    document.getElementById('propPerfil').textContent = d.perfil || '';
+    document.getElementById('propNome').textContent   = d.nome || '—';
+    document.getElementById('propLocal').textContent  = [d.bairro, d.cidade, d.uf].filter(Boolean).join(', ');
+    document.getElementById('propValor').textContent  = d.valor ? `A partir de R$ ${d.valor}` : '';
+
+    const specs = document.getElementById('propSpecs');
+    specs.innerHTML = '';
+    if (d.dormitorios) specs.innerHTML += `<span class="spec-chip">🛏 ${d.dormitorios} dorm</span>`;
+    if (d.area)        specs.innerHTML += `<span class="spec-chip">📐 ${d.area} m²</span>`;
+
+    // Caption
+    document.getElementById('captionText').value = d.caption || '';
+    atualizarCharCount();
+
+    // Fotos
+    renderFotos();
+
+    // Mostrar painel
+    document.getElementById('propInfo').classList.add('visible');
+    document.getElementById('propInfo').scrollIntoView({behavior:'smooth', block:'start'});
+
+    // Data hora padrão = amanhã 09:00
+    const amanha = new Date();
+    amanha.setDate(amanha.getDate() + 1);
+    amanha.setHours(9, 0, 0, 0);
+    document.getElementById('inputDataHora').value = amanha.toISOString().slice(0,16);
+
+  } catch(e) {
+    showAlert('alertBusca','error','Erro de conexão: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg> Buscar';
+  }
+}
+
+// ── Renderizar fotos ──────────────────────────────────────────────────────────
+function renderFotos() {
+  const grid = document.getElementById('photosGrid');
+  grid.innerHTML = '';
+  _fotos.forEach((f, i) => {
+    const div = document.createElement('div');
+    div.className = 'photo-item' + (i === 0 ? ' cover' : '');
+    div.dataset.index = i;
+    div.innerHTML = `
+      <img src="${f.url}" alt="${f.titulo || ''}" loading="lazy" onerror="this.parentElement.style.display='none'">
+      <span class="photo-num">${i+1}</span>
+      ${i === 0 ? '<span class="cover-label">Capa</span>' : ''}
+      <button class="photo-remove" title="Remover" onclick="removerFoto(${i})">✕</button>`;
+    grid.appendChild(div);
+  });
+
+  document.getElementById('photoCount').textContent = `${_fotos.length} foto${_fotos.length !== 1 ? 's' : ''} (máx 10)`;
+
+  // Drag & drop
+  if (window._sortable) window._sortable.destroy();
+  window._sortable = Sortable.create(grid, {
+    animation: 150,
+    ghostClass: 'sortable-ghost',
+    dragClass: 'sortable-drag',
+    onEnd(evt) {
+      const moved = _fotos.splice(evt.oldIndex, 1)[0];
+      _fotos.splice(evt.newIndex, 0, moved);
+      renderFotos();
+    }
+  });
+}
+
+function removerFoto(i) {
+  _fotos.splice(i, 1);
+  renderFotos();
+}
+
+// ── Caption ────────────────────────────────────────────────────────────────────
+function atualizarCharCount() {
+  const len = document.getElementById('captionText').value.length;
+  const el  = document.getElementById('charCount');
+  el.textContent = `${len} / 2200 caracteres`;
+  el.className   = 'char-count' + (len > 2200 ? ' over' : '');
+}
+
+function regenerarCaption() {
+  const codigo   = document.getElementById('inputCodigo').value.trim();
+  const telefone = document.getElementById('inputTelefone').value.trim();
+  if (!codigo) return;
+  buscarImovelSilencioso(codigo, telefone);
+}
+
+async function buscarImovelSilencioso(codigo, telefone) {
+  try {
+    const r = await fetch('/kpg/api/preview', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({codigo, telefone})
+    });
+    const d = await r.json();
+    if (d.caption) {
+      document.getElementById('captionText').value = d.caption;
+      atualizarCharCount();
+    }
+  } catch(e) {}
+}
+
+function copiarCaption() {
+  const txt = document.getElementById('captionText').value;
+  navigator.clipboard.writeText(txt).then(() => {
+    showAlert('alertPublicar','info','Legenda copiada para a área de transferência.');
+    setTimeout(() => hideAlert('alertPublicar'), 2500);
+  });
+}
+
+// ── Publicar agora ────────────────────────────────────────────────────────────
+async function publicarAgora() {
+  const caption = document.getElementById('captionText').value.trim();
+  const fotos   = _fotos.map(f => f.url);
+  if (!fotos.length) { showAlert('alertPublicar','error','Adicione ao menos uma foto.'); return; }
+  if (!caption)      { showAlert('alertPublicar','error','Preencha a legenda.'); return; }
+
+  if (!confirm(`Publicar "${_nome}" agora no @kpgimoveis?`)) return;
+
+  const redimensionar = document.getElementById('chkRedimensionar').checked;
+  const btn = document.getElementById('btnPublicar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> ' + (redimensionar ? 'Processando imagens...' : 'Publicando...');
+  hideAlert('alertPublicar');
+
+  try {
+    const r = await fetch('/kpg/api/publicar', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({fotos, caption, codigo: _codigo, redimensionar})
+    });
+    const d = await r.json();
+    if (d.erro) { showAlert('alertPublicar','error', d.erro); return; }
+    showAlert('alertPublicar','success',`✅ Publicado com sucesso! Post ID: ${d.post_id}`);
+    carregarAgendados();
+  } catch(e) {
+    showAlert('alertPublicar','error','Erro: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Publicar Agora';
+  }
+}
+
+// ── Agendar ───────────────────────────────────────────────────────────────────
+async function agendarPublicacao() {
+  const caption   = document.getElementById('captionText').value.trim();
+  const fotos     = _fotos.map(f => f.url);
+  const data_hora = document.getElementById('inputDataHora').value;
+  if (!fotos.length) { showAlert('alertPublicar','error','Adicione ao menos uma foto.'); return; }
+  if (!caption)      { showAlert('alertPublicar','error','Preencha a legenda.'); return; }
+  if (!data_hora)    { showAlert('alertPublicar','error','Selecione a data e hora.'); return; }
+
+  const btn = document.getElementById('btnAgendar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Agendando...';
+  hideAlert('alertPublicar');
+
+  try {
+    const r = await fetch('/kpg/api/agendar', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({fotos, caption, codigo: _codigo, nome: _nome, data_hora})
+    });
+    const d = await r.json();
+    if (d.erro) { showAlert('alertPublicar','error', d.erro); return; }
+    showAlert('alertPublicar','success',`✅ Agendado para ${d.agendado_para}! ID: ${d.job_id}`);
+    carregarAgendados();
+  } catch(e) {
+    showAlert('alertPublicar','error','Erro: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Agendar';
+  }
+}
+
+// ── Agendamentos ──────────────────────────────────────────────────────────────
+async function carregarAgendados() {
+  const lista = document.getElementById('listaAgendados');
+  try {
+    const r = await fetch('/kpg/api/agendados');
+    const items = await r.json();
+    if (!items.length) { lista.innerHTML = '<div class="empty">Nenhuma publicação agendada.</div>'; return; }
+
+    const icons = {agendado:'🕐', publicado:'✅', erro:'❌', cancelado:'⊘', expirado:'⏰'};
+    lista.innerHTML = '<div class="schedule-list">' + items.map(item => `
+      <div class="schedule-item status-${item.status}">
+        <span class="status-dot"></span>
+        <div class="schedule-info">
+          <strong>${item.nome || item.codigo}</strong>
+          <small>${icons[item.status] || ''} ${item.status.toUpperCase()} • ${item.data_hora || ''} • ${item.total_fotos || 0} fotos</small>
+        </div>
+        ${item.status === 'agendado' ? `<button class="btn btn-danger btn-sm" onclick="cancelarAgendamento('${item.job_id}')">Cancelar</button>` : ''}
+        ${item.post_id ? `<a href="https://www.instagram.com/p/${item.post_id}/" target="_blank" class="btn btn-outline btn-sm">Ver post</a>` : ''}
+      </div>`).join('') + '</div>';
+  } catch(e) {
+    lista.innerHTML = '<div class="empty">Erro ao carregar agendamentos.</div>';
+  }
+}
+
+async function cancelarAgendamento(jobId) {
+  if (!confirm('Cancelar este agendamento?')) return;
+  await fetch(`/kpg/api/agendados/${jobId}`, {method:'DELETE'});
+  carregarAgendados();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function showAlert(id, type, msg) {
+  const el = document.getElementById(id);
+  el.className = `alert alert-${type} show`;
+  el.textContent = msg;
+}
+function hideAlert(id) {
+  document.getElementById(id).className = 'alert';
+}
+
+// Buscar ao pressionar Enter
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('inputCodigo').addEventListener('keydown', e => {
+    if (e.key === 'Enter') buscarImovel();
+  });
+  verificarToken();
+  carregarAgendados();
+});
+</script>
+</body>
+</html>

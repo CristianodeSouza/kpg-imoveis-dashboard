@@ -4,3 +4,6 @@ google-auth
 requests
 gunicorn
 python-dotenv
+Pillow
+APScheduler
+SQLAlchemy

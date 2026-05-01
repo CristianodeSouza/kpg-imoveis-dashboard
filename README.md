@@ -84,6 +84,8 @@ KPG IMOVEIS/
 
 - **Google My Business API**: Performance e insights
 - **Business Account Management API**: Dados da conta
+- **Instagram Graph API**: Publicação de posts, stories e reels — [ver documentação completa](INSTAGRAM_INTEGRACAO.md)
+- **Meta Ads API**: Leitura de campanhas e performance (conta `act_609918289087466`)
 
 ## 🤝 Compartilhamento em Rede
 

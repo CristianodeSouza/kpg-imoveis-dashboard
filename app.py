@@ -12,6 +12,10 @@ from flask import make_response
 app = Flask(__name__)
 app.secret_key = 'kpg_imoveis_dashboard_2026_secret'
 
+# ── KPG Publisher (Instagram) ─────────────────────────────────────────────────
+from kpg_publisher import init_app as init_publisher
+init_publisher(app)
+
 BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR  = os.path.join(BASE_DIR, 'data')
 SCRIPTS   = os.path.join(BASE_DIR, 'scripts')

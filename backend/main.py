@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from agents.siga_extractor import SigaExtractor
 from agents.creative_builder import CreativeBuilder
 from agents.instagram_publisher import InstagramPublisher
+from agents.imovel_post_agent import ImovelPostAgent
 from skills.caption_generator import CaptionGenerator
 from config import CRIATIVOS_DIR
 
@@ -32,6 +33,7 @@ siga = SigaExtractor()
 criativo = CreativeBuilder()
 instagram = InstagramPublisher()
 caption_gen = CaptionGenerator()
+post_agent = ImovelPostAgent()
 
 
 class BuscarRequest(BaseModel):
@@ -127,6 +129,50 @@ def publicar_instagram(req: PublicarRequest):
         )
 
         return {"sucesso": True, "resultado": resultado}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao publicar: {str(e)}")
+
+
+class PublicarDiretoRequest(BaseModel):
+    codigo: int
+    caption: str = ""
+
+
+class PublicarFiltroRequest(BaseModel):
+    filtros: dict = {}
+    tipo: str = "destaque"  # "destaque", "lancamento" ou "filtro"
+    caption: str = ""
+
+
+@app.post("/api/publicar/direto")
+def publicar_direto(req: PublicarDiretoRequest):
+    """Publica imóvel pelo código SIGA usando foto do CDN (sem ImgBB)."""
+    try:
+        resultado = post_agent.publicar_por_codigo(
+            req.codigo,
+            caption=req.caption or None,
+        )
+        return resultado
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao publicar: {str(e)}")
+
+
+@app.post("/api/publicar/automatico")
+def publicar_automatico(req: PublicarFiltroRequest):
+    """Publica imóvel automaticamente: destaque, lançamento ou filtro customizado."""
+    try:
+        caption = req.caption or None
+        if req.tipo == "destaque":
+            resultado = post_agent.publicar_destaque(caption)
+        elif req.tipo == "lancamento":
+            resultado = post_agent.publicar_lancamento(caption)
+        else:
+            resultado = post_agent.publicar_por_filtro(req.filtros, caption)
+        return resultado
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao publicar: {str(e)}")
 
