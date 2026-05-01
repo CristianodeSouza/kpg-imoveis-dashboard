@@ -118,6 +118,32 @@ def api_status():
         'time': datetime.now().strftime('%d/%m/%Y %H:%M')
     })
 
+# ── Proxy de Imagens (Instagram CDN) ────────────────────────────────────────
+import urllib.request as _urllib_req
+
+@app.route('/proxy-img')
+def proxy_img():
+    if not logged_in():
+        return '', 403
+    url = request.args.get('url', '')
+    if not url:
+        return '', 400
+    allowed = ('fbcdn.net', 'cdninstagram.com', 'instagram.com', 'scontent.')
+    if not any(d in url for d in allowed):
+        return '', 400
+    try:
+        req = _urllib_req.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with _urllib_req.urlopen(req, timeout=10) as r:
+            data = r.read()
+            ct = r.headers.get('Content-Type', 'image/jpeg')
+        resp = make_response(data)
+        resp.headers['Content-Type'] = ct
+        resp.headers['Cache-Control'] = 'public, max-age=3600'
+        return resp
+    except Exception:
+        return '', 404
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
     os.makedirs(DATA_DIR, exist_ok=True)
