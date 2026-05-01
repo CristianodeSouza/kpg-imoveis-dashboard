@@ -3,6 +3,7 @@ import json
 import os
 import re
 import time
+import urllib.error
 import urllib.request
 import urllib.parse
 import uuid
@@ -443,6 +444,32 @@ def cancelar_agendamento(job_id):
         return jsonify({'erro': 'Não autorizado'}), 401
     cancelar(job_id)
     return jsonify({'sucesso': True})
+
+
+@kpg_bp.route('/api/debug')
+def debug_env():
+    if not _logged():
+        return jsonify({'erro': 'Não autorizado'}), 401
+    token = _token()
+    ig_id = _ig_id()
+    # Testa a API do Meta diretamente
+    resultado = {}
+    if not token:
+        resultado['token'] = 'AUSENTE — INSTAGRAM_ACCESS_TOKEN não encontrado'
+    else:
+        resultado['token'] = f'OK — {token[:12]}...{token[-6:]}'
+        try:
+            url = f'https://graph.facebook.com/v19.0/{ig_id}?fields=username&access_token={token}'
+            with urllib.request.urlopen(url, timeout=10) as r:
+                data = json.loads(r.read())
+            resultado['meta_api'] = f'OK — username: {data.get("username", "?")}'
+        except urllib.error.HTTPError as e:
+            body = e.read().decode('utf-8', errors='replace')
+            resultado['meta_api'] = f'ERRO {e.code}: {body}'
+        except Exception as e:
+            resultado['meta_api'] = f'ERRO: {str(e)}'
+    resultado['ig_id'] = ig_id
+    return jsonify(resultado)
 
 
 @kpg_bp.route('/api/instagram/perfil')
