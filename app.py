@@ -170,4 +170,21 @@ if __name__ == '__main__':
     print("  Compartilhe o endereço de Rede com a equipe.")
     print("  Pressione Ctrl+C para encerrar.\n")
 
+@app.route('/api/debug')
+def api_debug():
+    import urllib.request as _req
+    token = os.environ.get('INSTAGRAM_ACCESS_TOKEN', '')
+    ig_id = os.environ.get('INSTAGRAM_ACCOUNT_ID', '')
+    result = {'token': 'NAO_CONFIGURADO', 'meta_api': 'NAO_TESTADO', 'ig_id': ig_id}
+    if token:
+        result['token'] = f"OK ...{token[-6:]}"
+        try:
+            url = f"https://graph.facebook.com/v19.0/{ig_id}?fields=username,name&access_token={token}"
+            with _req.urlopen(url, timeout=10) as r:
+                data = json.loads(r.read())
+            result['meta_api'] = f"OK username: {data.get('username','?')}"
+        except Exception as e:
+            result['meta_api'] = f"ERRO {str(e)}"
+    return jsonify(result)
+
     app.run(host='0.0.0.0', port=5000, debug=False)
