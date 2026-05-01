@@ -352,8 +352,8 @@
             <div class="action-box">
               <h3>⚡ Agora</h3>
               <label style="display:flex;align-items:center;gap:7px;font-size:.73rem;color:var(--muted);margin-bottom:10px;cursor:pointer">
-                <input type="checkbox" id="chkRedimensionar" checked style="width:13px;height:13px;accent-color:var(--gold)">
-                Preencher quadrado (blur-fill)
+                <input type="checkbox" id="chkRedimensionar" style="width:13px;height:13px;accent-color:var(--gold)">
+                Preencher quadrado (blur-fill) — mais lento
               </label>
               <button type="button" class="btn btn-gold btn-full" id="btnPublicar" onclick="publicarAgora()">Publicar Agora</button>
             </div>
@@ -666,13 +666,17 @@ async function publicarAgora() {
   hideAlert('alertPublicar');
 
   try {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 110000);
     const r = await fetch('/kpg/api/publicar', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({fotos, caption, codigo: _codigo, redimensionar})
+      body: JSON.stringify({fotos, caption, codigo: _codigo, redimensionar}),
+      signal: ctrl.signal
     });
+    clearTimeout(tid);
     let d;
     try { d = await r.json(); }
-    catch { throw new Error(`Erro ${r.status} — servidor indisponível. Tente novamente.`); }
+    catch { throw new Error(`Servidor retornou status ${r.status}. Verifique os logs do Render.`); }
 
     if (d.erro) { showAlert('alertPublicar','error', d.erro); return; }
     showAlert('alertPublicar','success',`✅ Publicado! Post ID: ${d.post_id}`);
