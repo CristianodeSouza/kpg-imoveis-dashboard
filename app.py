@@ -13,6 +13,11 @@ APP_VERSION    = "1.2.0"
 APP_VERSION_DATE = "01/05/2026 — Dashboard unificado Analytics + Publisher"
 SERVER_STARTED = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
+BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR  = os.path.join(BASE_DIR, 'data')
+SCRIPTS   = os.path.join(BASE_DIR, 'scripts')
+os.makedirs(DATA_DIR, exist_ok=True)
+
 app = Flask(__name__)
 app.secret_key = 'kpg_imoveis_dashboard_2026_secret'
 
@@ -27,10 +32,6 @@ def inject_version():
 # ── KPG Publisher (Instagram) ─────────────────────────────────────────────────
 from kpg_publisher import init_app as init_publisher
 init_publisher(app)
-
-BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR  = os.path.join(BASE_DIR, 'data')
-SCRIPTS   = os.path.join(BASE_DIR, 'scripts')
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def no_cache(f):
