@@ -672,9 +672,9 @@ export default function HomePage() {
             <div className="chart-wrap">
               {mounted ? (
                 <ResponsiveContainer height="100%" width="100%">
-                  <BarChart data={chartData} margin={{ top: 16, right: 12, left: -12, bottom: 44 }}>
+                  <BarChart data={chartData} margin={{ top: 12, right: 12, left: -14, bottom: 18 }}>
                     <CartesianGrid stroke="#e4e9f1" strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" interval={0} tick={{ fontSize: 10 }} angle={-18} textAnchor="end" height={64} />
+                    <XAxis dataKey="name" interval={0} tick={{ fontSize: 10 }} height={42} />
                     <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip />
                     <Legend verticalAlign="top" height={32} />
