@@ -25,7 +25,7 @@ import {
   YAxis
 } from "recharts";
 import { buildCaption, buildHashtags } from "@/lib/property";
-import type { MediaInsight, Property } from "@/lib/types";
+import type { InstagramAccountSummary, MediaInsight, Property } from "@/lib/types";
 
 type Creatives = {
   feed: string[];
@@ -46,6 +46,7 @@ const sampleInsights: MediaInsight[] = [
     caption: "Apartamento em Gramado",
     permalink: "#",
     timestamp: new Date().toISOString(),
+    mediaType: "IMAGE",
     likeCount: 124,
     commentsCount: 9,
     metrics: [
@@ -60,6 +61,8 @@ const sampleInsights: MediaInsight[] = [
     caption: "Casa em Canela",
     permalink: "#",
     timestamp: new Date().toISOString(),
+    mediaType: "CAROUSEL_ALBUM",
+    childrenCount: 6,
     likeCount: 98,
     commentsCount: 7,
     metrics: [
@@ -71,8 +74,57 @@ const sampleInsights: MediaInsight[] = [
   }
 ];
 
+const sampleAccount: InstagramAccountSummary = {
+  id: "sample",
+  username: "kpgimoveis",
+  name: "KPG Imoveis",
+  followersCount: 7500,
+  mediaCount: 593,
+  metrics: []
+};
+
 function metric(media: MediaInsight, name: string) {
   return media.metrics.find((item) => item.name === name)?.value ?? 0;
+}
+
+function accountMetric(account: InstagramAccountSummary | null, name: string) {
+  return account?.metrics.find((item) => item.name === name)?.value ?? 0;
+}
+
+function percent(value: number) {
+  if (!Number.isFinite(value)) return "0%";
+  return `${value.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+}
+
+function shortCaption(caption: string, fallback: string) {
+  const clean = caption.replace(/\s+/g, " ").trim();
+  return clean ? clean.split(/\s+/).slice(0, 8).join(" ") : fallback;
+}
+
+function mediaTypeLabel(type: string) {
+  if (type === "CAROUSEL_ALBUM") return "Carrossel";
+  if (type === "VIDEO" || type === "REELS") return "Video/Reels";
+  if (type === "IMAGE") return "Imagem";
+  return type || "Post";
+}
+
+function weekdayLabel(timestamp: string) {
+  if (!timestamp) return "Sem data";
+  return new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(new Date(timestamp));
+}
+
+function hourLabel(timestamp: string) {
+  if (!timestamp) return "Sem hora";
+  return `${new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", hour12: false }).format(new Date(timestamp))}h`;
+}
+
+function groupBy<TItem, TValue>(items: TItem[], labeler: (item: TItem) => string, mapper: (item: TItem) => TValue) {
+  const grouped = new Map<string, TValue[]>();
+  items.forEach((item) => {
+    const label = labeler(item);
+    grouped.set(label, [...(grouped.get(label) || []), mapper(item)]);
+  });
+  return Array.from(grouped.entries());
 }
 
 export default function HomePage() {
@@ -88,6 +140,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
+  const [account, setAccount] = useState<InstagramAccountSummary | null>(null);
   const [insights, setInsights] = useState<MediaInsight[]>([]);
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -208,8 +261,10 @@ export default function HomePage() {
       const response = await fetch("/api/instagram/insights");
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Falha ao buscar indicadores.");
+      setAccount(data.account || null);
       setInsights(data.media || []);
     } catch (error) {
+      setAccount(sampleAccount);
       setInsights(sampleInsights);
       setMessage({
         type: "error",
@@ -220,23 +275,86 @@ export default function HomePage() {
     }
   }
 
-  const chartData = (insights.length ? insights : sampleInsights).map((item) => ({
-    name: item.caption.split(/\s+/).slice(0, 3).join(" ") || item.id,
-    alcance: metric(item, "reach"),
-    visualizacoes: metric(item, "views"),
-    curtidas: item.likeCount
+  const activeInsights = insights.length ? insights : sampleInsights;
+  const activeAccount = account || sampleAccount;
+  const enrichedInsights = activeInsights.map((item) => {
+    const reach = metric(item, "reach");
+    const views = metric(item, "views");
+    const saved = metric(item, "saved");
+    const shares = metric(item, "shares");
+    const totalInteractions = metric(item, "total_interactions") || item.likeCount + item.commentsCount + saved + shares;
+    return {
+      ...item,
+      reach,
+      views,
+      saved,
+      shares,
+      totalInteractions,
+      engagementRate: reach ? (totalInteractions / reach) * 100 : 0,
+      saveRate: reach ? (saved / reach) * 100 : 0,
+      shareRate: reach ? (shares / reach) * 100 : 0
+    };
+  });
+
+  const chartData = enrichedInsights.slice(0, 8).map((item) => ({
+    name: shortCaption(item.caption, item.id),
+    alcance: item.reach,
+    visualizacoes: item.views,
+    interacoes: item.totalInteractions
   }));
 
-  const totals = (insights.length ? insights : sampleInsights).reduce(
+  const totals = enrichedInsights.reduce(
     (acc, item) => {
-      acc.reach += metric(item, "reach");
-      acc.views += metric(item, "views");
-      acc.saved += metric(item, "saved");
+      acc.reach += item.reach;
+      acc.views += item.views;
+      acc.saved += item.saved;
+      acc.shares += item.shares;
+      acc.likes += item.likeCount;
       acc.comments += item.commentsCount;
+      acc.interactions += item.totalInteractions;
       return acc;
     },
-    { reach: 0, views: 0, saved: 0, comments: 0 }
+    { reach: 0, views: 0, saved: 0, shares: 0, likes: 0, comments: 0, interactions: 0 }
   );
+  const averageReach = enrichedInsights.length ? Math.round(totals.reach / enrichedInsights.length) : 0;
+  const averageViews = enrichedInsights.length ? Math.round(totals.views / enrichedInsights.length) : 0;
+  const engagementRate = totals.reach ? (totals.interactions / totals.reach) * 100 : 0;
+  const saveRate = totals.reach ? (totals.saved / totals.reach) * 100 : 0;
+  const topPosts = [...enrichedInsights].sort((a, b) => b.totalInteractions - a.totalInteractions).slice(0, 5);
+  const typeData = groupBy(
+    enrichedInsights,
+    (item) => mediaTypeLabel(item.mediaType),
+    (item) => item
+  ).map(([name, items]) => ({
+    name,
+    posts: items.length,
+    alcance: items.reduce((sum, item) => sum + item.reach, 0),
+    interacoes: items.reduce((sum, item) => sum + item.totalInteractions, 0)
+  }));
+  const bestDays = groupBy(
+    enrichedInsights,
+    (item) => weekdayLabel(item.timestamp),
+    (item) => item
+  )
+    .map(([name, items]) => ({
+      name,
+      alcance: Math.round(items.reduce((sum, item) => sum + item.reach, 0) / items.length),
+      posts: items.length
+    }))
+    .sort((a, b) => b.alcance - a.alcance)
+    .slice(0, 4);
+  const bestHours = groupBy(
+    enrichedInsights,
+    (item) => hourLabel(item.timestamp),
+    (item) => item
+  )
+    .map(([name, items]) => ({
+      name,
+      alcance: Math.round(items.reduce((sum, item) => sum + item.reach, 0) / items.length),
+      posts: items.length
+    }))
+    .sort((a, b) => b.alcance - a.alcance)
+    .slice(0, 4);
   const facts = property?.facts ?? [];
 
   return (
@@ -450,6 +568,29 @@ export default function HomePage() {
               Atualizar
             </button>
           </div>
+          <div className="account-strip">
+            <div>
+              <span className="eyebrow">Conta analisada</span>
+              <strong>@{activeAccount.username || "kpgimoveis"}</strong>
+              <small>{activeAccount.name || "KPG Imoveis"}</small>
+            </div>
+            <div>
+              <span className="eyebrow">Seguidores</span>
+              <strong>{activeAccount.followersCount.toLocaleString("pt-BR")}</strong>
+            </div>
+            <div>
+              <span className="eyebrow">Posts no perfil</span>
+              <strong>{activeAccount.mediaCount.toLocaleString("pt-BR")}</strong>
+            </div>
+            <div>
+              <span className="eyebrow">Posts analisados</span>
+              <strong>{enrichedInsights.length.toLocaleString("pt-BR")}</strong>
+            </div>
+            <div>
+              <span className="eyebrow">Visitas ao perfil</span>
+              <strong>{accountMetric(activeAccount, "profile_views").toLocaleString("pt-BR")}</strong>
+            </div>
+          </div>
           <div className="insight-grid">
             <div className="metric">
               <span>Alcance</span>
@@ -467,6 +608,30 @@ export default function HomePage() {
               <span>Comentarios</span>
               <strong>{totals.comments.toLocaleString("pt-BR")}</strong>
             </div>
+            <div className="metric">
+              <span>Compartilhamentos</span>
+              <strong>{totals.shares.toLocaleString("pt-BR")}</strong>
+            </div>
+            <div className="metric">
+              <span>Curtidas</span>
+              <strong>{totals.likes.toLocaleString("pt-BR")}</strong>
+            </div>
+            <div className="metric">
+              <span>Taxa de engajamento</span>
+              <strong>{percent(engagementRate)}</strong>
+            </div>
+            <div className="metric">
+              <span>Taxa de salvamento</span>
+              <strong>{percent(saveRate)}</strong>
+            </div>
+            <div className="metric">
+              <span>Alcance medio/post</span>
+              <strong>{averageReach.toLocaleString("pt-BR")}</strong>
+            </div>
+            <div className="metric">
+              <span>Views medias/post</span>
+              <strong>{averageViews.toLocaleString("pt-BR")}</strong>
+            </div>
           </div>
           <div className="chart-wrap">
             {mounted ? (
@@ -478,10 +643,68 @@ export default function HomePage() {
                   <Tooltip />
                   <Bar dataKey="alcance" fill="#2f6fed" radius={[6, 6, 0, 0]} />
                   <Bar dataKey="visualizacoes" fill="#1fbf75" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="curtidas" fill="#c7972d" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="interacoes" fill="#c7972d" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : null}
+          </div>
+          <div className="analytics-grid">
+            <section className="analytics-block">
+              <h3>Posts com maior resposta</h3>
+              <div className="ranking-list">
+                {topPosts.map((item, index) => (
+                  <a className="ranking-item" href={item.permalink || "#"} key={item.id} rel="noreferrer" target="_blank">
+                    <span className="rank">{index + 1}</span>
+                    {item.thumbnailUrl || item.mediaUrl ? (
+                      <img src={item.thumbnailUrl || item.mediaUrl} alt="Midia do Instagram" />
+                    ) : null}
+                    <span>
+                      <strong>{shortCaption(item.caption, item.id)}</strong>
+                      <small>
+                        {mediaTypeLabel(item.mediaType)} • {item.reach.toLocaleString("pt-BR")} alcance •{" "}
+                        {percent(item.engagementRate)} engaj.
+                      </small>
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </section>
+            <section className="analytics-block">
+              <h3>Formatos que mais ajudam</h3>
+              <div className="compact-table">
+                {typeData.map((item) => (
+                  <div className="table-row" key={item.name}>
+                    <span>{item.name}</span>
+                    <strong>{item.alcance.toLocaleString("pt-BR")}</strong>
+                    <small>{item.posts} posts</small>
+                  </div>
+                ))}
+              </div>
+            </section>
+            <section className="analytics-block">
+              <h3>Melhores dias</h3>
+              <div className="compact-table">
+                {bestDays.map((item) => (
+                  <div className="table-row" key={item.name}>
+                    <span>{item.name}</span>
+                    <strong>{item.alcance.toLocaleString("pt-BR")}</strong>
+                    <small>{item.posts} posts</small>
+                  </div>
+                ))}
+              </div>
+            </section>
+            <section className="analytics-block">
+              <h3>Melhores horarios</h3>
+              <div className="compact-table">
+                {bestHours.map((item) => (
+                  <div className="table-row" key={item.name}>
+                    <span>{item.name}</span>
+                    <strong>{item.alcance.toLocaleString("pt-BR")}</strong>
+                    <small>{item.posts} posts</small>
+                  </div>
+                ))}
+              </div>
+            </section>
           </div>
         </section>
       </section>

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import type { MediaInsight } from "@/lib/types";
+import type { InstagramAccountSummary, MediaInsight } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +15,57 @@ const numberFromMetric = (value: unknown) => {
   return 0;
 };
 
+async function graphFetch(path: string, params: Record<string, string | number | undefined>, token: string) {
+  const url = new URL(`${graphBase}/${path}`);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined) url.searchParams.set(key, String(value));
+  });
+  url.searchParams.set("access_token", token);
+
+  const response = await fetch(url, { cache: "no-store" });
+  const data = await response.json();
+  return { response, data };
+}
+
+const mapMetrics = (metrics: any[] = []) =>
+  metrics.map((metric: any) => ({
+    name: String(metric.name),
+    value: numberFromMetric(metric.values)
+  }));
+
+async function fetchAccount(accountId: string, token: string): Promise<InstagramAccountSummary | null> {
+  const fields = [
+    "id",
+    "username",
+    "name",
+    "followers_count",
+    "media_count",
+    "profile_picture_url",
+    "website"
+  ].join(",");
+  const { response, data } = await graphFetch(accountId, { fields }, token);
+  if (!response.ok) return null;
+
+  let metrics: InstagramAccountSummary["metrics"] = [];
+  const insights = await graphFetch(
+    `${accountId}/insights`,
+    { metric: "reach,profile_views,website_clicks", period: "day" },
+    token
+  );
+  if (insights.response.ok) metrics = mapMetrics(insights.data?.data || []);
+
+  return {
+    id: String(data.id || accountId),
+    username: String(data.username || ""),
+    name: String(data.name || ""),
+    followersCount: Number(data.followers_count || 0),
+    mediaCount: Number(data.media_count || 0),
+    profilePictureUrl: data.profile_picture_url ? String(data.profile_picture_url) : undefined,
+    website: data.website ? String(data.website) : undefined,
+    metrics
+  };
+}
+
 export async function GET() {
   const accountId = process.env.INSTAGRAM_ACCOUNT_ID;
   const token = process.env.INSTAGRAM_ACCESS_TOKEN;
@@ -27,18 +78,25 @@ export async function GET() {
     "id",
     "caption",
     "media_url",
+    "thumbnail_url",
+    "media_type",
     "permalink",
     "timestamp",
+    "username",
     "like_count",
     "comments_count",
+    "children{media_type,media_url,thumbnail_url}",
     "insights.metric(reach,views,saved,shares,total_interactions)"
   ].join(",");
 
-  const response = await fetch(
-    `${graphBase}/${accountId}/media?fields=${encodeURIComponent(fields)}&limit=12&access_token=${encodeURIComponent(token)}`,
-    { cache: "no-store" }
-  );
-  const data = await response.json();
+  let { response, data } = await graphFetch(`${accountId}/media`, { fields, limit: 24 }, token);
+
+  if (!response.ok && data?.error?.message?.includes("insights")) {
+    const fallbackFields = fields.replace(",insights.metric(reach,views,saved,shares,total_interactions)", "");
+    const fallback = await graphFetch(`${accountId}/media`, { fields: fallbackFields, limit: 24 }, token);
+    response = fallback.response;
+    data = fallback.data;
+  }
 
   if (!response.ok) {
     return NextResponse.json(
@@ -47,19 +105,20 @@ export async function GET() {
     );
   }
 
+  const account = await fetchAccount(accountId, token);
   const media: MediaInsight[] = (data.data || []).map((item: any) => ({
     id: String(item.id),
     caption: String(item.caption || ""),
     permalink: String(item.permalink || ""),
     timestamp: String(item.timestamp || ""),
+    mediaType: String(item.media_type || ""),
     mediaUrl: item.media_url ? String(item.media_url) : undefined,
+    thumbnailUrl: item.thumbnail_url ? String(item.thumbnail_url) : undefined,
+    childrenCount: Array.isArray(item.children?.data) ? item.children.data.length : undefined,
     likeCount: Number(item.like_count || 0),
     commentsCount: Number(item.comments_count || 0),
-    metrics: (item.insights?.data || []).map((metric: any) => ({
-      name: String(metric.name),
-      value: numberFromMetric(metric.values)
-    }))
+    metrics: mapMetrics(item.insights?.data || [])
   }));
 
-  return NextResponse.json({ media });
+  return NextResponse.json({ account, media });
 }

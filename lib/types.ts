@@ -33,12 +33,26 @@ export type InsightMetric = {
   value: number;
 };
 
+export type InstagramAccountSummary = {
+  id: string;
+  username: string;
+  name: string;
+  followersCount: number;
+  mediaCount: number;
+  profilePictureUrl?: string;
+  website?: string;
+  metrics: InsightMetric[];
+};
+
 export type MediaInsight = {
   id: string;
   caption: string;
   permalink: string;
   timestamp: string;
+  mediaType: string;
   mediaUrl?: string;
+  thumbnailUrl?: string;
+  childrenCount?: number;
   likeCount: number;
   commentsCount: number;
   metrics: InsightMetric[];
