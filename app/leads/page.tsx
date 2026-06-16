@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Loader2, MessageSquare, Phone, RefreshCw, Search, Users } from "lucide-react";
+import { CalendarDays, Database, Loader2, MessageSquare, Phone, RefreshCw, Search, Users } from "lucide-react";
 import type { Lead, LeadStatus } from "@/lib/types";
 
 const statusLabels: Record<LeadStatus, string> = {
@@ -31,6 +31,7 @@ export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [storage, setStorage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<LeadStatus | "todos">("todos");
   const [message, setMessage] = useState("");
@@ -65,6 +66,22 @@ export default function LeadsPage() {
     } catch (error) {
       setLeads(previous);
       setMessage(error instanceof Error ? error.message : "Erro ao atualizar lead.");
+    }
+  }
+
+  async function syncMake() {
+    setSyncing(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/leads/sync-make", { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Nao foi possivel sincronizar o Make.");
+      setMessage(`${data.imported} registros sincronizados do Make. Total no CRM: ${data.total}.`);
+      await loadLeads();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Erro ao sincronizar Make.");
+    } finally {
+      setSyncing(false);
     }
   }
 
@@ -114,10 +131,16 @@ export default function LeadsPage() {
               <Users size={22} />
               <h2>Mini CRM de Leads</h2>
             </div>
-            <button className="btn secondary" disabled={loading} onClick={loadLeads}>
-              {loading ? <Loader2 className="spin" size={17} /> : <RefreshCw size={17} />}
-              Atualizar
-            </button>
+            <div className="status-row">
+              <button className="btn secondary" disabled={syncing} onClick={syncMake}>
+                {syncing ? <Loader2 className="spin" size={17} /> : <Database size={17} />}
+                Sincronizar Make
+              </button>
+              <button className="btn secondary" disabled={loading} onClick={loadLeads}>
+                {loading ? <Loader2 className="spin" size={17} /> : <RefreshCw size={17} />}
+                Atualizar
+              </button>
+            </div>
           </div>
 
           <div className="crm-hero">
@@ -128,8 +151,14 @@ export default function LeadsPage() {
             </div>
             <div>
               <span className="eyebrow">Armazenamento</span>
-              <strong>{storage === "kv" ? "Persistente" : "Temporario"}</strong>
-              <small>{storage === "kv" ? "Vercel KV/Upstash ativo" : "Configure KV_REST_API_URL e KV_REST_API_TOKEN para producao"}</small>
+              <strong>{storage === "kv" ? "Persistente" : storage === "make-live" ? "Make ao vivo" : "Temporario"}</strong>
+              <small>
+                {storage === "kv"
+                  ? "Vercel KV/Upstash ativo"
+                  : storage === "make-live"
+                    ? "Dados lidos diretamente do Data Store do Make"
+                    : "Configure KV_REST_API_URL e KV_REST_API_TOKEN para producao"}
+              </small>
             </div>
           </div>
 
@@ -178,7 +207,7 @@ export default function LeadsPage() {
             </div>
           </div>
 
-          {message ? <div className="message error">{message}</div> : null}
+          {message ? <div className={`message ${message.includes("sincronizados") ? "ok" : "error"}`}>{message}</div> : null}
 
           <div className="lead-list">
             {filteredLeads.map((lead) => (

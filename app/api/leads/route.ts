@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
-import { readLeads, updateLead } from "@/lib/leads";
+import { normalizeLead, readLeads, updateLead } from "@/lib/leads";
+import { fetchMakeDataStoreRecords, hasMakeConfig } from "@/lib/make";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  if (hasMakeConfig() && !(process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL)) {
+    const payloads = await fetchMakeDataStoreRecords();
+    return NextResponse.json({
+      leads: payloads.map(normalizeLead),
+      storage: "make-live"
+    });
+  }
+
   const leads = await readLeads();
   return NextResponse.json({
     leads,

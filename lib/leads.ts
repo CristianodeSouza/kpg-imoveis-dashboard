@@ -155,6 +155,43 @@ export async function upsertLead(payload: unknown) {
   return { lead: incoming, leads: await writeLeads([incoming, ...leads]) };
 }
 
+export async function upsertLeads(payloads: unknown[]) {
+  let leads = await readLeads();
+  const imported: Lead[] = [];
+
+  for (const payload of payloads) {
+    const incoming = normalizeLead(payload);
+    const existingIndex = leads.findIndex((lead) => sameLead(lead, incoming));
+
+    if (existingIndex >= 0) {
+      const existing = leads[existingIndex];
+      const updated: Lead = {
+        ...existing,
+        name: incoming.name !== "Lead sem nome" ? incoming.name : existing.name,
+        phone: incoming.phone || existing.phone,
+        propertyInterest: incoming.propertyInterest !== "Nao informado" ? incoming.propertyInterest : existing.propertyInterest,
+        message: incoming.message || existing.message,
+        status: incoming.status !== "novo" ? incoming.status : existing.status,
+        source: incoming.source || existing.source,
+        conversationId: incoming.conversationId || existing.conversationId,
+        chatLid: incoming.chatLid || existing.chatLid,
+        lastMessageAt: incoming.lastMessageAt,
+        interactions: Math.max(existing.interactions, incoming.interactions),
+        notes: incoming.notes || existing.notes,
+        raw: incoming.raw
+      };
+      leads = [updated, ...leads.filter((_, index) => index !== existingIndex)];
+      imported.push(updated);
+    } else {
+      leads = [incoming, ...leads];
+      imported.push(incoming);
+    }
+  }
+
+  await writeLeads(leads);
+  return { imported, leads };
+}
+
 export async function updateLead(id: string, patch: Partial<Pick<Lead, "status" | "notes">>) {
   const leads = await readLeads();
   const next = leads.map((lead) => (lead.id === id ? { ...lead, ...patch } : lead));
