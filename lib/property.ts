@@ -220,54 +220,57 @@ const compact = (items: string[]) => items.filter(Boolean);
 export function buildCaption(property: Property, options: { tone: string; channel: string; includePrice: boolean }) {
   const location = compact([property.neighborhood, property.city, property.state]).join(", ");
   const specs = compact([
-    property.privateArea ? `${property.privateArea} m2 de area total` : "",
-    positive(property.bedrooms) ? `${property.bedrooms} dormitorios` : "",
-    positive(property.suites) ? `${property.suites} suites` : "",
-    positive(property.parking) ? `${property.parking} vagas` : "",
-    property.profile ? `perfil ${property.profile}` : ""
+    property.privateArea ? `📐 ${property.privateArea} m² de área total` : "",
+    positive(property.bedrooms) ? `🛏️ ${property.bedrooms} dormitórios` : "",
+    positive(property.suites) ? `🛁 ${property.suites} suítes` : "",
+    positive(property.parking) ? `🚗 ${property.parking} vagas` : "",
+    property.profile ? `🏷️ Perfil: ${property.profile}` : ""
   ]);
   const hooks: Record<string, string> = {
-    consultivo: "Existe oportunidade que voce olha e entende rapido: localizacao, exclusividade e potencial no mesmo endereco.",
-    direto: "Terreno de alto padrao em Gramado para quem quer construir com liberdade em um dos enderecos mais desejados da Serra.",
-    premium: "Para quem busca presenca, privacidade e um patrimonio raro em Gramado, este imovel merece atencao."
+    consultivo: "✨ Existe oportunidade que você olha e entende rápido: localização, exclusividade e potencial no mesmo endereço.",
+    direto: "🏡 Terreno de alto padrão em Gramado para quem quer construir com liberdade em um dos endereços mais desejados da Serra.",
+    premium: "🌲 Para quem busca presença, privacidade e um patrimônio raro em Gramado, este imóvel merece atenção."
   };
 
-  const featureLine = property.features.length ? `Diferenciais do condominio: ${property.features.slice(0, 8).join(", ")}.` : "";
-  const priceLine = options.includePrice ? `Valor: ${property.price}.` : "Valor sob consulta.";
+  const featureLine = property.features.length ? `🌟 Diferenciais do condomínio:\n${property.features.slice(0, 8).map((item) => `• ${item}`).join("\n")}` : "";
+  const priceLine = options.includePrice ? `💰 Valor: ${property.price}` : "💰 Valor sob consulta";
   const cta =
     options.channel === "whatsapp"
-      ? "Quer avaliar se este imovel combina com seu projeto? Chame a KPG no WhatsApp e receba detalhes, condicoes e proximos horarios para visita."
-      : "Fale com a equipe KPG e receba uma analise completa deste imovel.";
+      ? "📲 Quer avaliar se este imóvel combina com seu projeto?\nChame a KPG no WhatsApp e receba detalhes, condições e próximos horários para visita."
+      : "📩 Fale com a equipe KPG e receba uma análise completa deste imóvel.";
 
   const hashtags = buildHashtags(property);
   const description = property.description
     ? property.description.replace(/\s+/g, " ").slice(0, 720).trim()
-    : `${property.title} em ${property.neighborhood || property.city}, uma oportunidade para construir em um endereco de alto padrao, com natureza, privacidade e estrutura pensada para viver bem na Serra Gaucha.`;
+    : `${property.title} em ${property.neighborhood || property.city}, uma oportunidade para construir em um endereço de alto padrão, com natureza, privacidade e estrutura pensada para viver bem na Serra Gaúcha.`;
   const typeLine = `${property.category}${location ? ` em ${location}` : ""}`;
   const feeLine = compact([
-    property.condoFee !== "Consulte" ? `Condominio: ${property.condoFee}` : "",
-    property.propertyTax !== "Consulte" ? `IPTU: ${property.propertyTax}` : ""
-  ]).join(" | ");
+    property.condoFee !== "Consulte" ? `🏢 Condomínio: ${property.condoFee}` : "",
+    property.propertyTax !== "Consulte" ? `📄 IPTU: ${property.propertyTax}` : ""
+  ]).join("\n");
 
   return [
     hooks[options.tone] ?? hooks.consultivo,
     "",
-    property.title,
-    typeLine,
-    specs.length ? `Medidas e dados: ${specs.join(" | ")}.` : "",
-    feeLine ? `${feeLine}.` : "",
+    `📍 ${property.title}`,
+    `📌 ${typeLine}`,
+    "",
+    specs.length ? specs.join("\n") : "",
+    feeLine,
     priceLine,
     "",
+    "📝 Sobre o imóvel:",
     description,
+    "",
     featureLine,
     "",
-    `Para quem pesquisa imoveis em Gramado, terrenos em condominio fechado na Serra Gaucha ou oportunidades imobiliarias em Gramado e Canela, este cadastro reúne localizacao, potencial construtivo e seguranca patrimonial em um unico endereco.`,
+    `🔎 Para quem pesquisa imóveis em Gramado, terrenos em condomínio fechado na Serra Gaúcha ou oportunidades imobiliárias em Gramado e Canela, este cadastro reúne localização, potencial construtivo e segurança patrimonial em um único endereço.`,
     "",
-    "Um endereco assim nao e apenas compra: e decisao de estilo de vida, seguranca patrimonial e futuro na Serra Gaucha.",
+    "✅ Um endereço assim não é apenas compra: é decisão de estilo de vida, segurança patrimonial e futuro na Serra Gaúcha.",
     "",
     cta,
     "",
-    kpgAuthority,
+    `🏢 ${kpgAuthority}`,
     "",
     hashtags.join(" ")
   ]
