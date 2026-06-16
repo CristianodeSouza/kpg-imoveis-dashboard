@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { lookupProperty } from "@/lib/kpg-api";
 
 export const dynamic = "force-dynamic";
+export const runtime = "edge";
 export const preferredRegion = "gru1";
-export const maxDuration = 30;
 
 type RouteContext = {
   params: Promise<{ code: string }>;
