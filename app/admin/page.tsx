@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useState } from "react";
 import { Activity, Building2, Loader2, Plus, RefreshCw, ShieldCheck } from "lucide-react";
 import { LogoutButton } from "@/app/components/LogoutButton";
 
+type AdminView = "overview" | "clients" | "finance" | "management";
+
 type AdminService = {
   slug: string;
   name: string;
@@ -34,6 +36,7 @@ type AdminTenant = {
 export default function AdminPage() {
   const [tenants, setTenants] = useState<AdminTenant[]>([]);
   const [services, setServices] = useState<AdminService[]>([]);
+  const [view, setView] = useState<AdminView>("overview");
   const [selectedServices, setSelectedServices] = useState<string[]>(["instagram-publisher", "mini-crm"]);
   const [editing, setEditing] = useState<Record<string, Partial<AdminTenant>>>({});
   const [form, setForm] = useState({
@@ -126,6 +129,18 @@ export default function AdminPage() {
   function activeServicesCount(tenant: AdminTenant) {
     return tenant.services.filter((service) => service.status === "active" && !["portal", "settings"].includes(service.slug)).length;
   }
+
+  function hasPendingIntegrations(tenant: AdminTenant) {
+    return !tenant.integrations.siga || !tenant.integrations.instagram || !tenant.integrations.whatsapp;
+  }
+
+  const activeTenants = tenants.filter((tenant) => tenant.status === "active");
+  const blockedTenants = tenants.filter((tenant) => tenant.status !== "active");
+  const overdueTenants = tenants.filter((tenant) => ["overdue", "suspended"].includes(tenant.billingStatus));
+  const monthlyRevenue = tenants.reduce((total, tenant) => total + tenant.monthlyValueCents, 0);
+  const missingCommercialData = tenants.filter((tenant) => !tenant.contactName || !tenant.contactEmail || !tenant.contactPhone || !tenant.document);
+  const missingContractData = tenants.filter((tenant) => !tenant.acquiredAt || tenant.monthlyValueCents <= 0);
+  const pendingIntegrations = tenants.filter(hasPendingIntegrations);
 
   function statusLabel(status: string) {
     if (status === "active") return "Ativo";
@@ -223,6 +238,22 @@ export default function AdminPage() {
       </header>
 
       <section className="workspace admin-workspace">
+        <section className="admin-section-nav" aria-label="Areas do admin">
+          <button className={view === "overview" ? "active" : ""} onClick={() => setView("overview")} type="button">
+            Dados gerais
+          </button>
+          <button className={view === "clients" ? "active" : ""} onClick={() => setView("clients")} type="button">
+            Clientes
+          </button>
+          <button className={view === "finance" ? "active" : ""} onClick={() => setView("finance")} type="button">
+            Financeiro
+          </button>
+          <button className={view === "management" ? "active" : ""} onClick={() => setView("management")} type="button">
+            Gestao
+          </button>
+        </section>
+
+        {view === "overview" ? (
         <section className="panel">
           <div className="panel-heading">
             <div className="panel-title">
@@ -240,23 +271,48 @@ export default function AdminPage() {
           <div className="admin-summary-strip">
             <div>
               <span className="eyebrow">Clientes ativos</span>
-              <strong>{tenants.filter((tenant) => tenant.status === "active").length}</strong>
+              <strong>{activeTenants.length}</strong>
             </div>
             <div>
               <span className="eyebrow">Receita mensal</span>
-              <strong>{money(tenants.reduce((total, tenant) => total + tenant.monthlyValueCents, 0))}</strong>
+              <strong>{money(monthlyRevenue)}</strong>
             </div>
             <div>
               <span className="eyebrow">Contratos em atraso</span>
-              <strong>{tenants.filter((tenant) => ["overdue", "suspended"].includes(tenant.billingStatus)).length}</strong>
+              <strong>{overdueTenants.length}</strong>
             </div>
             <div>
               <span className="eyebrow">Servicos no catalogo</span>
               <strong>{services.length}</strong>
             </div>
           </div>
-        </section>
 
+          <div className="admin-audit-grid">
+            <article className={blockedTenants.length ? "audit-card warning" : "audit-card ok"}>
+              <span className="eyebrow">Acesso</span>
+              <strong>{blockedTenants.length}</strong>
+              <small>clientes bloqueados ou cancelados</small>
+            </article>
+            <article className={missingCommercialData.length ? "audit-card warning" : "audit-card ok"}>
+              <span className="eyebrow">Cadastro</span>
+              <strong>{missingCommercialData.length}</strong>
+              <small>clientes com dados comerciais incompletos</small>
+            </article>
+            <article className={missingContractData.length ? "audit-card warning" : "audit-card ok"}>
+              <span className="eyebrow">Contrato</span>
+              <strong>{missingContractData.length}</strong>
+              <small>clientes sem valor mensal ou data de aquisicao</small>
+            </article>
+            <article className={pendingIntegrations.length ? "audit-card warning" : "audit-card ok"}>
+              <span className="eyebrow">Integracoes</span>
+              <strong>{pendingIntegrations.length}</strong>
+              <small>clientes com SIGA, Instagram ou WhatsApp pendente</small>
+            </article>
+          </div>
+        </section>
+        ) : null}
+
+        {view === "clients" ? (
         <section className="panel">
           <div className="panel-heading">
             <div className="panel-title">
@@ -346,7 +402,9 @@ export default function AdminPage() {
             ))}
           </div>
         </section>
+        ) : null}
 
+        {view === "finance" ? (
         <section className="panel">
           <div className="panel-heading">
             <div className="panel-title">
@@ -377,7 +435,10 @@ export default function AdminPage() {
             ))}
           </div>
         </section>
+        ) : null}
 
+        {view === "management" ? (
+        <>
         <section className="panel">
           <div className="panel-heading">
             <div className="panel-title">
@@ -526,6 +587,8 @@ export default function AdminPage() {
             </article>
           ))}
         </section>
+        </>
+        ) : null}
       </section>
     </main>
   );
