@@ -75,7 +75,7 @@ export async function ensureDefaultTenantAndUser() {
   }
 
   const username = (process.env.DEFAULT_ADMIN_USERNAME || "KPGIMOVEIS").trim().toUpperCase();
-  await ensureTenantServices(tenant.id);
+  await ensureTenantServices(tenant.id, ["portal", "settings", "instagram-publisher", "mini-crm"]);
 
   const existingUser = await prisma.user.findUnique({ where: { username } });
   if (existingUser) {
