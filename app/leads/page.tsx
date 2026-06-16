@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Database, Loader2, MessageSquare, Phone, RefreshCw, Search, Users } from "lucide-react";
+import { CalendarDays, Database, ExternalLink, Loader2, MessageSquare, Phone, RefreshCw, Search, Users } from "lucide-react";
 import type { Lead, LeadStatus } from "@/lib/types";
 
 const statusLabels: Record<LeadStatus, string> = {
@@ -25,6 +25,13 @@ function normalize(value: string) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
+}
+
+function directionLabel(value: Lead["direction"]) {
+  if (value === "cliente") return "Cliente";
+  if (value === "automacao") return "Automacao";
+  if (value === "humano") return "Humano";
+  return "Origem indefinida";
 }
 
 export default function LeadsPage() {
@@ -93,7 +100,7 @@ export default function LeadsPage() {
     const term = normalize(search);
     return leads.filter((lead) => {
       const matchesStatus = status === "todos" || lead.status === status;
-      const haystack = normalize(`${lead.name} ${lead.phone} ${lead.propertyInterest} ${lead.message}`);
+      const haystack = normalize(`${lead.name} ${lead.phone} ${lead.propertyInterest} ${lead.propertyCode || ""} ${lead.stage || ""} ${lead.message}`);
       return matchesStatus && (!term || haystack.includes(term));
     });
   }, [leads, search, status]);
@@ -216,7 +223,10 @@ export default function LeadsPage() {
                   <div>
                     <span className="eyebrow">Lead</span>
                     <h3>{lead.name}</h3>
-                    <p>{lead.propertyInterest}</p>
+                    <p>
+                      {lead.propertyInterest}
+                      {lead.propertyCode ? ` • Codigo ${lead.propertyCode}` : ""}
+                    </p>
                   </div>
                   <select className={`status-select ${lead.status}`} value={lead.status} onChange={(event) => updateStatus(lead.id, event.target.value as LeadStatus)}>
                     {Object.entries(statusLabels).map(([value, label]) => (
@@ -239,6 +249,14 @@ export default function LeadsPage() {
                     <MessageSquare size={15} />
                     {lead.interactions} interacoes
                   </span>
+                  <span>{directionLabel(lead.direction)}</span>
+                  {lead.stage ? <span>{lead.stage}</span> : null}
+                  {lead.propertyUrl ? (
+                    <a className="lead-link" href={lead.propertyUrl} rel="noreferrer" target="_blank">
+                      <ExternalLink size={15} />
+                      Abrir imovel
+                    </a>
+                  ) : null}
                 </div>
                 <p className="lead-message">{lead.message || "Sem mensagem registrada."}</p>
               </article>

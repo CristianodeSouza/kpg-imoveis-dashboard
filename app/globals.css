@@ -418,7 +418,8 @@ a {
   margin-top: 14px;
 }
 
-.lead-details span {
+.lead-details span,
+.lead-link {
   align-items: center;
   background: #f6f8fb;
   border-radius: 999px;
@@ -428,6 +429,12 @@ a {
   font-weight: 800;
   gap: 6px;
   padding: 7px 10px;
+}
+
+.lead-link {
+  background: #eef5ff;
+  color: var(--blue);
+  text-decoration: none;
 }
 
 .lead-message {

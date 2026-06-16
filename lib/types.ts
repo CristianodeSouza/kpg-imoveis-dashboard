@@ -65,11 +65,16 @@ export type Lead = {
   name: string;
   phone: string;
   propertyInterest: string;
+  propertyCode?: string;
+  propertyUrl?: string;
   message: string;
+  originalMessage: string;
   status: LeadStatus;
+  stage?: string;
   source: string;
   conversationId?: string;
   chatLid?: string;
+  direction: "cliente" | "automacao" | "humano" | "desconhecido";
   createdAt: string;
   lastMessageAt: string;
   interactions: number;
