@@ -523,3 +523,81 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+.login-shell {
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(20, 33, 61, 0.92), rgba(34, 50, 79, 0.86)),
+    url("https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=80");
+  background-position: center;
+  background-size: cover;
+  display: flex;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.login-panel {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 8px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+  margin: 0 auto;
+  max-width: 430px;
+  padding: 34px;
+  width: 100%;
+}
+
+.login-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 22px;
+}
+
+.login-brand strong {
+  color: var(--gold);
+  font-size: 22px;
+  letter-spacing: 0;
+}
+
+.login-brand span {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.login-icon {
+  align-items: center;
+  background: var(--ink);
+  border-radius: 8px;
+  color: #fff;
+  display: inline-flex;
+  height: 52px;
+  justify-content: center;
+  margin-bottom: 18px;
+  width: 52px;
+}
+
+.login-panel h1 {
+  font-size: 26px;
+  line-height: 1.15;
+  margin: 0 0 10px;
+}
+
+.login-panel p {
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 24px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-submit {
+  margin-top: 4px;
+  width: 100%;
+}

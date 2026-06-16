@@ -15,6 +15,7 @@ export type Property = {
   profile: string;
   condoFee: string;
   propertyTax: string;
+  facts: Array<{ label: string; value: string }>;
   description: string;
   features: string[];
   photos: string[];

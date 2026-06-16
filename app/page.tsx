@@ -75,11 +75,6 @@ function metric(media: MediaInsight, name: string) {
   return media.metrics.find((item) => item.name === name)?.value ?? 0;
 }
 
-function hasPositiveValue(value: string) {
-  const numeric = Number(String(value || "").replace(",", ".").replace(/[^\d.]/g, ""));
-  return Number.isFinite(numeric) && numeric > 0;
-}
-
 export default function HomePage() {
   const [code, setCode] = useState("");
   const [property, setProperty] = useState<Property | null>(null);
@@ -242,17 +237,7 @@ export default function HomePage() {
     },
     { reach: 0, views: 0, saved: 0, comments: 0 }
   );
-  const facts = property
-    ? [
-        { label: "Area", value: property.privateArea || "-" },
-        { label: "Perfil", value: property.profile || "-" },
-        { label: "Condominio", value: property.condoFee !== "Consulte" ? property.condoFee : "-" },
-        { label: "IPTU", value: property.propertyTax !== "Consulte" ? property.propertyTax : "-" },
-        ...(hasPositiveValue(property.bedrooms) ? [{ label: "Dorm.", value: property.bedrooms }] : []),
-        ...(hasPositiveValue(property.suites) ? [{ label: "Suites", value: property.suites }] : []),
-        ...(hasPositiveValue(property.parking) ? [{ label: "Vagas", value: property.parking }] : [])
-      ]
-    : [];
+  const facts = property?.facts ?? [];
 
   return (
     <main className="shell">

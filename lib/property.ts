@@ -60,6 +60,22 @@ const positive = (value: string) => {
   return Number.isFinite(normalized) && normalized > 0;
 };
 
+const isMeaningful = (value: unknown) => {
+  if (value === undefined || value === null) return false;
+  const text = String(value).trim();
+  if (!text || ["false", "null", "undefined", "nao", "não"].includes(text.toLowerCase())) return false;
+  const numeric = Number(text.replace(/\./g, "").replace(",", ".").replace(/[^\d.-]/g, ""));
+  return !(Number.isFinite(numeric) && numeric === 0);
+};
+
+const booleanLabel = (value: unknown) => {
+  if (value === undefined || value === null || value === "") return "";
+  const text = String(value).trim();
+  if (["true", "sim", "s", "yes"].includes(text.toLowerCase())) return "Sim";
+  if (["false", "nao", "não", "n", "no", "0"].includes(text.toLowerCase())) return "";
+  return text;
+};
+
 const titleFromUrl = (url: string) => {
   const match = url.match(/\/imovel\/([^/]+)\/\d+/i);
   if (!match) return "";
@@ -178,6 +194,8 @@ export function normalizeProperty(payload: unknown, code: string): Property {
   const state = pickString(source, ["uf", "estado", "state"]) || pickString(address, ["uf", "estado"]);
   const bedrooms = pickString(source, ["dormitorios", "quartos", "bedrooms"]) || pickString(firstType, ["dormitorios"]) || "0";
   const suites = pickString(source, ["suites", "suite"]) || "0";
+  const bathrooms = pickString(source, ["banheiros", "bathrooms"]) || "0";
+  const lavatories = pickString(source, ["lavabos", "lavabo"]);
   const parking = pickString(source, ["garagem", "garagens", "vagas", "parking"]) || "0";
   const privateArea = pickString(source, ["area_privativa", "area_total", "area", "area_global", "metragem", "private_area"]);
   const title =
@@ -189,6 +207,25 @@ export function normalizeProperty(payload: unknown, code: string): Property {
     categoryFromType ||
     (slugTitle.toLowerCase().includes("terreno") ? "Terreno em Condominio" : "") ||
     (category.toLowerCase() === "vendas" ? "Imovel" : category);
+  const finalPrivateArea = privateArea || (isAspen2239 ? "825,89" : "");
+  const condoFee = formatPrice(firstValue(source, ["valor_condominio", "valorCondominio", "condominio"]));
+  const propertyTax = formatPrice(firstValue(source, ["valor_iptu", "valorIPTU", "iptu"]));
+  const areaLabel = firstValue(source, ["area_total"]) ? "Area Total" : "Area Privativa";
+  const facts = [
+    { label: areaLabel, value: finalPrivateArea },
+    { label: "Dormitorios", value: bedrooms },
+    { label: "Suites", value: suites },
+    { label: "Banheiros", value: bathrooms },
+    { label: "Lavabos", value: lavatories },
+    { label: "Vagas", value: parking },
+    { label: "Elevador", value: booleanLabel(firstValue(source, ["elevador", "elevadores"])) },
+    { label: "Perfil", value: pickString(source, ["perfil", "profile"]) },
+    { label: "Mobilia", value: booleanLabel(firstValue(source, ["mobilia", "mobiliado", "mobiliada"])) },
+    { label: "Investimento", value: booleanLabel(firstValue(source, ["investimento", "investidor"])) },
+    { label: "Alto Padrao", value: booleanLabel(firstValue(source, ["alto_padrao", "altoPadrao"])) },
+    { label: "Condominio", value: condoFee !== "Consulte" ? condoFee : "" },
+    { label: "IPTU", value: propertyTax !== "Consulte" ? propertyTax : "" }
+  ].filter((fact) => isMeaningful(fact.value));
 
   return {
     code: pickString(source, ["codigo", "referencia", "id", "code"]) || code,
@@ -199,14 +236,15 @@ export function normalizeProperty(payload: unknown, code: string): Property {
     city,
     state,
     price: formatPrice(firstValue(source, ["valor", "preco", "price", "valor_venda"]) || firstValue(firstType, ["valor"])),
-    privateArea: privateArea || (isAspen2239 ? "825,89" : ""),
+    privateArea: finalPrivateArea,
     bedrooms,
     suites,
-    bathrooms: pickString(source, ["banheiros", "bathrooms"]) || "0",
+    bathrooms,
     parking,
     profile: pickString(source, ["perfil", "profile"]),
-    condoFee: formatPrice(firstValue(source, ["valor_condominio", "valorCondominio", "condominio"])),
-    propertyTax: formatPrice(firstValue(source, ["valor_iptu", "valorIPTU", "iptu"])),
+    condoFee,
+    propertyTax,
+    facts,
     description: stripHtml(pickString(source, ["descricao", "description", "observacoes"])) || (isAspen2239 ? aspenDescription : ""),
     features: collectFeatures(source).length ? collectFeatures(source) : isAspen2239 ? aspenFeatures : [],
     photos: collectPhotos(source),
