@@ -451,6 +451,28 @@ a {
   padding: 8px 10px;
 }
 
+.admin-summary-strip {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  margin-bottom: 18px;
+}
+
+.admin-summary-strip > div,
+.tenant-kpis > div {
+  background: #f6f8fb;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.admin-summary-strip strong,
+.tenant-kpis strong {
+  display: block;
+  font-size: 18px;
+  margin-top: 4px;
+}
+
 .tenant-list {
   display: grid;
   gap: 12px;
@@ -484,6 +506,36 @@ a {
   font-size: 12px;
 }
 
+.tenant-status-pill {
+  align-items: center;
+  background: #eef2f7;
+  border-radius: 999px;
+  color: #41506a;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 900;
+  margin-left: auto;
+  padding: 7px 10px;
+  text-transform: uppercase;
+}
+
+.tenant-status-pill.active {
+  background: #eaf8f0;
+  color: #16734b;
+}
+
+.tenant-status-pill.blocked,
+.tenant-status-pill.canceled {
+  background: #fff0f0;
+  color: var(--danger);
+}
+
+.tenant-kpis {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+}
+
 .tenant-edit-grid {
   display: grid;
   gap: 12px;
@@ -505,6 +557,19 @@ a {
 
 .service-toggle input {
   margin: 0;
+}
+
+.tenant-activity {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.tenant-activity-title {
+  align-items: center;
+  display: flex;
+  gap: 8px;
 }
 
 .lead-toolbar {
@@ -1340,6 +1405,8 @@ a {
   .insight-grid,
   .config-status-grid,
   .admin-create-form,
+  .admin-summary-strip,
+  .tenant-kpis,
   .tenant-edit-grid,
   .portal-hero {
     grid-template-columns: 1fr;

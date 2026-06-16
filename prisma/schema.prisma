@@ -10,6 +10,7 @@ datasource db {
 
 model Tenant {
   id                String          @id @default(cuid())
+  clientCode        String?         @unique
   name              String
   slug              String          @unique
   status            String          @default("active")

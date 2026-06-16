@@ -6,6 +6,9 @@ import { ensureBaseServices, ensureTenantServices } from "@/lib/services";
 
 export const dynamic = "force-dynamic";
 
+const PLATFORM_TENANT_SLUG = "csr-tecnologia";
+const CLIENT_CODE_PREFIX = "CLI";
+
 function slugify(value: string) {
   return value
     .normalize("NFD")
@@ -29,24 +32,37 @@ function parseDate(value: unknown) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+async function nextClientCode() {
+  const tenants = await prisma.tenant.findMany({
+    where: { clientCode: { startsWith: `${CLIENT_CODE_PREFIX}-` } },
+    select: { clientCode: true }
+  });
+  const max = tenants.reduce((current, tenant) => {
+    const number = Number(String(tenant.clientCode || "").replace(`${CLIENT_CODE_PREFIX}-`, ""));
+    return Number.isFinite(number) ? Math.max(current, number) : current;
+  }, 0);
+  return `${CLIENT_CODE_PREFIX}-${String(max + 1).padStart(4, "0")}`;
+}
+
 export async function GET(request: Request) {
   const { response } = await requirePlatformAdmin(request);
   if (response) return response;
 
   const tenants = await prisma.tenant.findMany({
+    where: { slug: { not: PLATFORM_TENANT_SLUG } },
     orderBy: { createdAt: "desc" },
     include: {
       users: { select: { id: true } },
       services: { include: { service: true } },
-      settings: true
+      settings: true,
+      auditLogs: {
+        orderBy: { createdAt: "desc" },
+        take: 8,
+        include: { user: true }
+      }
     }
   });
   const services = await ensureBaseServices();
-  const auditLogs = await prisma.auditLog.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 20,
-    include: { tenant: true, user: true }
-  });
 
   return NextResponse.json({
     services: services.map((service) => ({
@@ -58,6 +74,7 @@ export async function GET(request: Request) {
     })),
     tenants: tenants.map((tenant) => ({
       id: tenant.id,
+      clientCode: tenant.clientCode,
       name: tenant.name,
       slug: tenant.slug,
       status: tenant.status,
@@ -83,15 +100,14 @@ export async function GET(request: Request) {
         instagram: Boolean(tenant.settings?.instagramAccountId && tenant.settings.instagramAccessTokenEncrypted),
         whatsapp: Boolean(tenant.settings?.whatsappNumber)
       },
+      activityLogs: tenant.auditLogs.map((log) => ({
+        id: log.id,
+        action: log.action,
+        target: log.target,
+        username: log.user?.username,
+        createdAt: log.createdAt
+      })),
       createdAt: tenant.createdAt
-    })),
-    auditLogs: auditLogs.map((log) => ({
-      id: log.id,
-      action: log.action,
-      target: log.target,
-      tenantName: log.tenant.name,
-      username: log.user?.username,
-      createdAt: log.createdAt
     }))
   });
 }
@@ -113,6 +129,7 @@ export async function POST(request: Request) {
 
   const tenant = await prisma.tenant.create({
     data: {
+      clientCode: await nextClientCode(),
       name,
       slug: slugify(body.slug || name),
       status: "active",

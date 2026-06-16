@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Building2, Loader2, Plus, RefreshCw, ShieldCheck } from "lucide-react";
+import { Activity, Building2, Loader2, Plus, RefreshCw, ShieldCheck } from "lucide-react";
 import { LogoutButton } from "@/app/components/LogoutButton";
 
 type AdminService = {
@@ -13,6 +13,7 @@ type AdminService = {
 
 type AdminTenant = {
   id: string;
+  clientCode?: string;
   name: string;
   slug: string;
   status: string;
@@ -27,21 +28,12 @@ type AdminTenant = {
   usersCount: number;
   services: Array<{ slug: string; name: string; status: string; plan: string; priceCents: number; expiresAt?: string }>;
   integrations: { siga: boolean; instagram: boolean; whatsapp: boolean };
-};
-
-type AuditLog = {
-  id: string;
-  action: string;
-  target?: string;
-  tenantName: string;
-  username?: string;
-  createdAt: string;
+  activityLogs: Array<{ id: string; action: string; target?: string; username?: string; createdAt: string }>;
 };
 
 export default function AdminPage() {
   const [tenants, setTenants] = useState<AdminTenant[]>([]);
   const [services, setServices] = useState<AdminService[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [selectedServices, setSelectedServices] = useState<string[]>(["instagram-publisher", "mini-crm"]);
   const [editing, setEditing] = useState<Record<string, Partial<AdminTenant>>>({});
   const [form, setForm] = useState({
@@ -73,7 +65,6 @@ export default function AdminPage() {
       }
       if (!response.ok) throw new Error(data.error || "Nao foi possivel carregar clientes.");
       setTenants(data.tenants || []);
-      setAuditLogs(data.auditLogs || []);
       setServices((data.services || []).filter((service: AdminService) => !["portal", "settings"].includes(service.slug)));
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao carregar clientes." });
@@ -130,6 +121,16 @@ export default function AdminPage() {
 
   function tenantServiceEnabled(tenant: AdminTenant, slug: string) {
     return tenant.services.some((service) => service.slug === slug && service.status === "active");
+  }
+
+  function activeServicesCount(tenant: AdminTenant) {
+    return tenant.services.filter((service) => service.status === "active" && !["portal", "settings"].includes(service.slug)).length;
+  }
+
+  function statusLabel(status: string) {
+    if (status === "active") return "Ativo";
+    if (status === "canceled") return "Cancelado";
+    return "Bloqueado";
   }
 
   async function saveTenant(tenant: AdminTenant) {
@@ -228,6 +229,21 @@ export default function AdminPage() {
 
           {message ? <div className={`message ${message.type}`}>{message.text}</div> : null}
 
+          <div className="admin-summary-strip">
+            <div>
+              <span className="eyebrow">Clientes ativos</span>
+              <strong>{tenants.filter((tenant) => tenant.status === "active").length}</strong>
+            </div>
+            <div>
+              <span className="eyebrow">Receita mensal</span>
+              <strong>{money(tenants.reduce((total, tenant) => total + tenant.monthlyValueCents, 0))}</strong>
+            </div>
+            <div>
+              <span className="eyebrow">Contratos em atraso</span>
+              <strong>{tenants.filter((tenant) => ["overdue", "suspended"].includes(tenant.billingStatus)).length}</strong>
+            </div>
+          </div>
+
           <form className="admin-create-form" onSubmit={createTenant}>
             <div className="field">
               <label htmlFor="tenantName">Cliente</label>
@@ -298,8 +314,23 @@ export default function AdminPage() {
                 <div>
                   <strong>{tenant.name}</strong>
                   <small>
-                    {tenant.slug} | {tenant.usersCount} usuario(s) | {money(tenant.monthlyValueCents)}
+                    ID {tenant.clientCode || "pendente"} | {tenant.slug} | {tenant.usersCount} usuario(s) | {money(tenant.monthlyValueCents)}
                   </small>
+                </div>
+                <span className={`tenant-status-pill ${tenant.status}`}>{statusLabel(tenant.status)}</span>
+              </div>
+              <div className="tenant-kpis">
+                <div>
+                  <span className="eyebrow">Servicos ativos</span>
+                  <strong>{activeServicesCount(tenant)}</strong>
+                </div>
+                <div>
+                  <span className="eyebrow">Financeiro</span>
+                  <strong>{tenant.billingStatus === "active" ? "Em dia" : tenant.billingStatus}</strong>
+                </div>
+                <div>
+                  <span className="eyebrow">Aquisicao</span>
+                  <strong>{tenant.acquiredAt ? new Date(tenant.acquiredAt).toLocaleDateString("pt-BR") : "Pendente"}</strong>
                 </div>
               </div>
               <div className="tenant-edit-grid">
@@ -382,6 +413,26 @@ export default function AdminPage() {
                 <span>Instagram: {tenant.integrations.instagram ? "ok" : "pendente"}</span>
                 <span>WhatsApp: {tenant.integrations.whatsapp ? "ok" : "pendente"}</span>
               </div>
+              <div className="tenant-activity">
+                <div className="tenant-activity-title">
+                  <Activity size={17} />
+                  <strong>Atividades do cliente</strong>
+                </div>
+                {tenant.activityLogs?.length ? (
+                  <div className="compact-table">
+                    {tenant.activityLogs.map((log) => (
+                      <div className="table-row" key={log.id}>
+                        <span>{log.action}</span>
+                        <small>
+                          {log.username || "sistema"} | {new Date(log.createdAt).toLocaleString("pt-BR")}
+                        </small>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <small className="step-caption">Nenhuma atividade registrada para este cliente.</small>
+                )}
+              </div>
               <div className="actions">
                 <span className="step-caption">{tenant.notes || "Sem observacoes comerciais."}</span>
                 <button className="btn secondary" disabled={saving} onClick={() => saveTenant(tenant)} type="button">
@@ -390,32 +441,6 @@ export default function AdminPage() {
               </div>
             </article>
           ))}
-        </section>
-
-        <section className="panel audit-panel">
-          <div className="panel-heading">
-            <div className="panel-title">
-              <ShieldCheck size={21} />
-              <h2>Eventos recentes</h2>
-            </div>
-          </div>
-          <div className="compact-table">
-            {auditLogs.length ? (
-              auditLogs.map((log) => (
-                <div className="table-row" key={log.id}>
-                  <span>{log.action}</span>
-                  <strong>{log.tenantName}</strong>
-                  <small>
-                    {log.username || "sistema"} | {new Date(log.createdAt).toLocaleString("pt-BR")}
-                  </small>
-                </div>
-              ))
-            ) : (
-              <div className="empty-state">
-                <strong>Nenhum evento registrado</strong>
-              </div>
-            )}
-          </div>
         </section>
       </section>
     </main>
