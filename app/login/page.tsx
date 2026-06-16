@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import { Lock, LogIn } from "lucide-react";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("KPGIMOVEIS");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -50,6 +50,7 @@ export default function LoginPage() {
               className="input"
               id="username"
               onChange={(event) => setUsername(event.target.value)}
+              placeholder="Digite seu usuario"
               value={username}
             />
           </div>

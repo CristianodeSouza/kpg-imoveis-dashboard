@@ -9,16 +9,24 @@ datasource db {
 }
 
 model Tenant {
-  id        String          @id @default(cuid())
-  name      String
-  slug      String          @unique
-  status    String          @default("active")
-  users     User[]
-  settings  TenantSettings?
-  services  TenantService[]
-  auditLogs AuditLog[]
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  id                String          @id @default(cuid())
+  name              String
+  slug              String          @unique
+  status            String          @default("active")
+  billingStatus     String          @default("active")
+  document          String          @default("")
+  contactName       String          @default("")
+  contactEmail      String          @default("")
+  contactPhone      String          @default("")
+  monthlyValueCents Int             @default(0)
+  acquiredAt        DateTime?
+  notes             String          @default("")
+  users             User[]
+  settings          TenantSettings?
+  services          TenantService[]
+  auditLogs         AuditLog[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 }
 
 model User {
@@ -50,17 +58,18 @@ model Service {
 }
 
 model TenantService {
-  id        String    @id @default(cuid())
-  tenantId  String
-  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  serviceId String
-  service   Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  status    String    @default("active")
-  plan      String    @default("starter")
-  limits    Json?
-  expiresAt DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id         String    @id @default(cuid())
+  tenantId   String
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  serviceId  String
+  service    Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  status     String    @default("active")
+  plan       String    @default("starter")
+  priceCents Int       @default(0)
+  limits     Json?
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   @@unique([tenantId, serviceId])
 }

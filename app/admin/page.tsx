@@ -8,6 +8,7 @@ type AdminService = {
   slug: string;
   name: string;
   description?: string;
+  status: string;
 };
 
 type AdminTenant = {
@@ -15,8 +16,16 @@ type AdminTenant = {
   name: string;
   slug: string;
   status: string;
+  billingStatus: string;
+  document: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  monthlyValueCents: number;
+  acquiredAt?: string;
+  notes: string;
   usersCount: number;
-  services: Array<{ slug: string; name: string; status: string; plan: string }>;
+  services: Array<{ slug: string; name: string; status: string; plan: string; priceCents: number; expiresAt?: string }>;
   integrations: { siga: boolean; instagram: boolean; whatsapp: boolean };
 };
 
@@ -34,7 +43,20 @@ export default function AdminPage() {
   const [services, setServices] = useState<AdminService[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [selectedServices, setSelectedServices] = useState<string[]>(["instagram-publisher", "mini-crm"]);
-  const [form, setForm] = useState({ name: "", slug: "", ownerName: "", username: "", password: "" });
+  const [editing, setEditing] = useState<Record<string, Partial<AdminTenant>>>({});
+  const [form, setForm] = useState({
+    name: "",
+    slug: "",
+    ownerName: "",
+    username: "",
+    password: "",
+    document: "",
+    contactEmail: "",
+    contactPhone: "",
+    monthlyValue: "",
+    acquiredAt: "",
+    notes: ""
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
@@ -72,7 +94,19 @@ export default function AdminPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Nao foi possivel criar cliente.");
-      setForm({ name: "", slug: "", ownerName: "", username: "", password: "" });
+      setForm({
+        name: "",
+        slug: "",
+        ownerName: "",
+        username: "",
+        password: "",
+        document: "",
+        contactEmail: "",
+        contactPhone: "",
+        monthlyValue: "",
+        acquiredAt: "",
+        notes: ""
+      });
       setMessage({ type: "ok", text: "Cliente criado com acesso inicial." });
       await loadTenants();
     } catch (error) {
@@ -84,6 +118,77 @@ export default function AdminPage() {
 
   function toggleService(slug: string) {
     setSelectedServices((current) => (current.includes(slug) ? current.filter((item) => item !== slug) : [...current, slug]));
+  }
+
+  function money(cents: number) {
+    return (cents / 100).toLocaleString("pt-BR", { currency: "BRL", style: "currency" });
+  }
+
+  function dateInput(value?: string) {
+    return value ? new Date(value).toISOString().slice(0, 10) : "";
+  }
+
+  function tenantServiceEnabled(tenant: AdminTenant, slug: string) {
+    return tenant.services.some((service) => service.slug === slug && service.status === "active");
+  }
+
+  async function saveTenant(tenant: AdminTenant) {
+    const draft = editing[tenant.id] || {};
+    const monthlyValueCents = draft.monthlyValueCents ?? tenant.monthlyValueCents;
+    setSaving(true);
+    setMessage(null);
+    try {
+      const response = await fetch("/api/admin/tenants", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantId: tenant.id,
+          name: draft.name ?? tenant.name,
+          status: draft.status ?? tenant.status,
+          billingStatus: draft.billingStatus ?? tenant.billingStatus,
+          document: draft.document ?? tenant.document,
+          contactName: draft.contactName ?? tenant.contactName,
+          contactEmail: draft.contactEmail ?? tenant.contactEmail,
+          contactPhone: draft.contactPhone ?? tenant.contactPhone,
+          monthlyValue: String(monthlyValueCents / 100),
+          acquiredAt: draft.acquiredAt ?? dateInput(tenant.acquiredAt),
+          notes: draft.notes ?? tenant.notes,
+          services: services.map((service) => ({
+            slug: service.slug,
+            enabled:
+              (draft.services as AdminTenant["services"] | undefined)?.some((item) => item.slug === service.slug && item.status === "active") ??
+              tenantServiceEnabled(tenant, service.slug)
+          }))
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Nao foi possivel salvar cliente.");
+      setMessage({ type: "ok", text: "Cliente atualizado." });
+      await loadTenants();
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao salvar cliente." });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function updateDraft(id: string, patch: Partial<AdminTenant>) {
+    setEditing((current) => ({ ...current, [id]: { ...current[id], ...patch } }));
+  }
+
+  function toggleTenantService(tenant: AdminTenant, slug: string) {
+    const draftServices = (editing[tenant.id]?.services as AdminTenant["services"] | undefined) || tenant.services;
+    const exists = draftServices.find((service) => service.slug === slug);
+    const next = exists
+      ? draftServices.map((service) => (service.slug === slug ? { ...service, status: service.status === "active" ? "blocked" : "active" } : service))
+      : [...draftServices, { slug, name: services.find((service) => service.slug === slug)?.name || slug, status: "active", plan: "starter", priceCents: 0 }];
+    updateDraft(tenant.id, { services: next });
+  }
+
+  function updateTenantMonthlyValue(tenant: AdminTenant, value: string) {
+    const normalized = value.replace(/\./g, "").replace(",", ".");
+    const parsed = Number(normalized);
+    updateDraft(tenant.id, { monthlyValueCents: Number.isFinite(parsed) ? Math.round(parsed * 100) : 0 });
   }
 
   useEffect(() => {
@@ -144,6 +249,30 @@ export default function AdminPage() {
               <label htmlFor="password">Senha inicial</label>
               <input className="input" id="password" type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
             </div>
+            <div className="field">
+              <label htmlFor="document">CPF/CNPJ</label>
+              <input className="input" id="document" value={form.document} onChange={(event) => setForm({ ...form, document: event.target.value })} />
+            </div>
+            <div className="field">
+              <label htmlFor="contactEmail">Email</label>
+              <input className="input" id="contactEmail" value={form.contactEmail} onChange={(event) => setForm({ ...form, contactEmail: event.target.value })} />
+            </div>
+            <div className="field">
+              <label htmlFor="contactPhone">Telefone</label>
+              <input className="input" id="contactPhone" value={form.contactPhone} onChange={(event) => setForm({ ...form, contactPhone: event.target.value })} />
+            </div>
+            <div className="field">
+              <label htmlFor="monthlyValue">Valor mensal</label>
+              <input className="input" id="monthlyValue" placeholder="197,00" value={form.monthlyValue} onChange={(event) => setForm({ ...form, monthlyValue: event.target.value })} />
+            </div>
+            <div className="field">
+              <label htmlFor="acquiredAt">Data aquisicao</label>
+              <input className="input" id="acquiredAt" type="date" value={form.acquiredAt} onChange={(event) => setForm({ ...form, acquiredAt: event.target.value })} />
+            </div>
+            <div className="field wide">
+              <label htmlFor="notes">Observacoes</label>
+              <input className="input" id="notes" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
+            </div>
             <div className="admin-service-picker">
               {services.map((service) => (
                 <label className="toggle-row" key={service.slug}>
@@ -168,20 +297,96 @@ export default function AdminPage() {
                 </span>
                 <div>
                   <strong>{tenant.name}</strong>
-                  <small>{tenant.slug} | {tenant.usersCount} usuario(s)</small>
+                  <small>
+                    {tenant.slug} | {tenant.usersCount} usuario(s) | {money(tenant.monthlyValueCents)}
+                  </small>
+                </div>
+              </div>
+              <div className="tenant-edit-grid">
+                <div className="field">
+                  <label>Status</label>
+                  <select
+                    className="select"
+                    value={String(editing[tenant.id]?.status ?? tenant.status)}
+                    onChange={(event) => updateDraft(tenant.id, { status: event.target.value })}
+                  >
+                    <option value="active">Ativo</option>
+                    <option value="blocked">Bloqueado</option>
+                    <option value="canceled">Cancelado</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Financeiro</label>
+                  <select
+                    className="select"
+                    value={String(editing[tenant.id]?.billingStatus ?? tenant.billingStatus)}
+                    onChange={(event) => updateDraft(tenant.id, { billingStatus: event.target.value })}
+                  >
+                    <option value="active">Em dia</option>
+                    <option value="trial">Teste</option>
+                    <option value="overdue">Em atraso</option>
+                    <option value="suspended">Suspenso</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label>CPF/CNPJ</label>
+                  <input className="input" value={String(editing[tenant.id]?.document ?? tenant.document)} onChange={(event) => updateDraft(tenant.id, { document: event.target.value })} />
+                </div>
+                <div className="field">
+                  <label>Responsavel</label>
+                  <input className="input" value={String(editing[tenant.id]?.contactName ?? tenant.contactName)} onChange={(event) => updateDraft(tenant.id, { contactName: event.target.value })} />
+                </div>
+                <div className="field">
+                  <label>Email</label>
+                  <input className="input" value={String(editing[tenant.id]?.contactEmail ?? tenant.contactEmail)} onChange={(event) => updateDraft(tenant.id, { contactEmail: event.target.value })} />
+                </div>
+                <div className="field">
+                  <label>Telefone</label>
+                  <input className="input" value={String(editing[tenant.id]?.contactPhone ?? tenant.contactPhone)} onChange={(event) => updateDraft(tenant.id, { contactPhone: event.target.value })} />
+                </div>
+                <div className="field">
+                  <label>Valor mensal</label>
+                  <input
+                    className="input"
+                    value={String(((editing[tenant.id]?.monthlyValueCents ?? tenant.monthlyValueCents) || 0) / 100)}
+                    onChange={(event) => updateTenantMonthlyValue(tenant, event.target.value)}
+                  />
+                </div>
+                <div className="field">
+                  <label>Aquisicao</label>
+                  <input className="input" type="date" value={String(editing[tenant.id]?.acquiredAt ?? dateInput(tenant.acquiredAt))} onChange={(event) => updateDraft(tenant.id, { acquiredAt: event.target.value })} />
+                </div>
+                <div className="field wide">
+                  <label>Observacoes</label>
+                  <input className="input" value={String(editing[tenant.id]?.notes ?? tenant.notes)} onChange={(event) => updateDraft(tenant.id, { notes: event.target.value })} />
                 </div>
               </div>
               <div className="hashtags">
-                {tenant.services.map((service) => (
-                  <span className="tag" key={service.slug}>
+                {services.map((service) => (
+                  <label className="tag service-toggle" key={service.slug}>
+                    <input
+                      checked={
+                        ((editing[tenant.id]?.services as AdminTenant["services"] | undefined) || tenant.services).some(
+                          (item) => item.slug === service.slug && item.status === "active"
+                        )
+                      }
+                      onChange={() => toggleTenantService(tenant, service.slug)}
+                      type="checkbox"
+                    />
                     {service.name}
-                  </span>
+                  </label>
                 ))}
               </div>
               <div className="tenant-integrations">
                 <span>SIGA: {tenant.integrations.siga ? "ok" : "pendente"}</span>
                 <span>Instagram: {tenant.integrations.instagram ? "ok" : "pendente"}</span>
                 <span>WhatsApp: {tenant.integrations.whatsapp ? "ok" : "pendente"}</span>
+              </div>
+              <div className="actions">
+                <span className="step-caption">{tenant.notes || "Sem observacoes comerciais."}</span>
+                <button className="btn secondary" disabled={saving} onClick={() => saveTenant(tenant)} type="button">
+                  Salvar cliente
+                </button>
               </div>
             </article>
           ))}

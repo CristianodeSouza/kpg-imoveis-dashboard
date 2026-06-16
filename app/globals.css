@@ -484,10 +484,27 @@ a {
   font-size: 12px;
 }
 
+.tenant-edit-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+}
+
 .tenant-integrations {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.service-toggle {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 7px;
+}
+
+.service-toggle input {
+  margin: 0;
 }
 
 .lead-toolbar {
@@ -1323,6 +1340,7 @@ a {
   .insight-grid,
   .config-status-grid,
   .admin-create-form,
+  .tenant-edit-grid,
   .portal-hero {
     grid-template-columns: 1fr;
   }

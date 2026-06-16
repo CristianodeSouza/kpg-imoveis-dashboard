@@ -12,17 +12,38 @@ export const serviceCatalog = [
   },
   {
     slug: "instagram-publisher",
-    name: "Instagram Publisher SIGA",
+    name: "Servico 01 - Publicacao no Instagram",
     description: "Busca imoveis no SIGA, gera legendas e publica no Instagram.",
     href: "/app/instagram",
     icon: "instagram"
   },
   {
     slug: "mini-crm",
-    name: "Mini CRM de Leads",
-    description: "Organiza leads imobiliarios por etapa de atendimento.",
+    name: "Servico 02 - Mini CRM WhatsApp",
+    description: "Organiza leads do WhatsApp por etapa de atendimento.",
     href: "/app/leads",
     icon: "users"
+  },
+  {
+    slug: "service-03",
+    name: "Servico 03 - A definir",
+    description: "Modulo reservado para expansao do portal SaaS.",
+    href: "/sem-acesso",
+    icon: "layout"
+  },
+  {
+    slug: "service-04",
+    name: "Servico 04 - A definir",
+    description: "Modulo reservado para expansao do portal SaaS.",
+    href: "/sem-acesso",
+    icon: "layout"
+  },
+  {
+    slug: "service-05",
+    name: "Servico 05 - A definir",
+    description: "Modulo reservado para expansao do portal SaaS.",
+    href: "/sem-acesso",
+    icon: "layout"
   },
   {
     slug: "settings",
