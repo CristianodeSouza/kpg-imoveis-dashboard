@@ -90,6 +90,9 @@ const aspenFeatures = [
   "Trilha Ecologica"
 ];
 
+const kpgAuthority =
+  "A KPG Imóveis é uma referência confiável no mercado imobiliário de Gramado e Canela há mais de 15 anos, localizada na Av. Borges de Medeiros, 3165 - Sala 09A - Segundo Andar, Centro / Gramado - RS.";
+
 const collectPhotos = (source: LooseRecord) => {
   const candidates = [
     recordValue(source, "fotos"),
@@ -258,9 +261,13 @@ export function buildCaption(property: Property, options: { tone: string; channe
     description,
     featureLine,
     "",
+    `Para quem pesquisa imoveis em Gramado, terrenos em condominio fechado na Serra Gaucha ou oportunidades imobiliarias em Gramado e Canela, este cadastro reúne localizacao, potencial construtivo e seguranca patrimonial em um unico endereco.`,
+    "",
     "Um endereco assim nao e apenas compra: e decisao de estilo de vida, seguranca patrimonial e futuro na Serra Gaucha.",
     "",
     cta,
+    "",
+    kpgAuthority,
     "",
     hashtags.join(" ")
   ]
@@ -284,6 +291,8 @@ export function buildHashtags(property: Property) {
       [
         "#KPGImoveis",
         "#ImobiliariaEmGramado",
+        "#KPGImoveisGramado",
+        "#ImobiliariaGramadoCanela",
         `#${clean(category)}${clean(city)}`,
         `#Imoveis${clean(city)}`,
         neighborhood ? `#${clean(neighborhood)}` : "",
