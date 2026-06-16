@@ -883,8 +883,7 @@ a {
 .analytics-grid {
   display: grid;
   align-items: start;
-  gap: 12px;
-  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.75fr);
+  grid-template-columns: 1fr;
   margin-top: 14px;
 }
 
@@ -898,10 +897,6 @@ a {
 .analytics-block h3 {
   font-size: 14px;
   margin-bottom: 12px;
-}
-
-.analytics-block:first-child {
-  grid-row: span 3;
 }
 
 .ranking-list,

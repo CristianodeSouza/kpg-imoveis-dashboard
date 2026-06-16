@@ -714,42 +714,6 @@ export default function HomePage() {
                 ))}
               </div>
             </section>
-            <section className="analytics-block">
-              <h3>Formatos que mais ajudam</h3>
-              <div className="compact-table">
-                {typeData.map((item) => (
-                  <div className="table-row" key={item.name}>
-                    <span>{item.name}</span>
-                    <strong>{item.alcance.toLocaleString("pt-BR")}</strong>
-                    <small>{item.posts} posts</small>
-                  </div>
-                ))}
-              </div>
-            </section>
-            <section className="analytics-block">
-              <h3>Melhores dias</h3>
-              <div className="compact-table">
-                {bestDays.map((item) => (
-                  <div className="table-row" key={item.name}>
-                    <span>{item.name}</span>
-                    <strong>{item.alcance.toLocaleString("pt-BR")}</strong>
-                    <small>{item.posts} posts</small>
-                  </div>
-                ))}
-              </div>
-            </section>
-            <section className="analytics-block">
-              <h3>Melhores horarios</h3>
-              <div className="compact-table">
-                {bestHours.map((item) => (
-                  <div className="table-row" key={item.name}>
-                    <span>{item.name}</span>
-                    <strong>{item.alcance.toLocaleString("pt-BR")}</strong>
-                    <small>{item.posts} posts</small>
-                  </div>
-                ))}
-              </div>
-            </section>
           </div>
         </section>
       </section>
