@@ -19,6 +19,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -355,6 +356,10 @@ export default function HomePage() {
     }))
     .sort((a, b) => b.alcance - a.alcance)
     .slice(0, 4);
+  const bestPost = topPosts[0];
+  const bestFormat = [...typeData].sort((a, b) => b.alcance - a.alcance)[0];
+  const bestDay = bestDays[0];
+  const bestHour = bestHours[0];
   const facts = property?.facts ?? [];
 
   return (
@@ -568,12 +573,25 @@ export default function HomePage() {
               Atualizar
             </button>
           </div>
-          <div className="account-strip">
-            <div>
+          <div className="analytics-hero">
+            <div className="account-card">
               <span className="eyebrow">Conta analisada</span>
               <strong>@{activeAccount.username || "kpgimoveis"}</strong>
               <small>{activeAccount.name || "KPG Imoveis"}</small>
             </div>
+            <div className="decision-card">
+              <span className="eyebrow">Melhor post recente</span>
+              <strong>{bestPost ? shortCaption(bestPost.caption, bestPost.id) : "Sem dados suficientes"}</strong>
+              <small>{bestPost ? `${bestPost.reach.toLocaleString("pt-BR")} alcance • ${percent(bestPost.engagementRate)} engajamento` : "Atualize para analisar"}</small>
+            </div>
+            <div className="decision-card">
+              <span className="eyebrow">Melhor janela</span>
+              <strong>{bestDay && bestHour ? `${bestDay.name} às ${bestHour.name}` : "Sem historico"}</strong>
+              <small>{bestFormat ? `${bestFormat.name} tem melhor alcance acumulado` : "Dados ainda indisponiveis"}</small>
+            </div>
+          </div>
+
+          <div className="account-strip">
             <div>
               <span className="eyebrow">Seguidores</span>
               <strong>{activeAccount.followersCount.toLocaleString("pt-BR")}</strong>
@@ -591,6 +609,7 @@ export default function HomePage() {
               <strong>{accountMetric(activeAccount, "profile_views").toLocaleString("pt-BR")}</strong>
             </div>
           </div>
+
           <div className="insight-grid">
             <div className="metric">
               <span>Alcance</span>
@@ -633,21 +652,33 @@ export default function HomePage() {
               <strong>{averageViews.toLocaleString("pt-BR")}</strong>
             </div>
           </div>
-          <div className="chart-wrap">
-            {mounted ? (
-              <ResponsiveContainer height="100%" width="100%">
-                <BarChart data={chartData}>
-                  <CartesianGrid stroke="#e4e9f1" strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="alcance" fill="#2f6fed" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="visualizacoes" fill="#1fbf75" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="interacoes" fill="#c7972d" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : null}
+
+          <div className="chart-section">
+            <div className="chart-header">
+              <div>
+                <span className="eyebrow">Comparativo por publicacao</span>
+                <h3>Alcance, visualizacoes e interacoes</h3>
+              </div>
+              <small>Ultimos {chartData.length} posts com dados disponiveis</small>
+            </div>
+            <div className="chart-wrap">
+              {mounted ? (
+                <ResponsiveContainer height="100%" width="100%">
+                  <BarChart data={chartData} margin={{ top: 16, right: 12, left: -12, bottom: 44 }}>
+                    <CartesianGrid stroke="#e4e9f1" strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" interval={0} tick={{ fontSize: 10 }} angle={-18} textAnchor="end" height={64} />
+                    <YAxis tick={{ fontSize: 11 }} />
+                    <Tooltip />
+                    <Legend verticalAlign="top" height={32} />
+                    <Bar dataKey="alcance" fill="#2f6fed" name="Alcance" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="visualizacoes" fill="#1fbf75" name="Visualizacoes" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="interacoes" fill="#c7972d" name="Interacoes" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : null}
+            </div>
           </div>
+
           <div className="analytics-grid">
             <section className="analytics-block">
               <h3>Posts com maior resposta</h3>
@@ -661,9 +692,13 @@ export default function HomePage() {
                     <span>
                       <strong>{shortCaption(item.caption, item.id)}</strong>
                       <small>
-                        {mediaTypeLabel(item.mediaType)} • {item.reach.toLocaleString("pt-BR")} alcance •{" "}
-                        {percent(item.engagementRate)} engaj.
+                        {mediaTypeLabel(item.mediaType)} • {item.reach.toLocaleString("pt-BR")} alcance
                       </small>
+                      <span className="mini-metrics">
+                        <span>{percent(item.engagementRate)} engaj.</span>
+                        <span>{item.saved.toLocaleString("pt-BR")} salvos</span>
+                        <span>{item.shares.toLocaleString("pt-BR")} shares</span>
+                      </span>
                     </span>
                   </a>
                 ))}
