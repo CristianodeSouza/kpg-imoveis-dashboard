@@ -15,16 +15,6 @@ import {
   Send,
   Sparkles
 } from "lucide-react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis
-} from "recharts";
 import { buildCaption, buildHashtags } from "@/lib/property";
 import type { InstagramAccountSummary, MediaInsight, Property } from "@/lib/types";
 
@@ -306,7 +296,7 @@ export default function HomePage() {
     visualizacoes: item.views,
     interacoes: item.totalInteractions
   }));
-  const canRenderChart = mounted && chartData.length > 0;
+  const maxChartValue = Math.max(1, ...chartData.flatMap((item) => [item.alcance, item.visualizacoes, item.interacoes]));
 
   const totals = enrichedInsights.reduce(
     (acc, item) => {
@@ -678,19 +668,35 @@ export default function HomePage() {
               <small>Ultimos {chartData.length} posts com dados disponiveis</small>
             </div>
             <div className="chart-wrap">
-              {canRenderChart ? (
-                <ResponsiveContainer height={280} minWidth={280} width="100%">
-                  <BarChart data={chartData} margin={{ top: 12, right: 12, left: -14, bottom: 18 }}>
-                    <CartesianGrid stroke="#e4e9f1" strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" interval={0} tick={{ fontSize: 10 }} height={42} />
-                    <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip />
-                    <Legend verticalAlign="top" height={32} />
-                    <Bar dataKey="alcance" fill="#2f6fed" name="Alcance" radius={[6, 6, 0, 0]} />
-                    <Bar dataKey="visualizacoes" fill="#1fbf75" name="Visualizacoes" radius={[6, 6, 0, 0]} />
-                    <Bar dataKey="interacoes" fill="#c7972d" name="Interacoes" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+              {mounted && chartData.length ? (
+                <div className="simple-chart" role="img" aria-label="Comparativo de alcance, visualizacoes e interacoes por publicacao">
+                  <div className="chart-legend">
+                    <span>
+                      <i className="legend-dot reach" />
+                      Alcance
+                    </span>
+                    <span>
+                      <i className="legend-dot views" />
+                      Visualizacoes
+                    </span>
+                    <span>
+                      <i className="legend-dot interactions" />
+                      Interacoes
+                    </span>
+                  </div>
+                  <div className="bar-groups">
+                    {chartData.map((item) => (
+                      <div className="bar-group" key={item.name}>
+                        <div className="bar-stack">
+                          <span className="bar reach" style={{ height: `${Math.max(8, (item.alcance / maxChartValue) * 100)}%` }} />
+                          <span className="bar views" style={{ height: `${Math.max(8, (item.visualizacoes / maxChartValue) * 100)}%` }} />
+                          <span className="bar interactions" style={{ height: `${Math.max(8, (item.interacoes / maxChartValue) * 100)}%` }} />
+                        </div>
+                        <span className="bar-label">{item.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ) : (
                 <div className="empty-chart">Sem dados suficientes para montar o comparativo.</div>
               )}
