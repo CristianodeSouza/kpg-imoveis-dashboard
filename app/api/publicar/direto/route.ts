@@ -2,9 +2,23 @@ import { NextResponse } from "next/server";
 import { postToBackend } from "@/lib/backend";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const graphVersion = process.env.META_GRAPH_VERSION || "v25.0";
 const graphBase = `https://graph.facebook.com/${graphVersion}`;
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function graphFetch(url: string, init?: RequestInit) {
+  const response = await fetch(url, {
+    ...init,
+    signal: AbortSignal.timeout(15000)
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.error?.message || `Instagram API retornou ${response.status}.`);
+  }
+  return data;
+}
 
 async function publishFallback(caption: string, imageUrls: string[]) {
   const accountId = process.env.INSTAGRAM_ACCOUNT_ID;
@@ -15,20 +29,30 @@ async function publishFallback(caption: string, imageUrls: string[]) {
     const params = new URLSearchParams({ image_url: imageUrl, access_token: token });
     if (isCarouselItem) params.set("is_carousel_item", "true");
     else params.set("caption", caption);
-    const response = await fetch(`${graphBase}/${accountId}/media`, { method: "POST", body: params });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data?.error?.message || "Falha ao criar container.");
+    const data = await graphFetch(`${graphBase}/${accountId}/media`, { method: "POST", body: params });
     return String(data.id);
   };
 
+  const waitUntilReady = async (creationId: string) => {
+    let lastStatus = "";
+    for (let attempt = 0; attempt < 18; attempt++) {
+      const data = await graphFetch(
+        `${graphBase}/${creationId}?fields=status_code&access_token=${encodeURIComponent(token)}`
+      );
+      lastStatus = String(data.status_code || "");
+      if (lastStatus === "FINISHED") return;
+      if (lastStatus === "ERROR") throw new Error("Instagram retornou erro ao processar uma imagem do carrossel.");
+      await sleep(2000);
+    }
+    throw new Error(`Instagram ainda nao liberou a midia para publicacao. Status: ${lastStatus || "pendente"}.`);
+  };
+
   const publish = async (creationId: string) => {
-    const response = await fetch(`${graphBase}/${accountId}/media_publish`, {
+    await waitUntilReady(creationId);
+    return graphFetch(`${graphBase}/${accountId}/media_publish`, {
       method: "POST",
       body: new URLSearchParams({ creation_id: creationId, access_token: token })
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data?.error?.message || "Falha ao publicar.");
-    return data;
   };
 
   if (imageUrls.length === 1) {
@@ -36,9 +60,10 @@ async function publishFallback(caption: string, imageUrls: string[]) {
     return { ...result, tipo: "imagem", fotos_publicadas: 1 };
   }
 
-  const children = [];
-  for (const imageUrl of imageUrls.slice(0, 10)) children.push(await create(imageUrl, true));
-  const response = await fetch(`${graphBase}/${accountId}/media`, {
+  const children = await Promise.all(imageUrls.slice(0, 10).map((imageUrl) => create(imageUrl, true)));
+  await Promise.all(children.map((childId) => waitUntilReady(childId)));
+
+  const carousel = await graphFetch(`${graphBase}/${accountId}/media`, {
     method: "POST",
     body: new URLSearchParams({
       media_type: "CAROUSEL",
@@ -47,8 +72,6 @@ async function publishFallback(caption: string, imageUrls: string[]) {
       access_token: token
     })
   });
-  const carousel = await response.json();
-  if (!response.ok) throw new Error(carousel?.error?.message || "Falha ao criar carrossel.");
   const result = await publish(String(carousel.id));
   return { ...result, tipo: "carrossel", fotos_publicadas: children.length };
 }

@@ -176,11 +176,14 @@ export default function HomePage() {
   async function publish() {
     setPublishing(true);
     setMessage(null);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 90000);
     try {
       const response = await fetch("/api/publicar/direto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ codigo: Number(property?.code || code), caption, imageUrls: selectedPhotos })
+        body: JSON.stringify({ codigo: Number(property?.code || code), caption, imageUrls: selectedPhotos }),
+        signal: controller.signal
       });
       const data = await response.json();
       if (!response.ok || data.sucesso === false) throw new Error(data.error || data.detail || "Falha ao publicar.");
@@ -190,8 +193,15 @@ export default function HomePage() {
       const details = publishedCount ? ` ${publishType || "post"} com ${publishedCount} foto${publishedCount > 1 ? "s" : ""}.` : "";
       setMessage({ type: "ok", text: `Publicacao enviada para o Instagram.${details}${url}` });
     } catch (error) {
-      setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao publicar." });
+      const text =
+        error instanceof DOMException && error.name === "AbortError"
+          ? "A publicacao demorou demais e foi interrompida. Tente novamente com menos fotos ou gere os criativos antes."
+          : error instanceof Error
+            ? error.message
+            : "Erro ao publicar.";
+      setMessage({ type: "error", text });
     } finally {
+      window.clearTimeout(timeout);
       setPublishing(false);
     }
   }
