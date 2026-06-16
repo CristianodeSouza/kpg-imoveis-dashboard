@@ -371,12 +371,6 @@ export default function HomePage() {
             Mini CRM
           </a>
         </nav>
-        <div className="status-row">
-          <span className="status-pill">SIGA</span>
-          <span className="status-pill">Instagram</span>
-          <span className="status-pill">ImgBB</span>
-          <span className="status-pill">IA</span>
-        </div>
       </header>
 
       <section className="workspace">

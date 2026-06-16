@@ -153,11 +153,6 @@ export default function LeadsPage() {
             Mini CRM
           </a>
         </nav>
-        <div className="status-row">
-          <span className="status-pill">Make</span>
-          <span className="status-pill">Leads</span>
-          <span className="status-pill">Corretores</span>
-        </div>
       </header>
 
       <section className="workspace">
