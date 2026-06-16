@@ -171,6 +171,17 @@ a {
   color: #fff;
 }
 
+.back-link {
+  align-items: center;
+  color: var(--ink-2);
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 900;
+  gap: 7px;
+  text-decoration: none;
+  width: fit-content;
+}
+
 .stepper {
   background: var(--panel);
   border: 1px solid #eef1f5;
@@ -580,9 +591,13 @@ a {
   grid-template-columns: repeat(4, minmax(150px, 1fr));
 }
 
+.compact-actions {
+  margin-top: 0;
+}
+
 .finance-row {
   align-items: center;
-  grid-template-columns: 1.4fr repeat(3, 1fr);
+  grid-template-columns: 1.4fr repeat(3, 1fr) auto;
 }
 
 .finance-row strong {
@@ -595,6 +610,19 @@ a {
   color: var(--muted);
   line-height: 1.45;
   margin: -8px 0 0;
+}
+
+.client-detail-hero {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.client-detail-hero h1 {
+  font-size: 28px;
+  line-height: 1.1;
+  margin: 2px 0 5px;
 }
 
 .tenant-list {
