@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { lookupProperty } from "@/lib/kpg-api";
 
 export const dynamic = "force-dynamic";
+export const preferredRegion = "gru1";
+export const maxDuration = 30;
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
