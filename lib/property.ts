@@ -55,6 +55,36 @@ const stripHtml = (text: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
+const collectDescription = (source: LooseRecord) => {
+  const value = firstValue(source, ["descricao", "description", "observacoes"]);
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        if (typeof item === "string") return item;
+        const record = nestedRecord(item);
+        return pickString(record, ["texto", "descricao", "description", "titulo"]);
+      })
+      .map(stripHtml)
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  if (value && typeof value === "object") {
+    return asArray(value)
+      .map((item) => {
+        if (typeof item === "string") return item;
+        const record = nestedRecord(item);
+        return pickString(record, ["texto", "descricao", "description", "titulo", "nome"]);
+      })
+      .map(stripHtml)
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  return stripHtml(String(value || ""));
+};
+
 const positive = (value: string) => {
   const normalized = Number(String(value).replace(",", ".").replace(/[^\d.]/g, ""));
   return Number.isFinite(normalized) && normalized > 0;
@@ -112,6 +142,9 @@ const kpgAuthority =
 const collectPhotos = (source: LooseRecord) => {
   const candidates = [
     recordValue(source, "fotos"),
+    recordValue(source, "fotos_edificio"),
+    recordValue(source, "fotosEdificio"),
+    recordValue(source, "FotosEdificio"),
     recordValue(source, "foto"),
     recordValue(source, "imagens"),
     recordValue(source, "images"),
@@ -133,6 +166,9 @@ const collectPhotos = (source: LooseRecord) => {
         "foto_grande",
         "foto_media",
         "foto_pequena",
+        "Foto_Grande",
+        "Foto_Media",
+        "Foto_Pequena",
         "src",
         "link",
         "arquivo",
@@ -245,7 +281,7 @@ export function normalizeProperty(payload: unknown, code: string): Property {
     condoFee,
     propertyTax,
     facts,
-    description: stripHtml(pickString(source, ["descricao", "description", "observacoes"])) || (isAspen2239 ? aspenDescription : ""),
+    description: collectDescription(source) || (isAspen2239 ? aspenDescription : ""),
     features: collectFeatures(source).length ? collectFeatures(source) : isAspen2239 ? aspenFeatures : [],
     photos: collectPhotos(source),
     sourceUrl,

@@ -303,6 +303,7 @@ export default function HomePage() {
     visualizacoes: item.views,
     interacoes: item.totalInteractions
   }));
+  const canRenderChart = mounted && chartData.length > 0;
 
   const totals = enrichedInsights.reduce(
     (acc, item) => {
@@ -670,8 +671,8 @@ export default function HomePage() {
               <small>Ultimos {chartData.length} posts com dados disponiveis</small>
             </div>
             <div className="chart-wrap">
-              {mounted ? (
-                <ResponsiveContainer height="100%" width="100%">
+              {canRenderChart ? (
+                <ResponsiveContainer height={280} minWidth={280} width="100%">
                   <BarChart data={chartData} margin={{ top: 12, right: 12, left: -14, bottom: 18 }}>
                     <CartesianGrid stroke="#e4e9f1" strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" interval={0} tick={{ fontSize: 10 }} height={42} />
@@ -683,7 +684,9 @@ export default function HomePage() {
                     <Bar dataKey="interacoes" fill="#c7972d" name="Interacoes" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-              ) : null}
+              ) : (
+                <div className="empty-chart">Sem dados suficientes para montar o comparativo.</div>
+              )}
             </div>
           </div>
 

@@ -839,7 +839,21 @@ a {
 
 .chart-wrap {
   height: 280px;
+  min-height: 280px;
+  min-width: 280px;
   width: 100%;
+}
+
+.empty-chart {
+  align-items: center;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  display: flex;
+  font-size: 0.82rem;
+  height: 100%;
+  justify-content: center;
+  text-align: center;
 }
 
 .chart-section {
