@@ -57,3 +57,22 @@ export type MediaInsight = {
   commentsCount: number;
   metrics: InsightMetric[];
 };
+
+export type LeadStatus = "novo" | "em_atendimento" | "corretor_acionado" | "ganho" | "perdido";
+
+export type Lead = {
+  id: string;
+  name: string;
+  phone: string;
+  propertyInterest: string;
+  message: string;
+  status: LeadStatus;
+  source: string;
+  conversationId?: string;
+  chatLid?: string;
+  createdAt: string;
+  lastMessageAt: string;
+  interactions: number;
+  notes?: string;
+  raw?: unknown;
+};

@@ -367,8 +367,16 @@ export default function HomePage() {
       <header className="topbar">
         <div className="brand">
           <strong>KPG IMOVEIS</strong>
-          <span>Instagram Publisher</span>
+          <span>Portal de ferramentas</span>
         </div>
+        <nav className="tool-nav" aria-label="Ferramentas KPG">
+          <a className="tool-link active" href="/">
+            Instagram Publisher
+          </a>
+          <a className="tool-link" href="/leads">
+            Mini CRM
+          </a>
+        </nav>
         <div className="status-row">
           <span className="status-pill">SIGA</span>
           <span className="status-pill">Instagram</span>
