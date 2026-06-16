@@ -19,11 +19,13 @@ export type TenantSettings = {
   updatedAt?: string;
 };
 
-export type PublicTenantSettings = Omit<TenantSettings, "sigaToken" | "metaAppSecret" | "instagramAccessToken" | "makeApiToken"> & {
+export type PublicTenantSettings = Omit<
+  TenantSettings,
+  "sigaToken" | "metaAppSecret" | "instagramAccessToken" | "makeBaseUrl" | "makeDataStoreId" | "makeApiToken"
+> & {
   sigaTokenConfigured: boolean;
   metaAppSecretConfigured: boolean;
   instagramAccessTokenConfigured: boolean;
-  makeApiTokenConfigured: boolean;
 };
 
 const text = (value: unknown) => String(value ?? "").trim();
@@ -118,12 +120,11 @@ export async function writeTenantSettings(tenantId: string, patch: Partial<Tenan
 }
 
 export function publicTenantSettings(settings: TenantSettings): PublicTenantSettings {
-  const { sigaToken, metaAppSecret, instagramAccessToken, makeApiToken, ...publicSettings } = settings;
+  const { sigaToken, metaAppSecret, instagramAccessToken, makeBaseUrl, makeDataStoreId, makeApiToken, ...publicSettings } = settings;
   return {
     ...publicSettings,
     sigaTokenConfigured: Boolean(sigaToken),
     metaAppSecretConfigured: Boolean(metaAppSecret),
-    instagramAccessTokenConfigured: Boolean(instagramAccessToken),
-    makeApiTokenConfigured: Boolean(makeApiToken)
+    instagramAccessTokenConfigured: Boolean(instagramAccessToken)
   };
 }

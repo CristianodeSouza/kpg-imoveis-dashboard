@@ -37,9 +37,6 @@ type TenantDetail = {
     metaAppSecretConfigured: boolean;
     instagramAccountId: string;
     instagramAccessTokenConfigured: boolean;
-    makeBaseUrl: string;
-    makeDataStoreId: string;
-    makeApiTokenConfigured: boolean;
     whatsappNumber: string;
   };
   activityLogs: Array<{ id: string; action: string; target?: string; username?: string; createdAt: string }>;
@@ -53,9 +50,6 @@ type SettingsDraft = {
   metaAppSecret: string;
   instagramAccountId: string;
   instagramAccessToken: string;
-  makeBaseUrl: string;
-  makeDataStoreId: string;
-  makeApiToken: string;
   whatsappNumber: string;
 };
 
@@ -90,9 +84,6 @@ function settingsDraftFromTenant(tenant: TenantDetail): SettingsDraft {
     metaAppSecret: "",
     instagramAccountId: tenant.settings?.instagramAccountId || "",
     instagramAccessToken: "",
-    makeBaseUrl: tenant.settings?.makeBaseUrl || "",
-    makeDataStoreId: tenant.settings?.makeDataStoreId || "",
-    makeApiToken: "",
     whatsappNumber: tenant.settings?.whatsappNumber || ""
   };
 }
@@ -356,23 +347,24 @@ export default function ClientDetailPage() {
               </div>
               <div className="settings-grid">
                 <div className="field">
-                  <label>Nome da empresa</label>
-                  <input className="input" value={draft.settings?.companyName || ""} onChange={(event) => updateSettings("companyName", event.target.value)} />
+                  <label>Nome da empresa <span className="required-mark">*</span></label>
+                  <input className="input" required value={draft.settings?.companyName || ""} onChange={(event) => updateSettings("companyName", event.target.value)} />
                 </div>
                 <div className="field">
                   <label>WhatsApp principal</label>
                   <input className="input" value={draft.settings?.whatsappNumber || ""} onChange={(event) => updateSettings("whatsappNumber", event.target.value)} />
                 </div>
                 <div className="field wide">
-                  <label>Endpoint CRM SIGA</label>
-                  <input className="input" value={draft.settings?.sigaEndpoint || ""} onChange={(event) => updateSettings("sigaEndpoint", event.target.value)} />
+                  <label>Endpoint CRM SIGA <span className="required-mark">*</span></label>
+                  <input className="input" required value={draft.settings?.sigaEndpoint || ""} onChange={(event) => updateSettings("sigaEndpoint", event.target.value)} />
                 </div>
                 <div className="field wide">
-                  <label>Token CRM SIGA</label>
+                  <label>Token CRM SIGA <span className="required-mark">*</span></label>
                   <input
                     autoComplete="off"
                     className="input"
                     placeholder={tenant.settings.sigaTokenConfigured ? "Token salvo. Preencha apenas para trocar." : "Cole o token do SIGA"}
+                    required={!tenant.settings.sigaTokenConfigured}
                     type="password"
                     value={draft.settings?.sigaToken || ""}
                     onChange={(event) => updateSettings("sigaToken", event.target.value)}
@@ -394,37 +386,19 @@ export default function ClientDetailPage() {
                   />
                 </div>
                 <div className="field">
-                  <label>Instagram Account ID</label>
-                  <input className="input" value={draft.settings?.instagramAccountId || ""} onChange={(event) => updateSettings("instagramAccountId", event.target.value)} />
+                  <label>Instagram Account ID <span className="required-mark">*</span></label>
+                  <input className="input" required value={draft.settings?.instagramAccountId || ""} onChange={(event) => updateSettings("instagramAccountId", event.target.value)} />
                 </div>
                 <div className="field">
-                  <label>Instagram Access Token</label>
+                  <label>Instagram Access Token <span className="required-mark">*</span></label>
                   <input
                     autoComplete="off"
                     className="input"
                     placeholder={tenant.settings.instagramAccessTokenConfigured ? "Token salvo. Preencha apenas para trocar." : "Token da Graph API"}
+                    required={!tenant.settings.instagramAccessTokenConfigured}
                     type="password"
                     value={draft.settings?.instagramAccessToken || ""}
                     onChange={(event) => updateSettings("instagramAccessToken", event.target.value)}
-                  />
-                </div>
-                <div className="field">
-                  <label>Make Base URL</label>
-                  <input className="input" value={draft.settings?.makeBaseUrl || ""} onChange={(event) => updateSettings("makeBaseUrl", event.target.value)} />
-                </div>
-                <div className="field">
-                  <label>Make Data Store ID</label>
-                  <input className="input" value={draft.settings?.makeDataStoreId || ""} onChange={(event) => updateSettings("makeDataStoreId", event.target.value)} />
-                </div>
-                <div className="field wide">
-                  <label>Make API Token</label>
-                  <input
-                    autoComplete="off"
-                    className="input"
-                    placeholder={tenant.settings.makeApiTokenConfigured ? "Token salvo. Preencha apenas para trocar." : "Token da API Make"}
-                    type="password"
-                    value={draft.settings?.makeApiToken || ""}
-                    onChange={(event) => updateSettings("makeApiToken", event.target.value)}
                   />
                 </div>
               </div>

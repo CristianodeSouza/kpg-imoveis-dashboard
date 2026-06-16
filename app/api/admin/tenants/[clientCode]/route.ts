@@ -19,6 +19,10 @@ function parseDate(value: unknown) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function requiredText(value: unknown) {
+  return String(value ?? "").trim();
+}
+
 async function loadTenant(clientCode: string) {
   return prisma.tenant.findFirst({
     where: { AND: [{ clientCode }, { clientCode: { not: "PLATFORM" } }] },
@@ -116,6 +120,24 @@ export async function PATCH(request: Request, context: { params: Promise<{ clien
 
   const body = await request.json().catch(() => ({}));
   if (body.settings) {
+    const currentSettings = await readTenantSettings(existing.id);
+    const missingFields = [
+      ["Nome da empresa", requiredText(body.settings.companyName)],
+      ["Endpoint CRM SIGA", requiredText(body.settings.sigaEndpoint)],
+      ["Token CRM SIGA", requiredText(body.settings.sigaToken) || currentSettings.sigaToken],
+      ["Instagram Account ID", requiredText(body.settings.instagramAccountId)],
+      ["Instagram Access Token", requiredText(body.settings.instagramAccessToken) || currentSettings.instagramAccessToken]
+    ]
+      .filter(([, value]) => !value)
+      .map(([label]) => label);
+
+    if (missingFields.length) {
+      return NextResponse.json(
+        { error: `Preencha os campos obrigatorios: ${missingFields.join(", ")}.` },
+        { status: 400 }
+      );
+    }
+
     await writeTenantSettings(existing.id, {
       companyName: body.settings.companyName,
       sigaEndpoint: body.settings.sigaEndpoint,
@@ -124,9 +146,6 @@ export async function PATCH(request: Request, context: { params: Promise<{ clien
       metaAppSecret: body.settings.metaAppSecret,
       instagramAccountId: body.settings.instagramAccountId,
       instagramAccessToken: body.settings.instagramAccessToken,
-      makeBaseUrl: body.settings.makeBaseUrl,
-      makeDataStoreId: body.settings.makeDataStoreId,
-      makeApiToken: body.settings.makeApiToken,
       whatsappNumber: body.settings.whatsappNumber
     });
   }

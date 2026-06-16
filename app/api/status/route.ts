@@ -14,7 +14,6 @@ export async function GET(request: Request) {
   return NextResponse.json({
     siga: settings.sigaEndpoint && settings.sigaToken ? "configurado" : "pendente",
     instagram: settings.instagramAccessToken && settings.instagramAccountId ? "configurado" : "pendente",
-    make: settings.makeApiToken && settings.makeBaseUrl && settings.makeDataStoreId ? "configurado" : "pendente",
     whatsapp: settings.whatsappNumber ? "configurado" : "pendente",
     imgbb: process.env.IMGBB_API_KEY ? "configurado" : "pendente",
     ia_caption: "template (sem IA)",

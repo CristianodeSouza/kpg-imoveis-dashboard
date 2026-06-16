@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Building2, CheckCircle2, Database, Instagram, KeyRound, Loader2, Save } from "lucide-react";
+import { Building2, CheckCircle2, Instagram, KeyRound, Loader2, RefreshCw, Save } from "lucide-react";
 
 type PublicSettings = {
   companyName: string;
@@ -11,9 +11,6 @@ type PublicSettings = {
   metaAppSecretConfigured: boolean;
   instagramAccountId: string;
   instagramAccessTokenConfigured: boolean;
-  makeBaseUrl: string;
-  makeDataStoreId: string;
-  makeApiTokenConfigured: boolean;
   whatsappNumber: string;
   updatedAt?: string;
 };
@@ -26,9 +23,6 @@ type FormState = {
   metaAppSecret: string;
   instagramAccountId: string;
   instagramAccessToken: string;
-  makeBaseUrl: string;
-  makeDataStoreId: string;
-  makeApiToken: string;
   whatsappNumber: string;
 };
 
@@ -40,9 +34,6 @@ const emptyForm: FormState = {
   metaAppSecret: "",
   instagramAccountId: "",
   instagramAccessToken: "",
-  makeBaseUrl: "",
-  makeDataStoreId: "",
-  makeApiToken: "",
   whatsappNumber: ""
 };
 
@@ -70,9 +61,6 @@ export default function ConfiguracoesPage() {
       metaAppSecret: "",
       instagramAccountId: nextSettings.instagramAccountId || "",
       instagramAccessToken: "",
-      makeBaseUrl: nextSettings.makeBaseUrl || "",
-      makeDataStoreId: nextSettings.makeDataStoreId || "",
-      makeApiToken: "",
       whatsappNumber: nextSettings.whatsappNumber || ""
     });
   }
@@ -158,7 +146,7 @@ export default function ConfiguracoesPage() {
               <h2>Configuracoes do Cliente</h2>
             </div>
             <button className="btn secondary" disabled={loading} onClick={loadSettings}>
-              {loading ? <Loader2 className="spin" size={17} /> : <Database size={17} />}
+              {loading ? <Loader2 className="spin" size={17} /> : <RefreshCw size={17} />}
               Recarregar
             </button>
           </div>
@@ -180,10 +168,6 @@ export default function ConfiguracoesPage() {
               <span>WhatsApp CTA</span>
               <strong>{settings?.whatsappNumber || "Pendente"}</strong>
             </div>
-            <div className="metric">
-              <span>Make</span>
-              <strong>{configuredLabel(Boolean(settings?.makeBaseUrl && settings?.makeDataStoreId && settings?.makeApiTokenConfigured))}</strong>
-            </div>
           </div>
 
           {message ? <div className={`message ${message.type}`}>{message.text}</div> : null}
@@ -199,12 +183,13 @@ export default function ConfiguracoesPage() {
               </div>
               <div className="settings-grid">
                 <div className="field">
-                  <label htmlFor="companyName">Nome da imobiliaria</label>
+                  <label htmlFor="companyName">Nome da imobiliaria <span className="required-mark">*</span></label>
                   <input
                     className="input"
                     id="companyName"
                     onChange={(event) => updateField("companyName", event.target.value)}
                     placeholder="Ex: KPG Imoveis"
+                    required
                     value={form.companyName}
                   />
                 </div>
@@ -219,23 +204,25 @@ export default function ConfiguracoesPage() {
                   />
                 </div>
                 <div className="field wide">
-                  <label htmlFor="sigaEndpoint">Endpoint da API SIGA</label>
+                  <label htmlFor="sigaEndpoint">Endpoint da API SIGA <span className="required-mark">*</span></label>
                   <input
                     className="input"
                     id="sigaEndpoint"
                     onChange={(event) => updateField("sigaEndpoint", event.target.value)}
                     placeholder="https://..."
+                    required
                     value={form.sigaEndpoint}
                   />
                 </div>
                 <div className="field wide secret-field">
-                  <label htmlFor="sigaToken">Token da API SIGA</label>
+                  <label htmlFor="sigaToken">Token da API SIGA <span className="required-mark">*</span></label>
                   <input
                     autoComplete="off"
                     className="input"
                     id="sigaToken"
                     onChange={(event) => updateField("sigaToken", event.target.value)}
                     placeholder={settings?.sigaTokenConfigured ? "Token ja configurado. Preencha apenas para trocar." : "Cole o token do CRM SIGA"}
+                    required={!settings?.sigaTokenConfigured}
                     type="password"
                     value={form.sigaToken}
                   />
@@ -287,17 +274,18 @@ export default function ConfiguracoesPage() {
                   ) : null}
                 </div>
                 <div className="field">
-                  <label htmlFor="instagramAccountId">Instagram Account ID</label>
+                  <label htmlFor="instagramAccountId">Instagram Account ID <span className="required-mark">*</span></label>
                   <input
                     className="input"
                     id="instagramAccountId"
                     onChange={(event) => updateField("instagramAccountId", event.target.value)}
                     placeholder="ID da conta profissional"
+                    required
                     value={form.instagramAccountId}
                   />
                 </div>
                 <div className="field secret-field">
-                  <label htmlFor="instagramAccessToken">Instagram Access Token</label>
+                  <label htmlFor="instagramAccessToken">Instagram Access Token <span className="required-mark">*</span></label>
                   <input
                     autoComplete="off"
                     className="input"
@@ -308,60 +296,11 @@ export default function ConfiguracoesPage() {
                         ? "Token ja configurado. Preencha apenas para trocar."
                         : "Token de acesso com permissoes da Graph API"
                     }
+                    required={!settings?.instagramAccessTokenConfigured}
                     type="password"
                     value={form.instagramAccessToken}
                   />
                   {settings?.instagramAccessTokenConfigured ? (
-                    <span className="secret-status">
-                      <CheckCircle2 size={15} />
-                      Token salvo
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-            </section>
-
-            <section className="settings-section">
-              <div className="settings-section-title">
-                <Database size={20} />
-                <div>
-                  <h3>Make e Automações</h3>
-                  <span>Credenciais usadas para sincronizar leads e acionar cenarios automatizados.</span>
-                </div>
-              </div>
-              <div className="settings-grid">
-                <div className="field">
-                  <label htmlFor="makeBaseUrl">Base URL Make</label>
-                  <input
-                    className="input"
-                    id="makeBaseUrl"
-                    onChange={(event) => updateField("makeBaseUrl", event.target.value)}
-                    placeholder="https://us2.make.com/api/v2"
-                    value={form.makeBaseUrl}
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor="makeDataStoreId">Data Store ID</label>
-                  <input
-                    className="input"
-                    id="makeDataStoreId"
-                    onChange={(event) => updateField("makeDataStoreId", event.target.value)}
-                    placeholder="ID do data store"
-                    value={form.makeDataStoreId}
-                  />
-                </div>
-                <div className="field wide secret-field">
-                  <label htmlFor="makeApiToken">Make API Token</label>
-                  <input
-                    autoComplete="off"
-                    className="input"
-                    id="makeApiToken"
-                    onChange={(event) => updateField("makeApiToken", event.target.value)}
-                    placeholder={settings?.makeApiTokenConfigured ? "Token ja configurado. Preencha apenas para trocar." : "Token da API Make"}
-                    type="password"
-                    value={form.makeApiToken}
-                  />
-                  {settings?.makeApiTokenConfigured ? (
                     <span className="secret-status">
                       <CheckCircle2 size={15} />
                       Token salvo

@@ -5,6 +5,10 @@ import { publicTenantSettings, readTenantSettings, writeTenantSettings } from "@
 
 export const dynamic = "force-dynamic";
 
+function text(value: unknown) {
+  return String(value ?? "").trim();
+}
+
 export async function GET(request: Request) {
   const { session, response } = await requireTenantService(request, "settings");
   if (response) return response;
@@ -20,6 +24,24 @@ export async function POST(request: Request) {
   if (!session) return NextResponse.json({ error: "Sessao invalida." }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));
+  const current = await readTenantSettings(session.tenantId);
+  const missingFields = [
+    ["Nome da imobiliaria", text(body.companyName)],
+    ["Endpoint da API SIGA", text(body.sigaEndpoint)],
+    ["Token da API SIGA", text(body.sigaToken) || current.sigaToken],
+    ["Instagram Account ID", text(body.instagramAccountId)],
+    ["Instagram Access Token", text(body.instagramAccessToken) || current.instagramAccessToken]
+  ]
+    .filter(([, value]) => !value)
+    .map(([label]) => label);
+
+  if (missingFields.length) {
+    return NextResponse.json(
+      { error: `Preencha os campos obrigatorios: ${missingFields.join(", ")}.` },
+      { status: 400 }
+    );
+  }
+
   const settings = await writeTenantSettings(session.tenantId, {
     companyName: body.companyName,
     sigaEndpoint: body.sigaEndpoint,
@@ -28,9 +50,6 @@ export async function POST(request: Request) {
     metaAppSecret: body.metaAppSecret,
     instagramAccountId: body.instagramAccountId,
     instagramAccessToken: body.instagramAccessToken,
-    makeBaseUrl: body.makeBaseUrl,
-    makeDataStoreId: body.makeDataStoreId,
-    makeApiToken: body.makeApiToken,
     whatsappNumber: body.whatsappNumber
   });
 

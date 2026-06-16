@@ -103,8 +103,8 @@ const sigaEndpoints = (baseEndpoint: string, codigo: string) => {
   const endpoint = baseEndpoint.trim().replace(/\/$/, "");
   const encoded = encodeURIComponent(codigo);
   if (!endpoint) return [];
-  if (endpoint.includes("{codigo}")) return [endpoint.replaceAll("{codigo}", encoded)];
-  if (endpoint.includes("{code}")) return [endpoint.replaceAll("{code}", encoded)];
+  if (/\{codigo\}/i.test(endpoint)) return [endpoint.replace(/\{codigo\}/gi, encoded)];
+  if (/\{code\}/i.test(endpoint)) return [endpoint.replace(/\{code\}/gi, encoded)];
   return [`${endpoint}/${encoded}`, `${endpoint}?codigo=${encoded}`, `${endpoint}?code=${encoded}`];
 };
 

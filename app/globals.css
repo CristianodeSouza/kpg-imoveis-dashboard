@@ -305,6 +305,11 @@ a {
   text-transform: uppercase;
 }
 
+.required-mark {
+  color: #dc2626;
+  font-weight: 900;
+}
+
 .input,
 .textarea,
 .select {
