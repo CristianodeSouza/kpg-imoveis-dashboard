@@ -1,0 +1,13 @@
+.next/
+node_modules/
+dist/
+build/
+.env
+.env.*
+!.env.example
+*.log
+vercel.json
+*.tsbuildinfo
+.vercel/
+
+.vercel
