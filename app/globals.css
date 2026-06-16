@@ -138,6 +138,12 @@ a {
   padding: 24px 18px 48px;
 }
 
+.admin-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
 .stepper {
   background: var(--panel);
   border: 1px solid #eef1f5;
@@ -454,8 +460,7 @@ a {
 .admin-summary-strip {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(3, minmax(160px, 1fr));
-  margin-bottom: 18px;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
 }
 
 .admin-summary-strip > div,
@@ -473,10 +478,66 @@ a {
   margin-top: 4px;
 }
 
+.client-directory,
+.finance-table {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.client-directory-card,
+.finance-row {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.client-directory-head {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.client-directory-head strong,
+.client-directory-head small {
+  display: block;
+}
+
+.client-directory-head small,
+.client-directory-grid {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.client-directory-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+}
+
+.finance-row {
+  align-items: center;
+  grid-template-columns: 1.4fr repeat(3, 1fr);
+}
+
+.finance-row strong {
+  display: block;
+  font-size: 15px;
+  margin-top: 3px;
+}
+
+.section-kicker {
+  color: var(--muted);
+  line-height: 1.45;
+  margin: -8px 0 0;
+}
+
 .tenant-list {
   display: grid;
   gap: 12px;
-  margin-top: 18px;
 }
 
 .tenant-card {
@@ -1406,6 +1467,8 @@ a {
   .config-status-grid,
   .admin-create-form,
   .admin-summary-strip,
+  .client-directory-grid,
+  .finance-row,
   .tenant-kpis,
   .tenant-edit-grid,
   .portal-hero {

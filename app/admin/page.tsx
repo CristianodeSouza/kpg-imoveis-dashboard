@@ -133,6 +133,14 @@ export default function AdminPage() {
     return "Bloqueado";
   }
 
+  function billingLabel(status: string) {
+    if (status === "active") return "Em dia";
+    if (status === "trial") return "Teste";
+    if (status === "overdue") return "Em atraso";
+    if (status === "suspended") return "Suspenso";
+    return status;
+  }
+
   async function saveTenant(tenant: AdminTenant) {
     const draft = editing[tenant.id] || {};
     const monthlyValueCents = draft.monthlyValueCents ?? tenant.monthlyValueCents;
@@ -214,12 +222,12 @@ export default function AdminPage() {
         </nav>
       </header>
 
-      <section className="workspace">
+      <section className="workspace admin-workspace">
         <section className="panel">
           <div className="panel-heading">
             <div className="panel-title">
               <ShieldCheck size={22} />
-              <h2>Clientes SaaS</h2>
+              <h2>Dados gerais da plataforma</h2>
             </div>
             <button className="btn secondary" disabled={loading} onClick={loadTenants}>
               {loading ? <Loader2 className="spin" size={17} /> : <RefreshCw size={17} />}
@@ -242,8 +250,20 @@ export default function AdminPage() {
               <span className="eyebrow">Contratos em atraso</span>
               <strong>{tenants.filter((tenant) => ["overdue", "suspended"].includes(tenant.billingStatus)).length}</strong>
             </div>
+            <div>
+              <span className="eyebrow">Servicos no catalogo</span>
+              <strong>{services.length}</strong>
+            </div>
           </div>
+        </section>
 
+        <section className="panel">
+          <div className="panel-heading">
+            <div className="panel-title">
+              <Building2 size={22} />
+              <h2>Clientes</h2>
+            </div>
+          </div>
           <form className="admin-create-form" onSubmit={createTenant}>
             <div className="field">
               <label htmlFor="tenantName">Cliente</label>
@@ -302,6 +322,70 @@ export default function AdminPage() {
               Criar cliente
             </button>
           </form>
+
+          <div className="client-directory">
+            {tenants.map((tenant) => (
+              <article className="client-directory-card" key={tenant.id}>
+                <div className="client-directory-head">
+                  <span className="portal-card-icon">
+                    <Building2 size={21} />
+                  </span>
+                  <div>
+                    <strong>{tenant.name}</strong>
+                    <small>ID {tenant.clientCode || "pendente"} | {tenant.slug}</small>
+                  </div>
+                  <span className={`tenant-status-pill ${tenant.status}`}>{statusLabel(tenant.status)}</span>
+                </div>
+                <div className="client-directory-grid">
+                  <span>Responsavel: {tenant.contactName || "pendente"}</span>
+                  <span>Email: {tenant.contactEmail || "pendente"}</span>
+                  <span>Telefone: {tenant.contactPhone || "pendente"}</span>
+                  <span>CPF/CNPJ: {tenant.document || "pendente"}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="panel">
+          <div className="panel-heading">
+            <div className="panel-title">
+              <ShieldCheck size={22} />
+              <h2>Financeiro</h2>
+            </div>
+          </div>
+          <div className="finance-table">
+            {tenants.map((tenant) => (
+              <article className="finance-row" key={tenant.id}>
+                <div>
+                  <span className="eyebrow">Cliente</span>
+                  <strong>{tenant.clientCode || "pendente"} | {tenant.name}</strong>
+                </div>
+                <div>
+                  <span className="eyebrow">Valor mensal</span>
+                  <strong>{money(tenant.monthlyValueCents)}</strong>
+                </div>
+                <div>
+                  <span className="eyebrow">Financeiro</span>
+                  <strong>{billingLabel(tenant.billingStatus)}</strong>
+                </div>
+                <div>
+                  <span className="eyebrow">Aquisicao</span>
+                  <strong>{tenant.acquiredAt ? new Date(tenant.acquiredAt).toLocaleDateString("pt-BR") : "Pendente"}</strong>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="panel">
+          <div className="panel-heading">
+            <div className="panel-title">
+              <Activity size={22} />
+              <h2>Gestao</h2>
+            </div>
+          </div>
+          <p className="section-kicker">Controle de status, liberacao de servicos, integracoes e historico operacional de cada cliente.</p>
         </section>
 
         <section className="tenant-list">
