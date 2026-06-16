@@ -345,19 +345,88 @@ a {
   align-items: end;
   display: grid;
   gap: 14px;
-  grid-template-columns: 1fr 240px;
+  grid-template-columns: minmax(260px, 1fr) 220px 250px;
   margin-bottom: 16px;
 }
 
-.lead-list {
+.kanban-board {
   display: grid;
-  gap: 12px;
+  gap: 14px;
+  grid-template-columns: repeat(5, minmax(280px, 1fr));
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.kanban-column {
+  background: #f6f8fb;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-width: 280px;
+  padding: 12px;
+}
+
+.kanban-column-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.kanban-column-header strong {
+  font-size: 14px;
+}
+
+.kanban-column-header span {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 900;
+  height: 26px;
+  justify-content: center;
+  min-width: 30px;
+  padding: 0 8px;
+}
+
+.kanban-column.novo {
+  border-top: 4px solid #98a2b3;
+}
+
+.kanban-column.em_atendimento {
+  border-top: 4px solid var(--blue);
+}
+
+.kanban-column.corretor_acionado {
+  border-top: 4px solid var(--gold);
+}
+
+.kanban-column.ganho {
+  border-top: 4px solid var(--green);
+}
+
+.kanban-column.perdido {
+  border-top: 4px solid var(--danger);
+}
+
+.kanban-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .lead-card {
+  background: #fff;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 16px;
+}
+
+.kanban-card {
+  box-shadow: 0 8px 18px rgba(28, 39, 58, 0.06);
+  padding: 12px;
 }
 
 .lead-main {
@@ -368,7 +437,8 @@ a {
 }
 
 .lead-main h3 {
-  font-size: 18px;
+  font-size: 16px;
+  line-height: 1.25;
   margin: 4px 0;
 }
 
@@ -382,8 +452,10 @@ a {
   border-radius: 999px;
   font-size: 12px;
   font-weight: 900;
+  margin-top: 12px;
   min-height: 36px;
   padding: 0 12px;
+  width: 100%;
 }
 
 .status-select.novo {
@@ -440,8 +512,12 @@ a {
 .lead-message {
   border-left: 3px solid var(--gold);
   color: var(--ink-2);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
   line-height: 1.5;
   margin: 14px 0 0;
+  overflow: hidden;
   padding-left: 12px;
 }
 
@@ -956,8 +1032,13 @@ a {
   .fact-grid,
   .crm-hero,
   .crm-metrics,
-  .lead-toolbar {
+  .lead-toolbar,
+  .kanban-board {
     grid-template-columns: 1fr;
+  }
+
+  .kanban-column {
+    min-width: 0;
   }
 
   .lead-main {
