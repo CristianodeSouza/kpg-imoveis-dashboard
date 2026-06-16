@@ -25,7 +25,8 @@ export async function POST(request: Request) {
       id: user.id,
       name: user.name,
       role: user.role,
-      tenantId: user.tenantId
+      tenantId: user.tenantId,
+      isPlatformAdmin: user.isPlatformAdmin
     }
   });
   response.cookies.set(SESSION_COOKIE, createSessionCookieValue({ userId: user.id, tenantId: user.tenantId }), {

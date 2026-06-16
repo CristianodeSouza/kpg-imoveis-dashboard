@@ -22,7 +22,8 @@ export default function LoginPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Falha ao entrar.");
-      window.location.href = new URLSearchParams(window.location.search).get("next") || "/portal";
+      const next = new URLSearchParams(window.location.search).get("next") || "/portal";
+      window.location.href = next.startsWith("/admin") && !data.user?.isPlatformAdmin ? "/portal" : next;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao entrar.");
     } finally {
