@@ -135,7 +135,6 @@ export default function LeadsPage() {
   );
 
   const todayCount = leads.filter((lead) => new Date(lead.lastMessageAt).toDateString() === new Date().toDateString()).length;
-  const hotCount = leads.filter((lead) => lead.status === "corretor_acionado").length;
   const newCount = leads.filter((lead) => lead.status === "novo").length;
   const brokerCount = leads.filter(hasBrokerAssigned).length;
 
@@ -288,7 +287,7 @@ export default function LeadsPage() {
                         <select className={`status-select ${lead.status}`} value={lead.status} onChange={(event) => updateStatus(lead.id, event.target.value as LeadStatus)}>
                           {Object.entries(statusLabels).map(([value, label]) => (
                             <option key={value} value={value}>
-                              Mover para: {label}
+                              {label}
                             </option>
                           ))}
                         </select>

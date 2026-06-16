@@ -134,8 +134,8 @@ a {
 
 .workspace {
   margin: 0 auto;
-  max-width: 1180px;
-  padding: 32px 24px 56px;
+  max-width: 1320px;
+  padding: 24px 18px 48px;
 }
 
 .stepper {
@@ -199,7 +199,7 @@ a {
   border: 1px solid #edf1f5;
   border-radius: 8px;
   box-shadow: var(--shadow);
-  padding: 28px 32px;
+  padding: 20px 22px;
 }
 
 .panel + .panel {
@@ -268,7 +268,7 @@ a {
   border: 1px solid #d9e0ea;
   border-radius: 8px;
   color: var(--ink);
-  min-height: 44px;
+  min-height: 38px;
   outline: none;
   padding: 10px 12px;
   width: 100%;
@@ -295,7 +295,7 @@ a {
   color: var(--muted);
   display: flex;
   gap: 8px;
-  min-height: 44px;
+  min-height: 38px;
   padding: 0 12px;
 }
 
@@ -336,23 +336,23 @@ a {
 
 .crm-metrics {
   display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(4, 1fr);
-  margin-bottom: 18px;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin-bottom: 14px;
 }
 
 .lead-toolbar {
   align-items: end;
   display: grid;
-  gap: 14px;
-  grid-template-columns: minmax(260px, 1fr) 220px 250px;
-  margin-bottom: 16px;
+  gap: 10px;
+  grid-template-columns: minmax(220px, 1fr) minmax(140px, 170px) minmax(170px, 210px);
+  margin-bottom: 14px;
 }
 
 .kanban-board {
   display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(5, minmax(280px, 1fr));
+  gap: 10px;
+  grid-template-columns: repeat(5, minmax(210px, 1fr));
   overflow-x: auto;
   padding-bottom: 8px;
 }
@@ -361,8 +361,8 @@ a {
   background: #f6f8fb;
   border: 1px solid var(--line);
   border-radius: 8px;
-  min-width: 280px;
-  padding: 12px;
+  min-width: 210px;
+  padding: 8px;
 }
 
 .kanban-column-header {
@@ -414,19 +414,19 @@ a {
 .kanban-cards {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .lead-card {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 16px;
+  padding: 14px;
 }
 
 .kanban-card {
   box-shadow: 0 8px 18px rgba(28, 39, 58, 0.06);
-  padding: 12px;
+  padding: 10px;
 }
 
 .lead-main {
@@ -437,24 +437,26 @@ a {
 }
 
 .lead-main h3 {
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.25;
   margin: 4px 0;
 }
 
 .lead-main p {
   color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
   margin: 0;
 }
 
 .status-select {
   border: 1px solid var(--line);
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
-  margin-top: 12px;
-  min-height: 36px;
-  padding: 0 12px;
+  margin-top: 10px;
+  min-height: 32px;
+  padding: 0 10px;
   width: 100%;
 }
 
@@ -486,8 +488,8 @@ a {
 .lead-details {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 14px;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 .lead-details span,
@@ -497,10 +499,11 @@ a {
   border-radius: 999px;
   color: #41506a;
   display: inline-flex;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
-  gap: 6px;
-  padding: 7px 10px;
+  gap: 4px;
+  line-height: 1.2;
+  padding: 4px 7px;
 }
 
 .lead-link {
@@ -514,11 +517,12 @@ a {
   color: var(--ink-2);
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 5;
-  line-height: 1.5;
-  margin: 14px 0 0;
+  -webkit-line-clamp: 3;
+  font-size: 12px;
+  line-height: 1.35;
+  margin: 8px 0 0;
   overflow: hidden;
-  padding-left: 12px;
+  padding-left: 8px;
 }
 
 .empty-state {
@@ -546,7 +550,7 @@ a {
   font-weight: 800;
   gap: 8px;
   justify-content: center;
-  min-height: 44px;
+  min-height: 38px;
   padding: 0 16px;
   white-space: nowrap;
 }
@@ -731,9 +735,9 @@ a {
 
 .insight-grid {
   display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(5, 1fr);
-  margin-bottom: 18px;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin-bottom: 14px;
 }
 
 .analytics-hero {
@@ -817,19 +821,19 @@ a {
 .metric {
   border: 1px solid var(--line);
   border-radius: 8px;
-  min-height: 82px;
-  padding: 14px;
+  min-height: 64px;
+  padding: 10px 12px;
 }
 
 .metric span {
   color: var(--muted);
   display: block;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .metric strong {
   display: block;
-  font-size: 24px;
+  font-size: 20px;
   margin-top: 4px;
 }
 
@@ -904,6 +908,14 @@ a {
   aspect-ratio: 1;
   border-radius: 6px;
   object-fit: cover;
+  width: 62px;
+}
+
+.ranking-thumb {
+  aspect-ratio: 1;
+  background: #eef2f7;
+  border-radius: 6px;
+  display: block;
   width: 62px;
 }
 
@@ -998,6 +1010,20 @@ a {
 
   .fact-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 1200px) {
+  .panel {
+    padding-inline: 16px;
+  }
+
+  .kanban-board {
+    grid-template-columns: repeat(5, minmax(200px, 1fr));
+  }
+
+  .kanban-column {
+    min-width: 200px;
   }
 }
 

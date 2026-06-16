@@ -696,7 +696,9 @@ export default function HomePage() {
                     <span className="rank">{index + 1}</span>
                     {item.thumbnailUrl || item.mediaUrl ? (
                       <img src={item.thumbnailUrl || item.mediaUrl} alt="Midia do Instagram" />
-                    ) : null}
+                    ) : (
+                      <span className="ranking-thumb" aria-hidden="true" />
+                    )}
                     <span>
                       <strong>{shortCaption(item.caption, item.id)}</strong>
                       <small>
