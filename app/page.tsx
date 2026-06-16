@@ -185,7 +185,10 @@ export default function HomePage() {
       const data = await response.json();
       if (!response.ok || data.sucesso === false) throw new Error(data.error || data.detail || "Falha ao publicar.");
       const url = data?.resultado?.url ? ` ${data.resultado.url}` : "";
-      setMessage({ type: "ok", text: `Publicacao enviada para o Instagram.${url}` });
+      const publishedCount = data?.resultado?.fotos_publicadas;
+      const publishType = data?.resultado?.tipo;
+      const details = publishedCount ? ` ${publishType || "post"} com ${publishedCount} foto${publishedCount > 1 ? "s" : ""}.` : "";
+      setMessage({ type: "ok", text: `Publicacao enviada para o Instagram.${details}${url}` });
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao publicar." });
     } finally {

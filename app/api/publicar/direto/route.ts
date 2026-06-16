@@ -31,7 +31,10 @@ async function publishFallback(caption: string, imageUrls: string[]) {
     return data;
   };
 
-  if (imageUrls.length === 1) return publish(await create(imageUrls[0], false));
+  if (imageUrls.length === 1) {
+    const result = await publish(await create(imageUrls[0], false));
+    return { ...result, tipo: "imagem", fotos_publicadas: 1 };
+  }
 
   const children = [];
   for (const imageUrl of imageUrls.slice(0, 10)) children.push(await create(imageUrl, true));
@@ -46,7 +49,8 @@ async function publishFallback(caption: string, imageUrls: string[]) {
   });
   const carousel = await response.json();
   if (!response.ok) throw new Error(carousel?.error?.message || "Falha ao criar carrossel.");
-  return publish(String(carousel.id));
+  const result = await publish(String(carousel.id));
+  return { ...result, tipo: "carrossel", fotos_publicadas: children.length };
 }
 
 export async function POST(request: Request) {
@@ -57,20 +61,28 @@ export async function POST(request: Request) {
 
     if (!codigo) return NextResponse.json({ sucesso: false, error: "Informe o codigo." }, { status: 400 });
 
-    const backend = await postToBackend("/api/publicar/direto", { codigo, caption });
-    if (backend) return NextResponse.json(backend);
-
     const imageUrls = Array.from(new Set((body.imageUrls || body.imagens || []) as string[])).filter((url) =>
       /^https?:\/\//i.test(url)
     );
+
+    if (imageUrls.length) {
+      const resultado = await publishFallback(caption, imageUrls);
+      return NextResponse.json({
+        sucesso: true,
+        resultado,
+        origem: "next-selected-images"
+      });
+    }
+
+    const backend = await postToBackend("/api/publicar/direto", { codigo, caption });
+    if (backend) return NextResponse.json(backend);
+
     if (!imageUrls.length) {
       return NextResponse.json(
-        { sucesso: false, error: "Backend indisponivel e nenhuma URL publica foi enviada para fallback." },
+        { sucesso: false, error: "Selecione pelo menos uma foto para publicar." },
         { status: 503 }
       );
     }
-    const resultado = await publishFallback(caption, imageUrls);
-    return NextResponse.json({ sucesso: true, resultado, origem: "next-fallback" });
   } catch (error) {
     return NextResponse.json(
       { sucesso: false, error: error instanceof Error ? error.message : "Erro ao publicar." },
