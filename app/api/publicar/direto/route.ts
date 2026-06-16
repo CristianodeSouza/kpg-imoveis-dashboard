@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { postToBackend } from "@/lib/backend";
+import { readTenantSettings } from "@/lib/settings";
+import { requireTenantService } from "@/lib/services";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -20,9 +22,7 @@ async function graphFetch(url: string, init?: RequestInit) {
   return data;
 }
 
-async function publishFallback(caption: string, imageUrls: string[]) {
-  const accountId = process.env.INSTAGRAM_ACCOUNT_ID;
-  const token = process.env.INSTAGRAM_ACCESS_TOKEN;
+async function publishFallback(caption: string, imageUrls: string[], accountId: string, token: string) {
   if (!accountId || !token) throw new Error("Credenciais do Instagram nao configuradas.");
 
   const create = async (imageUrl: string, isCarouselItem: boolean) => {
@@ -78,6 +78,11 @@ async function publishFallback(caption: string, imageUrls: string[]) {
 
 export async function POST(request: Request) {
   try {
+    const { session, response } = await requireTenantService(request, "instagram-publisher");
+    if (response) return response;
+    if (!session) return NextResponse.json({ sucesso: false, error: "Sessao invalida." }, { status: 401 });
+
+    const settings = await readTenantSettings(session.tenantId);
     const body = await request.json();
     const codigo = Number(body.codigo || body.code);
     const caption = String(body.caption || "").trim();
@@ -89,7 +94,7 @@ export async function POST(request: Request) {
     );
 
     if (imageUrls.length) {
-      const resultado = await publishFallback(caption, imageUrls);
+      const resultado = await publishFallback(caption, imageUrls, settings.instagramAccountId, settings.instagramAccessToken || "");
       return NextResponse.json({
         sucesso: true,
         resultado,

@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { lookupProperty } from "@/lib/kpg-api";
+import { requireTenantService } from "@/lib/services";
 
 export const dynamic = "force-dynamic";
-export const runtime = "edge";
 export const preferredRegion = "gru1";
 
 export async function POST(request: Request) {
+  const { session, response } = await requireTenantService(request, "instagram-publisher");
+  if (response) return response;
+  if (!session) return NextResponse.json({ sucesso: false, error: "Sessao invalida." }, { status: 401 });
+
   const body = await request.json().catch(() => ({}));
   const codigo = String(body.codigo || body.code || "").trim();
 
@@ -13,7 +17,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ sucesso: false, error: "Informe o codigo do imovel." }, { status: 400 });
   }
 
-  const result = await lookupProperty(codigo);
+  const result = await lookupProperty(codigo, session.tenantId);
 
   if (!result) {
     return NextResponse.json(

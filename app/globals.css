@@ -341,12 +341,216 @@ a {
   margin-bottom: 14px;
 }
 
+.portal-hero {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+.portal-hero h1 {
+  font-size: 30px;
+  line-height: 1.1;
+  margin: 4px 0 8px;
+}
+
+.portal-hero p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.portal-account {
+  align-items: center;
+  background: #f6f8fb;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: inline-flex;
+  font-weight: 900;
+  gap: 8px;
+  padding: 12px 14px;
+  white-space: nowrap;
+}
+
+.portal-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin-top: 18px;
+}
+
+.portal-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  display: grid;
+  gap: 14px;
+  min-height: 210px;
+  padding: 18px;
+  text-decoration: none;
+}
+
+.portal-card:hover {
+  border-color: var(--blue);
+}
+
+.portal-card-icon {
+  align-items: center;
+  background: var(--ink);
+  border-radius: 8px;
+  color: #fff;
+  display: inline-flex;
+  height: 46px;
+  justify-content: center;
+  width: 46px;
+}
+
+.portal-card strong,
+.portal-card small {
+  display: block;
+}
+
+.portal-card strong {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.portal-card small {
+  color: var(--muted);
+  line-height: 1.4;
+  margin-top: 6px;
+}
+
+.portal-card-footer {
+  align-items: center;
+  align-self: end;
+  color: var(--blue);
+  display: flex;
+  font-size: 12px;
+  font-weight: 900;
+  justify-content: space-between;
+  text-transform: uppercase;
+}
+
+.admin-create-form {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+}
+
+.admin-service-picker {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  grid-column: 1 / -2;
+  min-height: 42px;
+  padding: 8px 10px;
+}
+
+.tenant-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.tenant-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.tenant-card-main {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.tenant-card-main strong,
+.tenant-card-main small {
+  display: block;
+}
+
+.tenant-card-main small,
+.tenant-integrations {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.tenant-integrations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .lead-toolbar {
   align-items: end;
   display: grid;
   gap: 10px;
   grid-template-columns: minmax(220px, 1fr) minmax(140px, 170px) minmax(170px, 210px);
   margin-bottom: 14px;
+}
+
+.config-status-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.settings-section {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.settings-section-title {
+  align-items: flex-start;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.settings-section-title h3 {
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.settings-section-title span,
+.secret-status {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.settings-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field.wide {
+  grid-column: 1 / -1;
+}
+
+.secret-status {
+  align-items: center;
+  color: #16734b;
+  display: inline-flex;
+  font-weight: 800;
+  gap: 5px;
 }
 
 .kanban-board {
@@ -1116,8 +1320,20 @@ a {
   .analytics-hero,
   .account-strip,
   .analytics-grid,
-  .insight-grid {
+  .insight-grid,
+  .config-status-grid,
+  .admin-create-form,
+  .portal-hero {
     grid-template-columns: 1fr;
+  }
+
+  .admin-service-picker {
+    grid-column: auto;
+  }
+
+  .portal-hero {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .chart-header {
@@ -1183,6 +1399,7 @@ a {
   .fact-grid,
   .crm-hero,
   .crm-metrics,
+  .settings-grid,
   .lead-toolbar,
   .kanban-board {
     grid-template-columns: 1fr;

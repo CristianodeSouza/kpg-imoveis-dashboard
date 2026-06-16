@@ -6,6 +6,8 @@ build/
 .env.*
 !.env.example
 *.log
+prisma/*.db
+prisma/*.db-journal
 vercel.json
 *.tsbuildinfo
 .vercel/

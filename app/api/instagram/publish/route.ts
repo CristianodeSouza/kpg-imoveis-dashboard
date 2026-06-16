@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { readTenantSettings } from "@/lib/settings";
+import { requireTenantService } from "@/lib/services";
 import type { PublishPayload } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -6,10 +8,7 @@ export const dynamic = "force-dynamic";
 const graphVersion = process.env.META_GRAPH_VERSION || "v25.0";
 const graphBase = `https://graph.facebook.com/${graphVersion}`;
 
-async function createMediaContainer(imageUrl: string, caption: string, isCarouselItem: boolean) {
-  const accountId = process.env.INSTAGRAM_ACCOUNT_ID;
-  const token = process.env.INSTAGRAM_ACCESS_TOKEN;
-
+async function createMediaContainer(imageUrl: string, caption: string, isCarouselItem: boolean, accountId: string, token: string) {
   if (!accountId || !token) {
     throw new Error("Credenciais do Instagram nao configuradas no servidor.");
   }
@@ -38,10 +37,7 @@ async function createMediaContainer(imageUrl: string, caption: string, isCarouse
   return String(data.id);
 }
 
-async function publishContainer(creationId: string) {
-  const accountId = process.env.INSTAGRAM_ACCOUNT_ID;
-  const token = process.env.INSTAGRAM_ACCESS_TOKEN;
-
+async function publishContainer(creationId: string, accountId: string, token: string) {
   if (!accountId || !token) {
     throw new Error("Credenciais do Instagram nao configuradas no servidor.");
   }
@@ -64,6 +60,13 @@ async function publishContainer(creationId: string) {
 
 export async function POST(request: Request) {
   try {
+    const { session, response } = await requireTenantService(request, "instagram-publisher");
+    if (response) return response;
+    if (!session) return NextResponse.json({ error: "Sessao invalida." }, { status: 401 });
+
+    const settings = await readTenantSettings(session.tenantId);
+    const accountId = settings.instagramAccountId;
+    const token = settings.instagramAccessToken || "";
     const body = (await request.json()) as PublishPayload;
     const imageUrls = Array.from(new Set(body.imageUrls || [])).filter((url) => /^https?:\/\//i.test(url));
     const caption = String(body.caption || "").trim();
@@ -77,18 +80,16 @@ export async function POST(request: Request) {
     }
 
     if (imageUrls.length === 1) {
-      const containerId = await createMediaContainer(imageUrls[0], caption, false);
-      const result = await publishContainer(containerId);
+      const containerId = await createMediaContainer(imageUrls[0], caption, false, accountId, token);
+      const result = await publishContainer(containerId, accountId, token);
       return NextResponse.json({ ok: true, result });
     }
 
     const children = [];
     for (const imageUrl of imageUrls.slice(0, 10)) {
-      children.push(await createMediaContainer(imageUrl, caption, true));
+      children.push(await createMediaContainer(imageUrl, caption, true, accountId, token));
     }
 
-    const accountId = process.env.INSTAGRAM_ACCOUNT_ID;
-    const token = process.env.INSTAGRAM_ACCESS_TOKEN;
     if (!accountId || !token) {
       throw new Error("Credenciais do Instagram nao configuradas no servidor.");
     }
@@ -108,7 +109,7 @@ export async function POST(request: Request) {
       throw new Error(carousel?.error?.message || "Falha ao criar carrossel.");
     }
 
-    const result = await publishContainer(String(carousel.id));
+    const result = await publishContainer(String(carousel.id), accountId, token);
     return NextResponse.json({ ok: true, result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro inesperado ao publicar.";

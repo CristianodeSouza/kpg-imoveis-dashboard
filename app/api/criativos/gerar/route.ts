@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { absolutizeBackendUrls, postToBackend } from "@/lib/backend";
+import { requireTenantService } from "@/lib/services";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  const { response } = await requireTenantService(request, "instagram-publisher");
+  if (response) return response;
+
   const body = await request.json();
   const codigo = Number(body.codigo || body.code);
   const idImovel = Number(body.id_imovel || body.id || codigo);

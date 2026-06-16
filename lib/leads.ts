@@ -1,10 +1,11 @@
 import type { Lead, LeadStatus } from "@/lib/types";
+import { ensureDefaultTenantAndUser } from "@/lib/auth";
 
 type LooseRecord = Record<string, unknown>;
 
-const STORAGE_KEY = "kpg:leads:v1";
+const storageKey = (tenantId: string) => `tenant:${tenantId}:leads:v1`;
 const MAX_LEADS = 500;
-const memoryStore = globalThis as typeof globalThis & { __kpgLeads?: Lead[] };
+const memoryStore = globalThis as typeof globalThis & { __tenantLeads?: Record<string, Lead[]> };
 
 function text(value: unknown) {
   return String(value ?? "").trim();
@@ -75,21 +76,30 @@ async function redisCommand(command: unknown[]) {
   return data.result;
 }
 
-export async function readLeads() {
-  const stored = await redisCommand(["GET", STORAGE_KEY]);
+async function resolveTenantId(tenantId?: string | null) {
+  if (tenantId) return tenantId;
+  const { tenant } = await ensureDefaultTenantAndUser();
+  return tenant.id;
+}
+
+export async function readLeads(tenantId?: string | null) {
+  const resolvedTenantId = await resolveTenantId(tenantId);
+  const stored = await redisCommand(["GET", storageKey(resolvedTenantId)]);
   if (typeof stored === "string") {
     return JSON.parse(stored) as Lead[];
   }
 
-  memoryStore.__kpgLeads ||= [];
-  return memoryStore.__kpgLeads;
+  memoryStore.__tenantLeads ||= {};
+  memoryStore.__tenantLeads[resolvedTenantId] ||= [];
+  return memoryStore.__tenantLeads[resolvedTenantId];
 }
 
-async function writeLeads(leads: Lead[]) {
+async function writeLeads(tenantId: string, leads: Lead[]) {
   const limited = leads.slice(0, MAX_LEADS);
-  const result = await redisCommand(["SET", STORAGE_KEY, JSON.stringify(limited)]);
+  const result = await redisCommand(["SET", storageKey(tenantId), JSON.stringify(limited)]);
   if (result === null) {
-    memoryStore.__kpgLeads = limited;
+    memoryStore.__tenantLeads ||= {};
+    memoryStore.__tenantLeads[tenantId] = limited;
   }
   return limited;
 }
@@ -174,9 +184,10 @@ function sameLead(a: Lead, b: Lead) {
   );
 }
 
-export async function upsertLead(payload: unknown) {
+export async function upsertLead(payload: unknown, tenantId?: string | null) {
+  const resolvedTenantId = await resolveTenantId(tenantId);
   const incoming = normalizeLead(payload);
-  const leads = await readLeads();
+  const leads = await readLeads(resolvedTenantId);
   const existingIndex = leads.findIndex((lead) => sameLead(lead, incoming));
 
   if (existingIndex >= 0) {
@@ -202,14 +213,15 @@ export async function upsertLead(payload: unknown) {
       raw: incoming.raw
     };
     leads.splice(existingIndex, 1);
-    return { lead: updated, leads: await writeLeads([updated, ...leads]) };
+    return { lead: updated, leads: await writeLeads(resolvedTenantId, [updated, ...leads]) };
   }
 
-  return { lead: incoming, leads: await writeLeads([incoming, ...leads]) };
+  return { lead: incoming, leads: await writeLeads(resolvedTenantId, [incoming, ...leads]) };
 }
 
-export async function upsertLeads(payloads: unknown[]) {
-  let leads = await readLeads();
+export async function upsertLeads(payloads: unknown[], tenantId?: string | null) {
+  const resolvedTenantId = await resolveTenantId(tenantId);
+  let leads = await readLeads(resolvedTenantId);
   const imported: Lead[] = [];
 
   for (const payload of payloads) {
@@ -246,13 +258,14 @@ export async function upsertLeads(payloads: unknown[]) {
     }
   }
 
-  await writeLeads(leads);
+  await writeLeads(resolvedTenantId, leads);
   return { imported, leads };
 }
 
-export async function updateLead(id: string, patch: Partial<Pick<Lead, "status" | "notes">>) {
-  const leads = await readLeads();
+export async function updateLead(id: string, patch: Partial<Pick<Lead, "status" | "notes">>, tenantId?: string | null) {
+  const resolvedTenantId = await resolveTenantId(tenantId);
+  const leads = await readLeads(resolvedTenantId);
   const next = leads.map((lead) => (lead.id === id ? { ...lead, ...patch } : lead));
-  await writeLeads(next);
+  await writeLeads(resolvedTenantId, next);
   return next.find((lead) => lead.id === id) || null;
 }

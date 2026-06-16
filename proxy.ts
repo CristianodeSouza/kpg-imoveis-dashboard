@@ -15,8 +15,8 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const session = request.cookies.get("kpg_session")?.value;
-  if (session === "authenticated") {
+  const session = request.cookies.get("siga_saas_session")?.value;
+  if (session) {
     return NextResponse.next();
   }
 

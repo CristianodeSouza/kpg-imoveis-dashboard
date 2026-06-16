@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { readTenantSettings } from "@/lib/settings";
+import { requireTenantService } from "@/lib/services";
 import type { InstagramAccountSummary, MediaInsight } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -66,9 +68,14 @@ async function fetchAccount(accountId: string, token: string): Promise<Instagram
   };
 }
 
-export async function GET() {
-  const accountId = process.env.INSTAGRAM_ACCOUNT_ID;
-  const token = process.env.INSTAGRAM_ACCESS_TOKEN;
+export async function GET(request: Request) {
+  const { session, response: authResponse } = await requireTenantService(request, "instagram-publisher");
+  if (authResponse) return authResponse;
+  if (!session) return NextResponse.json({ error: "Sessao invalida." }, { status: 401 });
+
+  const settings = await readTenantSettings(session.tenantId);
+  const accountId = settings.instagramAccountId;
+  const token = settings.instagramAccessToken;
 
   if (!accountId || !token) {
     return NextResponse.json({ error: "Credenciais do Instagram nao configuradas." }, { status: 500 });

@@ -22,7 +22,7 @@ export default function LoginPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Falha ao entrar.");
-      window.location.href = new URLSearchParams(window.location.search).get("next") || "/";
+      window.location.href = new URLSearchParams(window.location.search).get("next") || "/portal";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao entrar.");
     } finally {
@@ -34,14 +34,14 @@ export default function LoginPage() {
     <main className="login-shell">
       <section className="login-panel">
         <div className="login-brand">
-          <strong>KPG IMOVEIS</strong>
-          <span>Instagram Publisher</span>
+          <strong>CSR Tecnologia</strong>
+          <span>Portal SaaS</span>
         </div>
         <div className="login-icon">
           <Lock size={26} />
         </div>
-        <h1>Acesso interno</h1>
-        <p>Entre para buscar imoveis, preparar legendas e publicar no Instagram da KPG.</p>
+        <h1>Acesse seu portal</h1>
+        <p>Entre para acessar os servicos contratados pela sua empresa.</p>
         <form className="login-form" onSubmit={submit}>
           <div className="field">
             <label htmlFor="username">Usuario</label>

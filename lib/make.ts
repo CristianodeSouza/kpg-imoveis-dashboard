@@ -1,19 +1,25 @@
-const makeBaseUrl = process.env.MAKE_API_BASE_URL || "https://us2.make.com/api/v2";
-const dataStoreId = process.env.MAKE_DATA_STORE_ID || "47814";
-
 type MakeRecord = {
   key?: string;
   data?: Record<string, unknown>;
 };
 
-export function hasMakeConfig() {
-  return Boolean(process.env.MAKE_API_TOKEN);
+type MakeConfig = {
+  baseUrl?: string;
+  dataStoreId?: string;
+  token?: string;
+};
+
+export function hasMakeConfig(config?: MakeConfig) {
+  return Boolean(config?.token || process.env.MAKE_API_TOKEN);
 }
 
-async function fetchMakePage(offset: number, limit: number) {
-  const token = process.env.MAKE_API_TOKEN;
+async function fetchMakePage(offset: number, limit: number, config?: MakeConfig) {
+  const token = config?.token || process.env.MAKE_API_TOKEN;
+  const makeBaseUrl = config?.baseUrl || process.env.MAKE_API_BASE_URL || "https://us2.make.com/api/v2";
+  const dataStoreId = config?.dataStoreId || process.env.MAKE_DATA_STORE_ID || "47814";
+
   if (!token) {
-    throw new Error("MAKE_API_TOKEN nao configurado no Vercel.");
+    throw new Error("Token Make nao configurado para este cliente.");
   }
 
   const url = new URL(`${makeBaseUrl}/data-stores/${dataStoreId}/data`);
@@ -35,13 +41,13 @@ async function fetchMakePage(offset: number, limit: number) {
   return (data.records || data.data || []) as MakeRecord[];
 }
 
-export async function fetchMakeDataStoreRecords() {
+export async function fetchMakeDataStoreRecords(config?: MakeConfig) {
   const limit = 100;
   let offset = 0;
   const records: MakeRecord[] = [];
 
   while (offset < 1000) {
-    const page = await fetchMakePage(offset, limit);
+    const page = await fetchMakePage(offset, limit, config);
     records.push(...page);
     if (page.length < limit) break;
     offset += limit;
