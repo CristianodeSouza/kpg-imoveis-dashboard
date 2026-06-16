@@ -141,6 +141,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
+  const [publishMessage, setPublishMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [account, setAccount] = useState<InstagramAccountSummary | null>(null);
   const [insights, setInsights] = useState<MediaInsight[]>([]);
   const [insightsLoading, setInsightsLoading] = useState(false);
@@ -162,6 +163,7 @@ export default function HomePage() {
 
     setLoading(true);
     setMessage(null);
+    setPublishMessage(null);
     try {
       const response = await fetch("/api/buscar", {
         method: "POST",
@@ -203,6 +205,7 @@ export default function HomePage() {
 
     setCreativeLoading(true);
     setMessage(null);
+    setPublishMessage(null);
     try {
       const response = await fetch("/api/criativos/gerar", {
         method: "POST",
@@ -224,7 +227,7 @@ export default function HomePage() {
 
   async function publish() {
     setPublishing(true);
-    setMessage(null);
+    setPublishMessage(null);
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 90000);
     try {
@@ -240,7 +243,7 @@ export default function HomePage() {
       const publishedCount = data?.resultado?.fotos_publicadas;
       const publishType = data?.resultado?.tipo;
       const details = publishedCount ? ` ${publishType || "post"} com ${publishedCount} foto${publishedCount > 1 ? "s" : ""}.` : "";
-      setMessage({ type: "ok", text: `Publicacao enviada para o Instagram.${details}${url}` });
+      setPublishMessage({ type: "ok", text: `Publicacao enviada para o Instagram.${details}${url}` });
     } catch (error) {
       const text =
         error instanceof DOMException && error.name === "AbortError"
@@ -248,7 +251,7 @@ export default function HomePage() {
           : error instanceof Error
             ? error.message
             : "Erro ao publicar.";
-      setMessage({ type: "error", text });
+      setPublishMessage({ type: "error", text });
     } finally {
       window.clearTimeout(timeout);
       setPublishing(false);
@@ -553,6 +556,7 @@ export default function HomePage() {
                 onClick={() => {
                   navigator.clipboard.writeText(caption);
                   setMessage({ type: "ok", text: "Legenda copiada." });
+                  setPublishMessage(null);
                 }}
               >
                 <Copy size={17} />
@@ -563,10 +567,13 @@ export default function HomePage() {
               <span className="step-caption">
                 Use Criativos para gerar 1080x1350/Stories pelo backend antes de publicar.
               </span>
-              <button className="btn success" disabled={publishing || !selectedPhotos.length} onClick={publish}>
-                {publishing ? <Loader2 size={17} /> : <Send size={17} />}
-                Publicar no Instagram
-              </button>
+              <div className="publish-area">
+                <button className="btn success" disabled={publishing || !selectedPhotos.length} onClick={publish}>
+                  {publishing ? <Loader2 size={17} /> : <Send size={17} />}
+                  Publicar no Instagram
+                </button>
+                {publishMessage ? <div className={`message publish-message ${publishMessage.type}`}>{publishMessage.text}</div> : null}
+              </div>
             </div>
           </section>
         ) : null}
