@@ -97,6 +97,17 @@ type SettingsDraft = {
 
 type Draft = Partial<Omit<TenantDetail, "settings">> & { monthlyValueText?: string; settings?: SettingsDraft };
 
+type PaymentDraft = {
+  description: string;
+  amount: string;
+  paidAt: string;
+  dueAt: string;
+  status: string;
+  method: string;
+  receiptUrl: string;
+  notes: string;
+};
+
 function money(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", { currency: "BRL", style: "currency" });
 }
@@ -135,6 +146,19 @@ function settingsDraftFromTenant(tenant: TenantDetail): SettingsDraft {
   };
 }
 
+function paymentDraftFromTenant(tenant: TenantDetail): PaymentDraft {
+  return {
+    description: `Mensalidade ${tenant.name}`,
+    amount: String((tenant.monthlyValueCents || 0) / 100),
+    paidAt: new Date().toISOString().slice(0, 10),
+    dueAt: "",
+    status: "paid",
+    method: "",
+    receiptUrl: "",
+    notes: ""
+  };
+}
+
 export default function ClientDetailPage() {
   const params = useParams<{ clientCode: string }>();
   const clientCode = String(params.clientCode || "").toUpperCase();
@@ -143,6 +167,8 @@ export default function ClientDetailPage() {
   const [draft, setDraft] = useState<Draft>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingPayment, setSavingPayment] = useState(false);
+  const [paymentDraft, setPaymentDraft] = useState<PaymentDraft | null>(null);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
 
   async function loadClient() {
@@ -159,6 +185,7 @@ export default function ClientDetailPage() {
       setTenant(data.tenant);
       setServices(data.services || []);
       setDraft({ monthlyValueText: String((data.tenant.monthlyValueCents || 0) / 100), settings: settingsDraftFromTenant(data.tenant) });
+      setPaymentDraft(paymentDraftFromTenant(data.tenant));
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao carregar cliente." });
     } finally {
@@ -172,6 +199,10 @@ export default function ClientDetailPage() {
 
   function updateSettings(field: keyof SettingsDraft, value: string) {
     setDraft((current) => ({ ...current, settings: { ...(current.settings || settingsDraftFromTenant(tenant as TenantDetail)), [field]: value } }));
+  }
+
+  function updatePaymentDraft(field: keyof PaymentDraft, value: string) {
+    setPaymentDraft((current) => ({ ...(current || paymentDraftFromTenant(tenant as TenantDetail)), [field]: value }));
   }
 
   function toggleService(slug: string) {
@@ -231,6 +262,27 @@ export default function ClientDetailPage() {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao salvar cliente." });
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function createPayment() {
+    if (!tenant || !paymentDraft) return;
+    setSavingPayment(true);
+    setMessage(null);
+    try {
+      const response = await fetch(`/api/admin/tenants/${encodeURIComponent(clientCode)}/payments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(paymentDraft)
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Nao foi possivel registrar pagamento.");
+      setMessage({ type: "ok", text: "Pagamento registrado e liberado no painel do cliente." });
+      await loadClient();
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao registrar pagamento." });
+    } finally {
+      setSavingPayment(false);
     }
   }
 
@@ -557,6 +609,54 @@ export default function ClientDetailPage() {
                   <div>
                     <span className="eyebrow">Pagamento do ciclo</span>
                     <strong>{tenant.paymentSummary.currentCyclePaid ? "Confirmado" : "Pendente"}</strong>
+                  </div>
+                </div>
+              ) : null}
+              {paymentDraft ? (
+                <div className="tenant-edit-grid payment-entry-grid">
+                  <div className="field">
+                    <label>Descricao</label>
+                    <input className="input" value={paymentDraft.description} onChange={(event) => updatePaymentDraft("description", event.target.value)} />
+                  </div>
+                  <div className="field">
+                    <label>Valor pago</label>
+                    <input className="input" value={paymentDraft.amount} onChange={(event) => updatePaymentDraft("amount", event.target.value)} />
+                  </div>
+                  <div className="field">
+                    <label>Pago em</label>
+                    <input className="input" type="date" value={paymentDraft.paidAt} onChange={(event) => updatePaymentDraft("paidAt", event.target.value)} />
+                  </div>
+                  <div className="field">
+                    <label>Vencimento</label>
+                    <input className="input" type="date" value={paymentDraft.dueAt} onChange={(event) => updatePaymentDraft("dueAt", event.target.value)} />
+                  </div>
+                  <div className="field">
+                    <label>Status da cobranca</label>
+                    <select className="select" value={paymentDraft.status} onChange={(event) => updatePaymentDraft("status", event.target.value)}>
+                      <option value="paid">Sucesso</option>
+                      <option value="pending">Pendente</option>
+                      <option value="failed">Falhou</option>
+                      <option value="refunded">Estornado</option>
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label>Metodo</label>
+                    <input className="input" placeholder="Pix, cartao, boleto..." value={paymentDraft.method} onChange={(event) => updatePaymentDraft("method", event.target.value)} />
+                  </div>
+                  <div className="field wide">
+                    <label>Link do comprovante</label>
+                    <input className="input" value={paymentDraft.receiptUrl} onChange={(event) => updatePaymentDraft("receiptUrl", event.target.value)} />
+                  </div>
+                  <div className="field wide">
+                    <label>Observacoes</label>
+                    <input className="input" value={paymentDraft.notes} onChange={(event) => updatePaymentDraft("notes", event.target.value)} />
+                  </div>
+                  <div className="actions payment-entry-actions">
+                    <span className="step-caption">Este registro aparecera no historico financeiro do cliente.</span>
+                    <button className="btn success" disabled={savingPayment} onClick={createPayment} type="button">
+                      {savingPayment ? <Loader2 className="spin" size={17} /> : <Save size={17} />}
+                      Registrar pagamento
+                    </button>
                   </div>
                 </div>
               ) : null}
