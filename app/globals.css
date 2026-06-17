@@ -869,6 +869,34 @@ a {
   font-size: 12px;
 }
 
+.oauth-connect-box {
+  align-items: center;
+  background: #f6f8fb;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+}
+
+.oauth-connect-box strong,
+.oauth-connect-box span {
+  display: block;
+}
+
+.oauth-connect-box strong {
+  font-size: 16px;
+}
+
+.oauth-connect-box span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+
 .settings-grid {
   display: grid;
   gap: 14px;
@@ -1712,6 +1740,11 @@ a {
 
   .portal-account-actions {
     flex-wrap: wrap;
+  }
+
+  .oauth-connect-box {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .chart-header {

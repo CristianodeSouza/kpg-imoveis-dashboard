@@ -29,6 +29,8 @@ export type PublicTenantSettings = Omit<
 };
 
 const text = (value: unknown) => String(value ?? "").trim();
+const hasField = (patch: Partial<TenantSettings>, key: keyof TenantSettings) =>
+  Object.prototype.hasOwnProperty.call(patch, key);
 
 function mapSettings(settings: DbTenantSettings): TenantSettings {
   return {
@@ -96,12 +98,12 @@ export async function writeTenantSettings(tenantId: string, patch: Partial<Tenan
     },
     update: {
       companyName: text(patch.companyName) || current?.companyName || "Imobiliaria",
-      sigaEndpoint: text(patch.sigaEndpoint),
-      metaAppId: text(patch.metaAppId),
-      instagramAccountId: text(patch.instagramAccountId),
-      makeBaseUrl: text(patch.makeBaseUrl),
-      makeDataStoreId: text(patch.makeDataStoreId),
-      whatsappNumber: text(patch.whatsappNumber),
+      ...(hasField(patch, "sigaEndpoint") ? { sigaEndpoint: text(patch.sigaEndpoint) } : {}),
+      ...(hasField(patch, "metaAppId") ? { metaAppId: text(patch.metaAppId) } : {}),
+      ...(hasField(patch, "instagramAccountId") ? { instagramAccountId: text(patch.instagramAccountId) } : {}),
+      ...(hasField(patch, "makeBaseUrl") ? { makeBaseUrl: text(patch.makeBaseUrl) } : {}),
+      ...(hasField(patch, "makeDataStoreId") ? { makeDataStoreId: text(patch.makeDataStoreId) } : {}),
+      ...(hasField(patch, "whatsappNumber") ? { whatsappNumber: text(patch.whatsappNumber) } : {}),
       ...(text(patch.sigaToken) ? { sigaTokenEncrypted: encryptSecret(patch.sigaToken) } : {}),
       ...(text(patch.metaAppSecret) ? { metaAppSecretEncrypted: encryptSecret(patch.metaAppSecret) } : {}),
       ...(text(patch.instagramAccessToken)

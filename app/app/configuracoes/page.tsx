@@ -167,6 +167,17 @@ export default function ConfiguracoesPage() {
   }
 
   useEffect(() => {
+    const instagramStatus = new URLSearchParams(window.location.search).get("instagram");
+    if (instagramStatus === "connected") {
+      setMessage({ type: "ok", text: "Instagram conectado com sucesso pela tela oficial da Meta." });
+      window.history.replaceState(null, "", "/app/configuracoes");
+    } else if (instagramStatus === "missing_meta_app") {
+      setMessage({ type: "error", text: "Configure o Meta App ID e Secret antes de conectar pelo login oficial." });
+      window.history.replaceState(null, "", "/app/configuracoes");
+    } else if (instagramStatus?.startsWith("error:")) {
+      setMessage({ type: "error", text: decodeURIComponent(instagramStatus.replace("error:", "")) });
+      window.history.replaceState(null, "", "/app/configuracoes");
+    }
     loadSettings();
   }, []);
 
@@ -433,8 +444,20 @@ export default function ConfiguracoesPage() {
                 <Instagram size={20} />
                 <div>
                   <h3>Meta e Instagram</h3>
-                  <span>Credenciais usadas para publicar e ler indicadores do perfil conectado.</span>
+                  <span>Conecte pelo login oficial da Meta ou mantenha o token manual atual.</span>
                 </div>
+              </div>
+              <div className="oauth-connect-box">
+                <div>
+                  <strong>{settings?.instagramAccessTokenConfigured ? "Instagram conectado" : "Conectar Instagram pelo login oficial"}</strong>
+                  <span>
+                    O cliente entra na tela oficial da Meta/Instagram, autoriza o aplicativo e o SaaS salva o token automaticamente.
+                  </span>
+                </div>
+                <a className="btn success" href="/api/integrations/instagram/start">
+                  <Instagram size={17} />
+                  {settings?.instagramAccessTokenConfigured ? "Reconectar Instagram" : "Conectar Instagram"}
+                </a>
               </div>
               <div className="settings-grid">
                 <div className="field">
