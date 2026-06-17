@@ -6,6 +6,7 @@ Este documento define os padroes visuais e de interface do SaaS da CSR Tecnologi
 
 - O produto e um SaaS operacional, nao uma landing page.
 - Priorize leitura, gestao recorrente e comparacao rapida de dados.
+- Use densidade operacional: fontes menores, labels discretas e menos espaco vertical.
 - Cards devem ser usados para itens repetidos, modulos, metricas e paineis claros.
 - Evite textos explicativos longos dentro da interface. A tela deve mostrar a acao e o estado.
 - Configuracoes, pagamentos e conta nao devem aparecer como produtos contratados.
@@ -31,6 +32,23 @@ Tokens principais ficam em `:root` no `app/globals.css`:
 - Espacamento: `--space-1` ate `--space-6`.
 
 Regra: use tokens existentes antes de criar novas cores ou espacamentos.
+
+## Densidade Visual
+
+O SaaS deve parecer ferramenta de operacao diaria, nao pagina promocional.
+
+Padroes:
+
+- Texto base em torno de 13px a 14px.
+- Titulos de pagina entre 22px e 24px.
+- Labels e eyebrows entre 10px e 11px, com letter-spacing moderado.
+- Botoes com altura aproximada de 34px.
+- Inputs e selects com altura aproximada de 34px.
+- Metric cards compactos, em torno de 78px de altura minima.
+- Evite paddings acima de 18px em paineis internos, salvo quando houver formulario longo.
+- Use sombra leve; borda e contraste devem carregar a hierarquia visual.
+
+Ao criar uma tela operacional, prefira mostrar mais dados uteis acima da dobra em vez de aumentar cards e titulos.
 
 ## Componentes Padrao
 
@@ -76,6 +94,8 @@ Campos:
 ### MetricCard
 
 Use para KPIs e indicadores.
+
+Metricas devem ser compactas. O label explica o indicador, o numero deve ser o foco e o hint deve caber em uma ou duas linhas curtas.
 
 Tons:
 
@@ -196,4 +216,3 @@ Supabase guarda dados e credenciais de clientes.
 - Tem `EmptyState` quando nao ha dados?
 - Respeita `tenantId`?
 - Nao cria credenciais por cliente na Vercel?
-
