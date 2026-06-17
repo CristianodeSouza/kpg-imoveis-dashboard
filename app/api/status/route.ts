@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 import { getSessionFromRequest } from "@/lib/auth";
-import { getFromBackend } from "@/lib/backend";
 import { readTenantSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  const backend = await getFromBackend("/api/status");
-  if (backend) return NextResponse.json({ ...backend, backend: "online" });
   const session = await getSessionFromRequest(request);
-  const settings = await readTenantSettings(session?.tenantId);
+  if (!session) return NextResponse.json({ error: "Sessao invalida." }, { status: 401 });
+  const settings = await readTenantSettings(session.tenantId);
 
   return NextResponse.json({
     siga: settings.sigaEndpoint && settings.sigaToken ? "configurado" : "pendente",
@@ -17,6 +15,6 @@ export async function GET(request: Request) {
     whatsapp: settings.whatsappNumber ? "configurado" : "pendente",
     imgbb: process.env.IMGBB_API_KEY ? "configurado" : "pendente",
     ia_caption: "template (sem IA)",
-    backend: "offline"
+    backend: "nao utilizado"
   });
 }

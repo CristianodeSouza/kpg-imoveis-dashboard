@@ -1,4 +1,7 @@
-export const backendUrl = () => (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/$/, "");
+export const backendUrl = () => {
+  if (process.env.ENABLE_LEGACY_BACKEND !== "true") return "";
+  return (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/$/, "");
+};
 
 export async function postToBackend<T>(path: string, body: unknown): Promise<T | null> {
   const base = backendUrl();

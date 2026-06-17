@@ -1,7 +1,6 @@
 import type { TenantSettings as DbTenantSettings } from "@prisma/client";
 import { decryptSecret, encryptSecret } from "@/lib/crypto";
 import { prisma } from "@/lib/db";
-import { ensureDefaultTenantAndUser } from "@/lib/auth";
 
 export type TenantSettings = {
   tenantId: string;
@@ -50,13 +49,9 @@ function mapSettings(settings: DbTenantSettings): TenantSettings {
   };
 }
 
-async function fallbackTenantId() {
-  const { tenant } = await ensureDefaultTenantAndUser();
-  return tenant.id;
-}
-
-export async function readTenantSettings(tenantId?: string | null) {
-  const resolvedTenantId = tenantId || (await fallbackTenantId());
+export async function readTenantSettings(tenantId: string) {
+  const resolvedTenantId = text(tenantId);
+  if (!resolvedTenantId) throw new Error("tenantId obrigatorio para ler configuracoes do cliente.");
   let settings = await prisma.tenantSettings.findUnique({ where: { tenantId: resolvedTenantId } });
 
   if (!settings) {

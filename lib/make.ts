@@ -10,16 +10,16 @@ type MakeConfig = {
 };
 
 export function hasMakeConfig(config?: MakeConfig) {
-  return Boolean(config?.token || process.env.MAKE_API_TOKEN);
+  return Boolean(config?.token && config?.dataStoreId);
 }
 
 async function fetchMakePage(offset: number, limit: number, config?: MakeConfig) {
-  const token = config?.token || process.env.MAKE_API_TOKEN;
-  const makeBaseUrl = config?.baseUrl || process.env.MAKE_API_BASE_URL || "https://us2.make.com/api/v2";
-  const dataStoreId = config?.dataStoreId || process.env.MAKE_DATA_STORE_ID || "47814";
+  const token = config?.token;
+  const makeBaseUrl = config?.baseUrl || "https://us2.make.com/api/v2";
+  const dataStoreId = config?.dataStoreId;
 
-  if (!token) {
-    throw new Error("Token Make nao configurado para este cliente.");
+  if (!token || !dataStoreId) {
+    throw new Error("Token e Data Store ID do Make nao configurados para este cliente.");
   }
 
   const url = new URL(`${makeBaseUrl}/data-stores/${dataStoreId}/data`);

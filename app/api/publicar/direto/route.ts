@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { postToBackend } from "@/lib/backend";
 import { readTenantSettings } from "@/lib/settings";
 import { requireTenantService } from "@/lib/services";
 import { ensureInstagramQuota, recordInstagramPublication } from "@/lib/publications";
@@ -134,13 +133,10 @@ export async function POST(request: Request) {
       });
     }
 
-    const backend = await postToBackend("/api/publicar/direto", { codigo, caption });
-    if (backend) return NextResponse.json(backend);
-
     if (!imageUrls.length) {
       return NextResponse.json(
         { sucesso: false, error: "Selecione pelo menos uma foto para publicar." },
-        { status: 503 }
+        { status: 400 }
       );
     }
   } catch (error) {

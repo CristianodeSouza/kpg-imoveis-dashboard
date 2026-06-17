@@ -5,8 +5,9 @@ import { requireTenantService } from "@/lib/services";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  const { response } = await requireTenantService(request, "instagram-publisher");
+  const { session, response } = await requireTenantService(request, "instagram-publisher");
   if (response) return response;
+  if (!session) return NextResponse.json({ sucesso: false, error: "Sessao invalida." }, { status: 401 });
 
   const body = await request.json();
   const codigo = Number(body.codigo || body.code);
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     sucesso: boolean;
     caption: string;
     criativos: { feed: string[]; stories: string[]; carousel: string[] };
-  }>("/api/criativos/gerar", { codigo, id_imovel: idImovel });
+  }>("/api/criativos/gerar", { codigo, id_imovel: idImovel, tenantId: session.tenantId });
 
   if (backend) {
     return NextResponse.json(absolutizeBackendUrls({ ...backend, origem: "backend" }));

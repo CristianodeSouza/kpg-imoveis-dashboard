@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
-import { encryptSecret } from "@/lib/crypto";
 import { ensureTenantServices } from "@/lib/services";
 export { createSessionCookieValue, getSessionFromCookies, getSessionFromRequest, SESSION_COOKIE } from "@/lib/session";
 
@@ -12,21 +11,11 @@ export async function ensureDefaultTenantAndUser() {
     where: { slug: DEFAULT_TENANT_SLUG },
     update: {},
     create: {
-      name: process.env.COMPANY_NAME || "KPG Imoveis",
+      name: "KPG Imoveis",
       slug: DEFAULT_TENANT_SLUG,
       settings: {
         create: {
-          companyName: process.env.COMPANY_NAME || "KPG Imoveis",
-          sigaEndpoint: process.env.SIGA_ENDPOINT || "",
-          sigaTokenEncrypted: encryptSecret(process.env.SIGA_TOKEN),
-          metaAppId: process.env.META_APP_ID || "",
-          metaAppSecretEncrypted: encryptSecret(process.env.META_APP_SECRET),
-          instagramAccountId: process.env.INSTAGRAM_ACCOUNT_ID || "",
-          instagramAccessTokenEncrypted: encryptSecret(process.env.INSTAGRAM_ACCESS_TOKEN),
-          makeBaseUrl: process.env.MAKE_API_BASE_URL || "",
-          makeDataStoreId: process.env.MAKE_DATA_STORE_ID || "",
-          makeApiTokenEncrypted: encryptSecret(process.env.MAKE_API_TOKEN),
-          whatsappNumber: process.env.WHATSAPP_CTA || ""
+          companyName: "KPG Imoveis"
         }
       }
     },
@@ -37,39 +26,7 @@ export async function ensureDefaultTenantAndUser() {
     await prisma.tenantSettings.create({
       data: {
         tenantId: tenant.id,
-        companyName: tenant.name,
-        sigaEndpoint: process.env.SIGA_ENDPOINT || "",
-        sigaTokenEncrypted: encryptSecret(process.env.SIGA_TOKEN),
-        metaAppId: process.env.META_APP_ID || "",
-        metaAppSecretEncrypted: encryptSecret(process.env.META_APP_SECRET),
-        instagramAccountId: process.env.INSTAGRAM_ACCOUNT_ID || "",
-        instagramAccessTokenEncrypted: encryptSecret(process.env.INSTAGRAM_ACCESS_TOKEN),
-        makeBaseUrl: process.env.MAKE_API_BASE_URL || "",
-        makeDataStoreId: process.env.MAKE_DATA_STORE_ID || "",
-        makeApiTokenEncrypted: encryptSecret(process.env.MAKE_API_TOKEN),
-        whatsappNumber: process.env.WHATSAPP_CTA || ""
-      }
-    });
-  } else {
-    await prisma.tenantSettings.update({
-      where: { tenantId: tenant.id },
-      data: {
-        companyName: tenant.settings.companyName || process.env.COMPANY_NAME || tenant.name,
-        sigaEndpoint: tenant.settings.sigaEndpoint || process.env.SIGA_ENDPOINT || "",
-        sigaTokenEncrypted:
-          tenant.settings.sigaTokenEncrypted || encryptSecret(process.env.SIGA_TOKEN),
-        metaAppId: tenant.settings.metaAppId || process.env.META_APP_ID || "",
-        metaAppSecretEncrypted:
-          tenant.settings.metaAppSecretEncrypted || encryptSecret(process.env.META_APP_SECRET),
-        instagramAccountId:
-          tenant.settings.instagramAccountId || process.env.INSTAGRAM_ACCOUNT_ID || "",
-        instagramAccessTokenEncrypted:
-          tenant.settings.instagramAccessTokenEncrypted || encryptSecret(process.env.INSTAGRAM_ACCESS_TOKEN),
-        makeBaseUrl: tenant.settings.makeBaseUrl || process.env.MAKE_API_BASE_URL || "",
-        makeDataStoreId: tenant.settings.makeDataStoreId || process.env.MAKE_DATA_STORE_ID || "",
-        makeApiTokenEncrypted:
-          tenant.settings.makeApiTokenEncrypted || encryptSecret(process.env.MAKE_API_TOKEN),
-        whatsappNumber: tenant.settings.whatsappNumber || process.env.WHATSAPP_CTA || ""
+        companyName: tenant.name
       }
     });
   }
