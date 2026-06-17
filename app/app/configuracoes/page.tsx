@@ -83,6 +83,10 @@ function configuredLabel(configured: boolean) {
   return configured ? "Configurado" : "Pendente";
 }
 
+function publishRequirement() {
+  return <span className="field-note">necessario para publicar</span>;
+}
+
 export default function ConfiguracoesPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [settings, setSettings] = useState<PublicSettings | null>(null);
@@ -414,7 +418,7 @@ export default function ConfiguracoesPage() {
                   />
                 </div>
                 <div className="field wide">
-                  <label htmlFor="sigaEndpoint">Endpoint da API SIGA <span className="required-mark">*</span></label>
+                  <label htmlFor="sigaEndpoint">Endpoint da API SIGA {publishRequirement()}</label>
                   <input
                     className="input"
                     id="sigaEndpoint"
@@ -424,7 +428,7 @@ export default function ConfiguracoesPage() {
                   />
                 </div>
                 <div className="field wide secret-field">
-                  <label htmlFor="sigaToken">Token da API SIGA <span className="required-mark">*</span></label>
+                  <label htmlFor="sigaToken">Token da API SIGA {publishRequirement()}</label>
                   <input
                     autoComplete="off"
                     className="input"
@@ -481,7 +485,7 @@ export default function ConfiguracoesPage() {
               </div>
               <div className="settings-grid">
                 <div className="field">
-                  <label htmlFor="instagramAccountId">Instagram Account ID <span className="required-mark">*</span></label>
+                  <label htmlFor="instagramAccountId">Instagram Account ID {publishRequirement()}</label>
                   <input
                     className="input"
                     id="instagramAccountId"
@@ -491,7 +495,7 @@ export default function ConfiguracoesPage() {
                   />
                 </div>
                 <div className="field secret-field">
-                  <label htmlFor="instagramAccessToken">Instagram Access Token <span className="required-mark">*</span></label>
+                  <label htmlFor="instagramAccessToken">Instagram Access Token {publishRequirement()}</label>
                   <input
                     autoComplete="off"
                     className="input"
