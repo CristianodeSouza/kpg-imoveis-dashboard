@@ -23,6 +23,18 @@ async function graphFetch(url: string, init?: RequestInit) {
   return data;
 }
 
+async function fetchPublishedPermalink(mediaId: string, token: string) {
+  if (!mediaId) return "";
+  try {
+    const data = await graphFetch(
+      `${graphBase}/${encodeURIComponent(mediaId)}?fields=permalink&access_token=${encodeURIComponent(token)}`
+    );
+    return String(data?.permalink || "");
+  } catch {
+    return "";
+  }
+}
+
 async function publishFallback(caption: string, imageUrls: string[], accountId: string, token: string) {
   if (!accountId || !token) throw new Error("Credenciais do Instagram nao configuradas.");
 
@@ -97,7 +109,9 @@ export async function POST(request: Request) {
     if (imageUrls.length) {
       await ensureInstagramQuota(session.tenantId);
       const resultado = await publishFallback(caption, imageUrls, settings.instagramAccountId, settings.instagramAccessToken || "");
+      const publishedPermalink = await fetchPublishedPermalink(String(resultado.id || ""), settings.instagramAccessToken || "");
       const permalink =
+        publishedPermalink ||
         resultado.permalink ||
         resultado.url ||
         (resultado.id ? `https://www.instagram.com/p/${resultado.id}/` : "");

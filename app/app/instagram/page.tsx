@@ -763,34 +763,6 @@ export default function HomePage() {
             </div>
           </section>
 
-          <div className="analytics-grid">
-            <section className="analytics-block">
-              <h3>Posts com maior resposta</h3>
-              <div className="ranking-list">
-                {topPosts.map((item, index) => (
-                  <a className="ranking-item" href={item.permalink || "#"} key={item.id} rel="noreferrer" target="_blank">
-                    <span className="rank">{index + 1}</span>
-                    {item.thumbnailUrl || item.mediaUrl ? (
-                      <img src={item.thumbnailUrl || item.mediaUrl} alt="Midia do Instagram" />
-                    ) : (
-                      <span className="ranking-thumb" aria-hidden="true" />
-                    )}
-                    <span>
-                      <strong>{shortCaption(item.caption, item.id)}</strong>
-                      <small>
-                        {mediaTypeLabel(item.mediaType)} • {item.reach.toLocaleString("pt-BR")} alcance
-                      </small>
-                      <span className="mini-metrics">
-                        <span>{percent(item.engagementRate)} engaj.</span>
-                        <span>{item.saved.toLocaleString("pt-BR")} salvos</span>
-                        <span>{item.shares.toLocaleString("pt-BR")} shares</span>
-                      </span>
-                    </span>
-                  </a>
-                ))}
-              </div>
-            </section>
-          </div>
         </section>
       </section>
     </main>

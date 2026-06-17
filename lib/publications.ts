@@ -49,7 +49,8 @@ export async function getInstagramUsage(tenantId: string) {
     where: {
       tenantId,
       status: "published",
-      createdAt: { gte: cycleStart, lt: cycleEnd }
+      cycleStart,
+      cycleEnd
     }
   });
 

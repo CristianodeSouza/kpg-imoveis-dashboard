@@ -59,6 +59,21 @@ async function publishContainer(creationId: string, accountId: string, token: st
   return data;
 }
 
+async function fetchPublishedPermalink(mediaId: string, token: string) {
+  if (!mediaId) return "";
+  try {
+    const response = await fetch(
+      `${graphBase}/${encodeURIComponent(mediaId)}?fields=permalink&access_token=${encodeURIComponent(token)}`,
+      { cache: "no-store" }
+    );
+    const data = await response.json();
+    if (!response.ok) return "";
+    return String(data?.permalink || "");
+  } catch {
+    return "";
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const { session, response } = await requireTenantService(request, "instagram-publisher");
@@ -85,7 +100,8 @@ export async function POST(request: Request) {
     if (imageUrls.length === 1) {
       const containerId = await createMediaContainer(imageUrls[0], caption, false, accountId, token);
       const result = await publishContainer(containerId, accountId, token);
-      const permalink = result?.permalink || result?.url || (result?.id ? `https://www.instagram.com/p/${result.id}/` : "");
+      const publishedPermalink = await fetchPublishedPermalink(String(result?.id || ""), token);
+      const permalink = publishedPermalink || result?.permalink || result?.url || (result?.id ? `https://www.instagram.com/p/${result.id}/` : "");
       const { usage } = await recordInstagramPublication({
         tenantId: session.tenantId,
         userId: session.userId,
@@ -124,7 +140,8 @@ export async function POST(request: Request) {
     }
 
     const result = await publishContainer(String(carousel.id), accountId, token);
-    const permalink = result?.permalink || result?.url || (result?.id ? `https://www.instagram.com/p/${result.id}/` : "");
+    const publishedPermalink = await fetchPublishedPermalink(String(result?.id || ""), token);
+    const permalink = publishedPermalink || result?.permalink || result?.url || (result?.id ? `https://www.instagram.com/p/${result.id}/` : "");
     const { usage } = await recordInstagramPublication({
       tenantId: session.tenantId,
       userId: session.userId,
