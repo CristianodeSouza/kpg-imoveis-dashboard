@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   BarChart3,
   Building2,
@@ -135,14 +135,9 @@ export default function HomePage() {
   const [account, setAccount] = useState<InstagramAccountSummary | null>(null);
   const [insights, setInsights] = useState<MediaInsight[]>([]);
   const [insightsLoading, setInsightsLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   const currentStep = property ? (caption ? 3 : 2) : 1;
   const hashtags = useMemo(() => (property ? buildHashtags(property) : []), [property]);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   async function fetchProperty() {
     const cleanCode = code.trim();
@@ -289,14 +284,6 @@ export default function HomePage() {
       shareRate: reach ? (shares / reach) * 100 : 0
     };
   });
-
-  const chartData = enrichedInsights.slice(0, 8).map((item) => ({
-    name: shortCaption(item.caption, item.id),
-    alcance: item.reach,
-    visualizacoes: item.views,
-    interacoes: item.totalInteractions
-  }));
-  const maxChartValue = Math.max(1, ...chartData.flatMap((item) => [item.alcance, item.visualizacoes, item.interacoes]));
 
   const totals = enrichedInsights.reduce(
     (acc, item) => {
@@ -656,50 +643,6 @@ export default function HomePage() {
             <div className="metric">
               <span>Views medias/post</span>
               <strong>{averageViews.toLocaleString("pt-BR")}</strong>
-            </div>
-          </div>
-
-          <div className="chart-section">
-            <div className="chart-header">
-              <div>
-                <span className="eyebrow">Comparativo por publicacao</span>
-                <h3>Alcance, visualizacoes e interacoes</h3>
-              </div>
-              <small>Ultimos {chartData.length} posts com dados disponiveis</small>
-            </div>
-            <div className="chart-wrap">
-              {mounted && chartData.length ? (
-                <div className="simple-chart" role="img" aria-label="Comparativo de alcance, visualizacoes e interacoes por publicacao">
-                  <div className="chart-legend">
-                    <span>
-                      <i className="legend-dot reach" />
-                      Alcance
-                    </span>
-                    <span>
-                      <i className="legend-dot views" />
-                      Visualizacoes
-                    </span>
-                    <span>
-                      <i className="legend-dot interactions" />
-                      Interacoes
-                    </span>
-                  </div>
-                  <div className="bar-groups">
-                    {chartData.map((item) => (
-                      <div className="bar-group" key={item.name}>
-                        <div className="bar-stack">
-                          <span className="bar reach" style={{ height: `${Math.max(8, (item.alcance / maxChartValue) * 100)}%` }} />
-                          <span className="bar views" style={{ height: `${Math.max(8, (item.visualizacoes / maxChartValue) * 100)}%` }} />
-                          <span className="bar interactions" style={{ height: `${Math.max(8, (item.interacoes / maxChartValue) * 100)}%` }} />
-                        </div>
-                        <span className="bar-label">{item.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="empty-chart">Sem dados suficientes para montar o comparativo.</div>
-              )}
             </div>
           </div>
 
