@@ -42,6 +42,12 @@ function ServiceIcon({ icon }: { icon: string }) {
   return <Icon size={22} />;
 }
 
+function productClass(slug: string) {
+  if (slug === "instagram-publisher") return "portal-product-instagram";
+  if (slug === "mini-crm") return "portal-product-crm";
+  return "portal-product-default";
+}
+
 export default function PortalPage() {
   const [data, setData] = useState<PortalData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,19 +74,17 @@ export default function PortalPage() {
     loadPortal();
   }, []);
 
-  const services = data?.services.filter((service) => service.slug !== "portal") || [];
-  const accountServices: PortalService[] = [
-    {
-      slug: "payments",
-      name: "Pagamentos",
-      description: "Status da assinatura, ciclo atual e historico de pagamentos.",
-      href: "/app/pagamentos",
-      icon: "payment",
-      plan: "conta",
-      status: "active"
-    }
-  ];
-
+  const services = data?.services || [];
+  const productServices = services.filter((service) => !["portal", "settings", "payments"].includes(service.slug));
+  const settingsService = services.find((service) => service.slug === "settings") || {
+    slug: "settings",
+    name: "Configuracoes",
+    description: "Credenciais SIGA, Meta, Instagram e WhatsApp.",
+    href: "/app/configuracoes",
+    icon: "settings",
+    plan: "core",
+    status: "active"
+  };
   return (
     <main className="shell">
       <header className="topbar">
@@ -108,9 +112,20 @@ export default function PortalPage() {
             <h1>{data?.tenant.name || "Portal CSR Tecnologia"}</h1>
             <p>{data ? `Ola, ${data.user.name}. Acesse os servicos contratados para esta conta.` : "Carregando seus servicos contratados."}</p>
           </div>
-          <div className="portal-account">
-            <Building2 size={20} />
-            <span>{data?.tenant.slug || "tenant"}</span>
+          <div className="portal-quick-area">
+            <div className="portal-account-actions" aria-label="Acoes da conta">
+              <a className="portal-account-link" href="/app/pagamentos">
+                <CreditCard size={17} />
+                <span>Pagamentos</span>
+              </a>
+              <a className="portal-settings-link" href={settingsService.href} aria-label="Configuracoes da conta">
+                <Settings size={19} />
+              </a>
+            </div>
+            <div className="portal-account">
+              <Building2 size={20} />
+              <span>{data?.tenant.slug || "tenant"}</span>
+            </div>
           </div>
         </section>
 
@@ -124,30 +139,37 @@ export default function PortalPage() {
         {message ? <div className="message error">{message}</div> : null}
 
         {!loading && data ? (
-          <section className="portal-grid">
-            {services.length || accountServices.length ? (
-              [...services, ...accountServices].map((service) => (
-                <a className="portal-card" href={service.href} key={service.slug}>
-                  <span className="portal-card-icon">
-                    <ServiceIcon icon={service.icon} />
-                  </span>
-                  <span>
-                    <strong>{service.name}</strong>
-                    <small>{service.description || "Servico contratado"}</small>
-                  </span>
-                  <span className="portal-card-footer">
-                    <span>{service.plan}</span>
-                    <ArrowRight size={17} />
-                  </span>
-                </a>
-              ))
-            ) : (
-              <section className="panel empty-state">
-                <Shield size={24} />
-                <strong>Nenhum servico ativo</strong>
-                <span>Fale com a CSR Tecnologia para ativar o primeiro modulo deste cliente.</span>
-              </section>
-            )}
+          <section className="portal-products-section">
+            <div className="portal-section-heading">
+              <span className="eyebrow">Produtos contratados</span>
+              <h2>Servicos ativos</h2>
+            </div>
+            <div className="portal-grid">
+              {productServices.length ? (
+                productServices.map((service) => (
+                  <a className={`portal-card portal-product-card ${productClass(service.slug)}`} href={service.href} key={service.slug}>
+                    <span className="portal-card-scrim" />
+                    <span className="portal-card-icon">
+                      <ServiceIcon icon={service.icon} />
+                    </span>
+                    <span>
+                      <strong>{service.name}</strong>
+                      <small>{service.description || "Servico contratado"}</small>
+                    </span>
+                    <span className="portal-card-footer">
+                      <span>{service.plan}</span>
+                      <ArrowRight size={17} />
+                    </span>
+                  </a>
+                ))
+              ) : (
+                <section className="panel empty-state">
+                  <Shield size={24} />
+                  <strong>Nenhum servico ativo</strong>
+                  <span>Fale com a CSR Tecnologia para ativar o primeiro modulo deste cliente.</span>
+                </section>
+              )}
+            </div>
           </section>
         ) : null}
       </section>

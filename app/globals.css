@@ -395,6 +395,7 @@ a {
   display: flex;
   gap: 18px;
   justify-content: space-between;
+  position: relative;
 }
 
 .portal-hero h1 {
@@ -420,11 +421,58 @@ a {
   white-space: nowrap;
 }
 
+.portal-quick-area {
+  align-items: flex-end;
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+.portal-account-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.portal-account-link,
+.portal-settings-link {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  display: inline-flex;
+  font-weight: 900;
+  gap: 8px;
+  min-height: 40px;
+  padding: 9px 12px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.portal-settings-link {
+  background: var(--ink);
+  color: #fff;
+  justify-content: center;
+  padding: 0;
+  width: 42px;
+}
+
+.portal-section-heading {
+  margin-top: 18px;
+}
+
+.portal-section-heading h2 {
+  font-size: 24px;
+  line-height: 1.15;
+  margin: 3px 0 0;
+}
+
 .portal-grid {
   display: grid;
   gap: 14px;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  margin-top: 18px;
+  margin-top: 12px;
 }
 
 .portal-card {
@@ -440,6 +488,40 @@ a {
   text-decoration: none;
 }
 
+.portal-product-card {
+  background-position: center;
+  background-size: cover;
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  min-height: 238px;
+  overflow: hidden;
+  position: relative;
+}
+
+.portal-product-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.portal-card-scrim {
+  background: linear-gradient(180deg, rgba(10, 24, 55, 0.36), rgba(10, 24, 55, 0.9));
+  inset: 0;
+  position: absolute;
+  z-index: 0;
+}
+
+.portal-product-instagram {
+  background-image: url("https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?auto=format&fit=crop&w=900&q=80");
+}
+
+.portal-product-crm {
+  background-image: url("https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=900&q=80");
+}
+
+.portal-product-default {
+  background-image: url("https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=900&q=80");
+}
+
 .portal-card:hover {
   border-color: var(--blue);
 }
@@ -453,6 +535,12 @@ a {
   height: 46px;
   justify-content: center;
   width: 46px;
+}
+
+.portal-product-card .portal-card-icon {
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(8px);
+  color: #fff;
 }
 
 .portal-card strong,
@@ -471,6 +559,10 @@ a {
   margin-top: 6px;
 }
 
+.portal-product-card small {
+  color: rgba(255, 255, 255, 0.82);
+}
+
 .portal-card-footer {
   align-items: center;
   align-self: end;
@@ -480,6 +572,10 @@ a {
   font-weight: 900;
   justify-content: space-between;
   text-transform: uppercase;
+}
+
+.portal-product-card .portal-card-footer {
+  color: #fff;
 }
 
 .admin-create-form {
@@ -1606,6 +1702,16 @@ a {
   .portal-hero {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .portal-quick-area {
+    align-items: flex-start;
+    justify-items: start;
+    width: 100%;
+  }
+
+  .portal-account-actions {
+    flex-wrap: wrap;
   }
 
   .chart-header {
