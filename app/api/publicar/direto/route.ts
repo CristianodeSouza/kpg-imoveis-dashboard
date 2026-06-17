@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { postToBackend } from "@/lib/backend";
 import { readTenantSettings } from "@/lib/settings";
 import { requireTenantService } from "@/lib/services";
+import { ensureInstagramQuota, recordInstagramPublication } from "@/lib/publications";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -94,10 +95,27 @@ export async function POST(request: Request) {
     );
 
     if (imageUrls.length) {
+      await ensureInstagramQuota(session.tenantId);
       const resultado = await publishFallback(caption, imageUrls, settings.instagramAccountId, settings.instagramAccessToken || "");
+      const permalink =
+        resultado.permalink ||
+        resultado.url ||
+        (resultado.id ? `https://www.instagram.com/p/${resultado.id}/` : "");
+      const { usage } = await recordInstagramPublication({
+        tenantId: session.tenantId,
+        userId: session.userId,
+        propertyCode: codigo,
+        caption,
+        instagramPostId: resultado.id,
+        instagramUrl: permalink,
+        mediaType: resultado.tipo,
+        photosCount: resultado.fotos_publicadas,
+        metadata: resultado
+      });
       return NextResponse.json({
         sucesso: true,
-        resultado,
+        resultado: { ...resultado, url: permalink },
+        usage,
         origem: "next-selected-images"
       });
     }

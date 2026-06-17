@@ -3,6 +3,7 @@ import { requirePlatformAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/db";
 import { ensureBaseServices } from "@/lib/services";
 import { publicTenantSettings, readTenantSettings, writeTenantSettings } from "@/lib/settings";
+import { getInstagramUsage, listInstagramPublications } from "@/lib/publications";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,11 @@ async function loadTenant(clientCode: string) {
 }
 
 async function serializeTenant(tenant: NonNullable<Awaited<ReturnType<typeof loadTenant>>>) {
-  const settings = await readTenantSettings(tenant.id);
+  const [settings, instagramUsage, publicationLogs] = await Promise.all([
+    readTenantSettings(tenant.id),
+    getInstagramUsage(tenant.id),
+    listInstagramPublications(tenant.id, 80)
+  ]);
   return {
     id: tenant.id,
     clientCode: tenant.clientCode,
@@ -76,6 +81,20 @@ async function serializeTenant(tenant: NonNullable<Awaited<ReturnType<typeof loa
       whatsapp: Boolean(tenant.settings?.whatsappNumber)
     },
     settings: publicTenantSettings(settings),
+    instagramUsage,
+    publicationLogs: publicationLogs.map((item) => ({
+      id: item.id,
+      propertyCode: item.propertyCode,
+      caption: item.caption,
+      instagramPostId: item.instagramPostId,
+      instagramUrl: item.instagramUrl,
+      mediaType: item.mediaType,
+      photosCount: item.photosCount,
+      status: item.status,
+      createdAt: item.createdAt,
+      cycleStart: item.cycleStart,
+      cycleEnd: item.cycleEnd
+    })),
     activityLogs: tenant.auditLogs.map((log) => ({
       id: log.id,
       action: log.action,

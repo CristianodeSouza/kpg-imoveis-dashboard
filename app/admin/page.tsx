@@ -30,6 +30,14 @@ type AdminTenant = {
   usersCount: number;
   services: Array<{ slug: string; name: string; status: string; plan: string; priceCents: number; expiresAt?: string }>;
   integrations: { siga: boolean; instagram: boolean; whatsapp: boolean };
+  instagramUsage?: {
+    planName: string;
+    monthlyLimit: number;
+    used: number;
+    remaining: number;
+    exceeded: boolean;
+    cycleEnd: string;
+  };
   activityLogs: Array<{ id: string; action: string; target?: string; username?: string; createdAt: string }>;
 };
 
@@ -132,6 +140,8 @@ export default function AdminPage() {
   const missingCommercialData = tenants.filter((tenant) => !tenant.contactName || !tenant.contactEmail || !tenant.contactPhone || !tenant.document);
   const missingContractData = tenants.filter((tenant) => !tenant.acquiredAt || tenant.monthlyValueCents <= 0);
   const pendingIntegrations = tenants.filter(hasPendingIntegrations);
+  const exceededInstagramPlans = tenants.filter((tenant) => tenant.instagramUsage?.exceeded);
+  const totalInstagramPosts = tenants.reduce((total, tenant) => total + (tenant.instagramUsage?.used || 0), 0);
 
   function statusLabel(status: string) {
     if (status === "active") return "Ativo";
@@ -217,6 +227,14 @@ export default function AdminPage() {
               <span className="eyebrow">Servicos no catalogo</span>
               <strong>{services.length}</strong>
             </div>
+            <div>
+              <span className="eyebrow">Posts no ciclo</span>
+              <strong>{totalInstagramPosts}</strong>
+            </div>
+            <div>
+              <span className="eyebrow">Pacotes estourados</span>
+              <strong>{exceededInstagramPlans.length}</strong>
+            </div>
           </div>
 
           <div className="admin-audit-grid">
@@ -239,6 +257,11 @@ export default function AdminPage() {
               <span className="eyebrow">Integracoes</span>
               <strong>{pendingIntegrations.length}</strong>
               <small>clientes com SIGA, Instagram ou WhatsApp pendente</small>
+            </article>
+            <article className={exceededInstagramPlans.length ? "audit-card warning" : "audit-card ok"}>
+              <span className="eyebrow">Postagens</span>
+              <strong>{exceededInstagramPlans.length}</strong>
+              <small>clientes que ultrapassaram o pacote contratado</small>
             </article>
           </div>
         </section>
@@ -417,7 +440,19 @@ export default function AdminPage() {
                   <span className="eyebrow">Aquisicao</span>
                   <strong>{tenant.acquiredAt ? new Date(tenant.acquiredAt).toLocaleDateString("pt-BR") : "Pendente"}</strong>
                 </div>
+                <div>
+                  <span className="eyebrow">Posts Instagram</span>
+                  <strong>{tenant.instagramUsage ? `${tenant.instagramUsage.used}/${tenant.instagramUsage.monthlyLimit}` : "0/0"}</strong>
+                </div>
               </div>
+              {tenant.instagramUsage ? (
+                <div className="usage-mini">
+                  <span>
+                    Pacote {tenant.instagramUsage.planName}: {tenant.instagramUsage.remaining} restantes ate{" "}
+                    {new Date(tenant.instagramUsage.cycleEnd).toLocaleDateString("pt-BR")}
+                  </span>
+                </div>
+              ) : null}
               <div className="hashtags">
                 {tenant.services
                   .filter((service) => !["portal", "settings"].includes(service.slug))

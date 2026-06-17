@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readTenantSettings } from "@/lib/settings";
 import { requireTenantService } from "@/lib/services";
 import type { PublishPayload } from "@/lib/types";
+import { ensureInstagramQuota, recordInstagramPublication } from "@/lib/publications";
 
 export const dynamic = "force-dynamic";
 
@@ -79,10 +80,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Selecione pelo menos uma imagem publica." }, { status: 400 });
     }
 
+    await ensureInstagramQuota(session.tenantId);
+
     if (imageUrls.length === 1) {
       const containerId = await createMediaContainer(imageUrls[0], caption, false, accountId, token);
       const result = await publishContainer(containerId, accountId, token);
-      return NextResponse.json({ ok: true, result });
+      const permalink = result?.permalink || result?.url || (result?.id ? `https://www.instagram.com/p/${result.id}/` : "");
+      const { usage } = await recordInstagramPublication({
+        tenantId: session.tenantId,
+        userId: session.userId,
+        caption,
+        instagramPostId: result?.id,
+        instagramUrl: permalink,
+        mediaType: "imagem",
+        photosCount: 1,
+        metadata: result
+      });
+      return NextResponse.json({ ok: true, result: { ...result, url: permalink }, usage });
     }
 
     const children = [];
@@ -110,7 +124,18 @@ export async function POST(request: Request) {
     }
 
     const result = await publishContainer(String(carousel.id), accountId, token);
-    return NextResponse.json({ ok: true, result });
+    const permalink = result?.permalink || result?.url || (result?.id ? `https://www.instagram.com/p/${result.id}/` : "");
+    const { usage } = await recordInstagramPublication({
+      tenantId: session.tenantId,
+      userId: session.userId,
+      caption,
+      instagramPostId: result?.id,
+      instagramUrl: permalink,
+      mediaType: "carrossel",
+      photosCount: children.length,
+      metadata: result
+    });
+    return NextResponse.json({ ok: true, result: { ...result, url: permalink }, usage });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro inesperado ao publicar.";
     return NextResponse.json({ error: message }, { status: 500 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BarChart3,
   Building2,
@@ -22,6 +22,29 @@ type Creatives = {
   feed: string[];
   stories: string[];
   carousel: string[];
+};
+
+type PublicationUsage = {
+  plan: string;
+  planName: string;
+  monthlyLimit: number;
+  used: number;
+  remaining: number;
+  exceeded: boolean;
+  cycleStart: string;
+  cycleEnd: string;
+};
+
+type PublicationLog = {
+  id: string;
+  propertyCode: string;
+  caption: string;
+  instagramPostId: string;
+  instagramUrl: string;
+  mediaType: string;
+  photosCount: number;
+  status: string;
+  createdAt: string;
 };
 
 const steps = [
@@ -135,9 +158,14 @@ export default function HomePage() {
   const [account, setAccount] = useState<InstagramAccountSummary | null>(null);
   const [insights, setInsights] = useState<MediaInsight[]>([]);
   const [insightsLoading, setInsightsLoading] = useState(false);
+  const [publicationUsage, setPublicationUsage] = useState<PublicationUsage | null>(null);
+  const [publicationLogs, setPublicationLogs] = useState<PublicationLog[]>([]);
 
   const currentStep = property ? (caption ? 3 : 2) : 1;
   const hashtags = useMemo(() => (property ? buildHashtags(property) : []), [property]);
+  const usagePercent = publicationUsage
+    ? Math.min(100, Math.round((publicationUsage.used / Math.max(1, publicationUsage.monthlyLimit)) * 100))
+    : 0;
 
   async function fetchProperty() {
     const cleanCode = code.trim();
@@ -229,6 +257,8 @@ export default function HomePage() {
       const publishType = data?.resultado?.tipo;
       const details = publishedCount ? ` ${publishType || "post"} com ${publishedCount} foto${publishedCount > 1 ? "s" : ""}.` : "";
       setPublishMessage({ type: "ok", text: `Publicacao enviada para o Instagram.${details}${url}` });
+      if (data.usage) setPublicationUsage(data.usage);
+      await loadPublications();
     } catch (error) {
       const text =
         error instanceof DOMException && error.name === "AbortError"
@@ -263,6 +293,24 @@ export default function HomePage() {
       setInsightsLoading(false);
     }
   }
+
+  async function loadPublications() {
+    try {
+      const response = await fetch("/api/publications", { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Falha ao buscar historico de publicacoes.");
+      setPublicationUsage(data.usage || null);
+      setPublicationLogs(data.publications || []);
+    } catch {
+      setPublicationUsage(null);
+      setPublicationLogs([]);
+    }
+  }
+
+  useEffect(() => {
+    loadInsights();
+    loadPublications();
+  }, []);
 
   const activeInsights = insights.length ? insights : sampleInsights;
   const activeAccount = account || sampleAccount;
@@ -645,6 +693,75 @@ export default function HomePage() {
               <strong>{averageViews.toLocaleString("pt-BR")}</strong>
             </div>
           </div>
+
+          <section className="usage-panel">
+            <div className="usage-header">
+              <div>
+                <span className="eyebrow">Assinatura de publicacoes</span>
+                <h3>{publicationUsage ? `Pacote ${publicationUsage.planName}` : "Pacote nao carregado"}</h3>
+              </div>
+              {publicationUsage ? (
+                <strong>
+                  {publicationUsage.used}/{publicationUsage.monthlyLimit} posts
+                </strong>
+              ) : null}
+            </div>
+            {publicationUsage ? (
+              <>
+                <div className="usage-bar" aria-label={`Uso do pacote ${usagePercent}%`}>
+                  <span style={{ width: `${usagePercent}%` }} />
+                </div>
+                <div className="usage-details">
+                  <span>{publicationUsage.remaining} posts restantes neste ciclo</span>
+                  <span>Renova em {new Date(publicationUsage.cycleEnd).toLocaleDateString("pt-BR")}</span>
+                </div>
+                {publicationUsage.exceeded ? (
+                  <div className="message error">Este cliente ja ultrapassou o limite contratado neste ciclo.</div>
+                ) : null}
+              </>
+            ) : (
+              <div className="empty-state">
+                <strong>Nao foi possivel carregar o consumo do pacote.</strong>
+              </div>
+            )}
+          </section>
+
+          <section className="analytics-block publication-history">
+            <div className="section-inline-heading">
+              <div>
+                <span className="eyebrow">Historico de envios</span>
+                <h3>Posts enviados via SaaS</h3>
+              </div>
+              <button className="btn secondary" onClick={loadPublications} type="button">
+                <RefreshCw size={16} />
+                Atualizar
+              </button>
+            </div>
+            <div className="compact-table">
+              {publicationLogs.length ? (
+                publicationLogs.map((item) => (
+                  <div className="table-row publication-row" key={item.id}>
+                    <span>{item.propertyCode ? `Imovel ${item.propertyCode}` : item.mediaType}</span>
+                    <strong>{new Date(item.createdAt).toLocaleString("pt-BR")}</strong>
+                    <small>
+                      {item.photosCount} foto{item.photosCount === 1 ? "" : "s"} | {item.status}
+                    </small>
+                    {item.instagramUrl ? (
+                      <a href={item.instagramUrl} rel="noreferrer" target="_blank">
+                        Conferir no Instagram
+                      </a>
+                    ) : (
+                      <small>Link ainda nao retornado pela Meta</small>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="empty-state">
+                  <strong>Nenhuma publicacao enviada por este SaaS neste cliente.</strong>
+                </div>
+              )}
+            </div>
+          </section>
 
           <div className="analytics-grid">
             <section className="analytics-block">

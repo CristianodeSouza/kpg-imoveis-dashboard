@@ -26,6 +26,7 @@ model Tenant {
   settings          TenantSettings?
   services          TenantService[]
   auditLogs         AuditLog[]
+  publicationLogs   PublicationLog[]
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 }
@@ -104,4 +105,25 @@ model AuditLog {
   target    String?
   metadata  Json?
   createdAt DateTime @default(now())
+}
+
+model PublicationLog {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId         String?
+  propertyCode   String   @default("")
+  caption        String   @default("")
+  instagramPostId String  @default("")
+  instagramUrl   String   @default("")
+  mediaType      String   @default("post")
+  photosCount    Int      @default(0)
+  status         String   @default("published")
+  cycleStart     DateTime
+  cycleEnd       DateTime
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, cycleStart, cycleEnd])
 }

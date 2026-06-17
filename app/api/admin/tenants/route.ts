@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requirePlatformAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/db";
 import { ensureBaseServices, ensureTenantServices } from "@/lib/services";
+import { getInstagramUsage } from "@/lib/publications";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,10 @@ export async function GET(request: Request) {
   });
   const services = await ensureBaseServices();
 
+  const usageByTenant = new Map(
+    await Promise.all(tenants.map(async (tenant) => [tenant.id, await getInstagramUsage(tenant.id)] as const))
+  );
+
   return NextResponse.json({
     services: services.map((service) => ({
       slug: service.slug,
@@ -107,6 +112,7 @@ export async function GET(request: Request) {
         username: log.user?.username,
         createdAt: log.createdAt
       })),
+      instagramUsage: usageByTenant.get(tenant.id),
       createdAt: tenant.createdAt
     }))
   });

@@ -39,6 +39,26 @@ type TenantDetail = {
     instagramAccessTokenConfigured: boolean;
     whatsappNumber: string;
   };
+  instagramUsage?: {
+    planName: string;
+    monthlyLimit: number;
+    used: number;
+    remaining: number;
+    exceeded: boolean;
+    cycleStart: string;
+    cycleEnd: string;
+  };
+  publicationLogs: Array<{
+    id: string;
+    propertyCode: string;
+    caption: string;
+    instagramPostId: string;
+    instagramUrl: string;
+    mediaType: string;
+    photosCount: number;
+    status: string;
+    createdAt: string;
+  }>;
   activityLogs: Array<{ id: string; action: string; target?: string; username?: string; createdAt: string }>;
 };
 
@@ -73,6 +93,11 @@ function billingLabel(status: string) {
 
 function activeServicesCount(tenant: TenantDetail) {
   return tenant.services.filter((service) => service.status === "active" && !["portal", "settings"].includes(service.slug)).length;
+}
+
+function usagePercent(tenant: TenantDetail) {
+  if (!tenant.instagramUsage) return 0;
+  return Math.min(100, Math.round((tenant.instagramUsage.used / Math.max(1, tenant.instagramUsage.monthlyLimit)) * 100));
 }
 
 function settingsDraftFromTenant(tenant: TenantDetail): SettingsDraft {
@@ -142,6 +167,13 @@ export default function ClientDetailPage() {
     return ((draft.services as TenantDetail["services"] | undefined) || tenant.services).some((item) => item.slug === slug && item.status === "active");
   }
 
+  function updateServicePlan(slug: string, plan: string) {
+    if (!tenant) return;
+    const draftServices = (draft.services as TenantDetail["services"] | undefined) || tenant.services;
+    const next = draftServices.map((service) => (service.slug === slug ? { ...service, plan } : service));
+    updateDraft({ services: next });
+  }
+
   async function saveClient() {
     if (!tenant) return;
     setSaving(true);
@@ -162,7 +194,10 @@ export default function ClientDetailPage() {
           acquiredAt: draft.acquiredAt ?? dateInput(tenant.acquiredAt),
           notes: draft.notes ?? tenant.notes,
           settings: draft.settings,
-          services: services.map((service) => ({ slug: service.slug, enabled: serviceEnabled(service.slug) }))
+          services: services.map((service) => {
+            const current = ((draft.services as TenantDetail["services"] | undefined) || tenant.services).find((item) => item.slug === service.slug);
+            return { slug: service.slug, enabled: serviceEnabled(service.slug), plan: current?.plan || "starter" };
+          })
         })
       });
       const data = await response.json();
@@ -249,7 +284,33 @@ export default function ClientDetailPage() {
                 <span className="eyebrow">Aquisicao</span>
                 <strong>{tenant.acquiredAt ? new Date(tenant.acquiredAt).toLocaleDateString("pt-BR") : "Pendente"}</strong>
               </div>
+              <div>
+                <span className="eyebrow">Posts Instagram</span>
+                <strong>{tenant.instagramUsage ? `${tenant.instagramUsage.used}/${tenant.instagramUsage.monthlyLimit}` : "0/0"}</strong>
+              </div>
             </section>
+
+            {tenant.instagramUsage ? (
+              <section className="usage-panel">
+                <div className="usage-header">
+                  <div>
+                    <span className="eyebrow">Assinatura de publicacoes</span>
+                    <h3>Pacote {tenant.instagramUsage.planName}</h3>
+                  </div>
+                  <strong>{tenant.instagramUsage.remaining} restantes</strong>
+                </div>
+                <div className="usage-bar">
+                  <span style={{ width: `${usagePercent(tenant)}%` }} />
+                </div>
+                <div className="usage-details">
+                  <span>
+                    Ciclo: {new Date(tenant.instagramUsage.cycleStart).toLocaleDateString("pt-BR")} ate{" "}
+                    {new Date(tenant.instagramUsage.cycleEnd).toLocaleDateString("pt-BR")}
+                  </span>
+                  <span>{tenant.instagramUsage.exceeded ? "Limite ultrapassado" : "Dentro do pacote contratado"}</span>
+                </div>
+              </section>
+            ) : null}
 
             <section className="panel">
               <div className="panel-heading">
@@ -331,6 +392,25 @@ export default function ClientDetailPage() {
                   </label>
                 ))}
               </div>
+              {serviceEnabled("instagram-publisher") ? (
+                <div className="tenant-edit-grid service-plan-grid">
+                  <div className="field">
+                    <label>Pacote de postagens Instagram</label>
+                    <select
+                      className="select"
+                      value={
+                        (((draft.services as TenantDetail["services"] | undefined) || tenant.services).find((item) => item.slug === "instagram-publisher")?.plan ||
+                          "starter")
+                      }
+                      onChange={(event) => updateServicePlan("instagram-publisher", event.target.value)}
+                    >
+                      <option value="starter">Essencial - 30 posts / 30 dias</option>
+                      <option value="growth">Crescimento - 60 posts / 30 dias</option>
+                      <option value="scale">Escala - 90 posts / 30 dias</option>
+                    </select>
+                  </div>
+                </div>
+              ) : null}
               <div className="tenant-integrations">
                 <span>SIGA: {tenant.integrations.siga ? "ok" : "pendente"}</span>
                 <span>Instagram: {tenant.integrations.instagram ? "ok" : "pendente"}</span>
@@ -428,6 +508,39 @@ export default function ClientDetailPage() {
                     </small>
                   </div>
                 ))}
+              </div>
+            </section>
+
+            <section className="panel">
+              <div className="panel-heading">
+                <div className="panel-title">
+                  <Activity size={22} />
+                  <h2>Publicacoes enviadas</h2>
+                </div>
+              </div>
+              <div className="compact-table">
+                {tenant.publicationLogs.length ? (
+                  tenant.publicationLogs.map((item) => (
+                    <div className="table-row publication-row" key={item.id}>
+                      <span>{item.propertyCode ? `Imovel ${item.propertyCode}` : item.mediaType}</span>
+                      <strong>{new Date(item.createdAt).toLocaleString("pt-BR")}</strong>
+                      <small>
+                        {item.photosCount} foto{item.photosCount === 1 ? "" : "s"} | {item.status}
+                      </small>
+                      {item.instagramUrl ? (
+                        <a href={item.instagramUrl} rel="noreferrer" target="_blank">
+                          Conferir no Instagram
+                        </a>
+                      ) : (
+                        <small>Sem link retornado</small>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="empty-state">
+                    <strong>Nenhuma publicacao enviada via SaaS.</strong>
+                  </div>
+                )}
               </div>
             </section>
 
