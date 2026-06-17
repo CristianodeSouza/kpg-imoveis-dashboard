@@ -60,7 +60,7 @@ const sampleInsights: MediaInsight[] = [
     id: "sample-1",
     caption: "Apartamento em Gramado",
     permalink: "#",
-    timestamp: new Date().toISOString(),
+    timestamp: "2026-06-16T14:00:00.000Z",
     mediaType: "IMAGE",
     likeCount: 124,
     commentsCount: 9,
@@ -75,7 +75,7 @@ const sampleInsights: MediaInsight[] = [
     id: "sample-2",
     caption: "Casa em Canela",
     permalink: "#",
-    timestamp: new Date().toISOString(),
+    timestamp: "2026-06-15T17:00:00.000Z",
     mediaType: "CAROUSEL_ALBUM",
     childrenCount: 6,
     likeCount: 98,
@@ -125,12 +125,12 @@ function mediaTypeLabel(type: string) {
 
 function weekdayLabel(timestamp: string) {
   if (!timestamp) return "Sem data";
-  return new Intl.DateTimeFormat("pt-BR", { weekday: "short" }).format(new Date(timestamp));
+  return new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "short" }).format(new Date(timestamp));
 }
 
 function hourLabel(timestamp: string) {
   if (!timestamp) return "Sem hora";
-  return `${new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", hour12: false }).format(new Date(timestamp))}h`;
+  return `${new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", hour12: false, timeZone: "America/Sao_Paulo" }).format(new Date(timestamp))}h`;
 }
 
 function groupBy<TItem, TValue>(items: TItem[], labeler: (item: TItem) => string, mapper: (item: TItem) => TValue) {
