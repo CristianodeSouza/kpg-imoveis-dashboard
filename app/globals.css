@@ -1,21 +1,28 @@
 :root {
-  --ink: #14213d;
-  --ink-2: #21324f;
-  --gold: #c7972d;
-  --green: #1fbf75;
-  --blue: #2f6fed;
-  --cyan: #0891b2;
-  --amber: #d97706;
-  --red: #dc2626;
-  --paper: #f6f7f9;
+  --ink: #0a0a0a;
+  --ink-2: #343746;
+  --gold: #c87b00;
+  --green: #00c87b;
+  --blue: #0059d5;
+  --cyan: #0059d5;
+  --amber: #c87b00;
+  --red: #c80003;
+  --paper: #f6f6f6;
   --panel: #ffffff;
-  --muted: #657084;
-  --line: #dfe5ef;
-  --danger: #c13f3f;
-  --shadow: 0 10px 26px rgba(28, 39, 58, 0.07);
-  --shadow-soft: 0 6px 18px rgba(28, 39, 58, 0.055);
+  --muted: #5d5d5d;
+  --line: #d1d1d1;
+  --danger: #c80003;
+  --primary-surface: #eef5ff;
+  --primary-highlight: #96c1fc;
+  --success-surface: #defef2;
+  --warning-surface: #fef2de;
+  --danger-surface: #fedede;
+  --neutral-surface: #f6f6f6;
+  --neutral-disabled: #e7e7e7;
+  --shadow: 0 3px 6px rgba(209, 209, 209, 0.65), 0 0 1px rgba(136, 136, 136, 0.65);
+  --shadow-soft: 0 0 1px rgba(136, 136, 136, 0.8);
   --radius: 8px;
-  --radius-sm: 6px;
+  --radius-sm: 4px;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -35,7 +42,7 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-size: 14px;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: Geist, Inter, -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 button,
@@ -66,8 +73,9 @@ a {
 }
 
 .ds-sidebar {
-  background: #101b33;
-  color: #fff;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  color: var(--ink);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -78,20 +86,20 @@ a {
 }
 
 .ds-sidebar-brand {
-  color: #fff;
+  color: var(--ink);
   display: grid;
   gap: 3px;
   text-decoration: none;
 }
 
 .ds-sidebar-brand strong {
-  color: #f3bd3b;
+  color: var(--blue);
   font-size: 18px;
   line-height: 1.1;
 }
 
 .ds-sidebar-brand span {
-  color: #b8c4d8;
+  color: var(--muted);
   font-size: 10px;
   letter-spacing: 1.2px;
   text-transform: uppercase;
@@ -105,7 +113,7 @@ a {
 .ds-sidebar-link {
   align-items: center;
   border-radius: var(--radius);
-  color: #dce6f5;
+  color: var(--ink-2);
   display: flex;
   font-size: 13px;
   font-weight: 800;
@@ -116,13 +124,13 @@ a {
 
 .ds-sidebar-link.active,
 .ds-sidebar-link:hover {
-  background: #fff;
-  color: var(--ink);
+  background: var(--primary-surface);
+  color: var(--blue);
 }
 
 .ds-sidebar-meta {
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  color: #c9d3e2;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
   display: grid;
   font-size: 11px;
   gap: 7px;
@@ -194,30 +202,31 @@ a {
 }
 
 .ds-metric-card.success {
-  background: #f6fef9;
-  border-color: #ccefdc;
+  background: var(--success-surface);
+  border-color: #7af7c7;
 }
 
 .ds-metric-card.warning {
-  background: #fffdf5;
-  border-color: #f4dd9a;
+  background: var(--warning-surface);
+  border-color: #f7c77a;
 }
 
 .ds-metric-card.danger {
-  background: #fff8f8;
-  border-color: #f3caca;
+  background: var(--danger-surface);
+  border-color: #f77a7c;
 }
 
 .ds-metric-card.info {
-  background: #f6fdff;
-  border-color: #bdeaf3;
+  background: var(--primary-surface);
+  border-color: var(--primary-highlight);
 }
 
 .ds-status-badge {
   align-items: center;
-  background: #eef2f7;
+  background: var(--neutral-surface);
+  border: 1px solid var(--line);
   border-radius: 999px;
-  color: #40516d;
+  color: var(--ink-2);
   display: inline-flex;
   font-size: 11px;
   font-weight: 800;
@@ -229,23 +238,27 @@ a {
 }
 
 .ds-status-badge.success {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--success-surface);
+  border-color: #7af7c7;
+  color: #005333;
 }
 
 .ds-status-badge.warning {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--warning-surface);
+  border-color: #f7c77a;
+  color: #533300;
 }
 
 .ds-status-badge.danger {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--danger-surface);
+  border-color: #f77a7c;
+  color: #530001;
 }
 
 .ds-status-badge.info {
-  background: #cffafe;
-  color: #155e75;
+  background: var(--primary-surface);
+  border-color: var(--primary-highlight);
+  color: #00255a;
 }
 
 .ds-empty-state {
@@ -279,6 +292,7 @@ a {
 .ds-data-table {
   border: 1px solid var(--line);
   border-radius: var(--radius);
+  background: var(--panel);
   overflow: hidden;
 }
 
@@ -292,8 +306,8 @@ a {
 }
 
 .ds-data-table-head {
-  background: #f8fafc;
-  color: #4b5c78;
+  background: var(--neutral-surface);
+  color: var(--muted);
   font-size: 11px;
   font-weight: 900;
   letter-spacing: 1px;
@@ -302,8 +316,8 @@ a {
 
 .ds-data-table-row {
   background: #fff;
-  border-top: 1px solid #edf1f5;
-  color: #334155;
+  border-top: 1px solid var(--neutral-disabled);
+  color: var(--ink-2);
   font-size: 14px;
 }
 
@@ -506,9 +520,9 @@ a {
 
 .panel {
   background: var(--panel);
-  border: 1px solid #edf1f5;
+  border: 1px solid var(--line);
   border-radius: 8px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-soft);
   padding: 16px 18px;
 }
 
@@ -580,7 +594,7 @@ a {
 .textarea,
 .select {
   background: #fff;
-  border: 1px solid #d9e0ea;
+  border: 1px solid var(--line);
   border-radius: 8px;
   color: var(--ink);
   font-size: 13px;
@@ -600,13 +614,13 @@ a {
 .textarea:focus,
 .select:focus {
   border-color: var(--blue);
-  box-shadow: 0 0 0 2px rgba(47, 111, 237, 0.12);
+  box-shadow: 0 0 0 3px var(--primary-highlight);
 }
 
 .input-icon {
   align-items: center;
   background: #fff;
-  border: 1px solid #d9e0ea;
+  border: 1px solid var(--line);
   border-radius: 8px;
   color: var(--muted);
   display: flex;
@@ -679,7 +693,7 @@ a {
 
 .portal-account {
   align-items: center;
-  background: #f6f8fb;
+  background: var(--neutral-surface);
   border: 1px solid var(--line);
   border-radius: 8px;
   display: inline-flex;
@@ -710,7 +724,7 @@ a {
   border-radius: 8px;
   color: var(--ink);
   display: inline-flex;
-  font-weight: 900;
+  font-weight: 600;
   gap: 8px;
   min-height: 40px;
   padding: 9px 12px;
@@ -719,7 +733,7 @@ a {
 }
 
 .portal-settings-link {
-  background: var(--ink);
+  background: var(--blue);
   color: #fff;
   justify-content: center;
   padding: 0;
@@ -747,7 +761,7 @@ a {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 8px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-soft);
   color: var(--ink);
   display: grid;
   gap: 14px;
@@ -1114,7 +1128,7 @@ a {
 
 .crm-view-tabs {
   align-items: center;
-  background: #eef2f7;
+  background: var(--neutral-surface);
   border: 1px solid var(--line);
   border-radius: 8px;
   display: inline-flex;
@@ -1139,9 +1153,10 @@ a {
 }
 
 .crm-view-tabs button.active {
-  background: #fff;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-  color: var(--ink);
+  background: var(--primary-surface);
+  border: 1px solid var(--blue);
+  box-shadow: none;
+  color: var(--blue);
 }
 
 .crm-toolbar {
@@ -1157,7 +1172,7 @@ a {
 
 .crm-conversation-list,
 .crm-detail-panel {
-  background: #f8fafc;
+  background: var(--neutral-surface);
   border: 1px solid var(--line);
   border-radius: 8px;
   min-width: 0;
@@ -1174,7 +1189,7 @@ a {
 
 .crm-conversation-item {
   align-items: flex-start;
-  background: #fff;
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
   color: inherit;
@@ -1190,13 +1205,14 @@ a {
 .crm-conversation-item:hover,
 .crm-conversation-item.active {
   border-color: var(--blue);
-  box-shadow: 0 12px 28px rgba(47, 111, 237, 0.12);
+  background: var(--primary-surface);
+  box-shadow: none;
   transform: translateY(-1px);
 }
 
 .crm-contact-avatar {
   align-items: center;
-  background: var(--ink);
+  background: var(--blue);
   border-radius: 8px;
   color: #fff;
   display: inline-flex;
@@ -1254,7 +1270,7 @@ a {
 
 .crm-chip-row span {
   align-items: center;
-  background: #eef2f7;
+  background: var(--neutral-disabled);
   border-radius: 999px;
   color: #41506a;
   display: inline-flex;
@@ -1266,13 +1282,13 @@ a {
 }
 
 .crm-chip-row span.hot {
-  background: #fff7e6;
-  color: #a46906;
+  background: var(--warning-surface);
+  color: #533300;
 }
 
 .crm-chip-row span.risk {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--danger-surface);
+  color: #530001;
 }
 
 .crm-detail-panel {
@@ -1321,7 +1337,7 @@ a {
   align-items: center;
   background: transparent;
   border: 0;
-  border-bottom: 1px solid #edf1f5;
+  border-bottom: 1px solid var(--neutral-disabled);
   border-radius: 0;
   display: grid;
   gap: 7px;
@@ -1331,7 +1347,7 @@ a {
 }
 
 .crm-info-item:nth-child(odd) {
-  border-right: 1px solid #edf1f5;
+  border-right: 1px solid var(--neutral-disabled);
 }
 
 .crm-info-item > span {
@@ -1710,7 +1726,7 @@ a {
   border-radius: 8px;
   display: inline-flex;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   gap: 7px;
   justify-content: center;
   min-height: 34px;
@@ -1734,18 +1750,27 @@ a {
 }
 
 .btn.primary {
-  background: var(--ink);
+  background: var(--blue);
   color: #fff;
 }
 
 .btn.secondary {
-  background: #eef2f7;
-  color: var(--ink);
+  background: var(--neutral-surface);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
 }
 
 .btn.success {
   background: var(--green);
-  color: #fff;
+  color: #001910;
+}
+
+.btn.primary:hover {
+  background: #00429f;
+}
+
+.btn.secondary:hover {
+  background: var(--neutral-disabled);
 }
 
 .btn.icon {

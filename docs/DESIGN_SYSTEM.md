@@ -17,7 +17,8 @@ Este documento define os padroes visuais e de interface do SaaS da CSR Tecnologi
 - React/Next.js com componentes internos em `app/components/ds.tsx`.
 - CSS global em `app/globals.css`.
 - Icones com `lucide-react`.
-- Inspiracao de arquitetura: shadcn/ui, Radix UI, TanStack Table e dashboards SaaS B2B.
+- Inspiracao principal: Nimbus Design System, da Nuvemshop, adaptado ao contexto CSR SaaS.
+- Inspiracao complementar: shadcn/ui, Radix UI, TanStack Table e dashboards SaaS B2B.
 - Nao instalar template pesado sem decisao explicita.
 
 ## Tokens
@@ -32,6 +33,27 @@ Tokens principais ficam em `:root` no `app/globals.css`:
 - Espacamento: `--space-1` ate `--space-6`.
 
 Regra: use tokens existentes antes de criar novas cores ou espacamentos.
+
+### Camada Nimbus-Inspired
+
+O DS da CSR usa uma adaptacao dos principios do Nimbus:
+
+- Primary interativo em azul (`--blue`) para acoes e item selecionado.
+- Superficies neutras claras: `--paper`, `--panel`, `--neutral-surface`.
+- Estados com surface propria: `--success-surface`, `--warning-surface`, `--danger-surface`, `--primary-surface`.
+- Espacamentos em multiplos de 4px.
+- Pesos tipograficos moderados, evitando bold excessivo.
+- Bordas e superficies carregam a hierarquia antes de sombras.
+- AppShell deve parecer painel de SaaS/admin, com navegacao clara e conteudo central limpo.
+
+Ao criar componentes novos, pense nos patterns Nimbus:
+
+- `App Shell` para estrutura autenticada.
+- `Data List` para listas operacionais.
+- `Data Table` para objetos comparaveis.
+- `Summary Stats` para indicadores.
+- `Side Modal` ou painel lateral para edicao/ficha sem perder contexto.
+- `Chip`, `Tag` e `Badge` para status, filtros e atributos curtos.
 
 ## Densidade Visual
 
