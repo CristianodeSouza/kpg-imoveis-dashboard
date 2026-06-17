@@ -94,11 +94,11 @@ export default function LeadsPage() {
     try {
       const response = await fetch("/api/leads/sync-make", { method: "POST" });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Nao foi possivel sincronizar o Make.");
-      setMessage(`${data.imported} registros sincronizados do Make. Total no CRM: ${data.total}.`);
+      if (!response.ok) throw new Error(data.error || "Nao foi possivel sincronizar as leads.");
+      setMessage(`${data.imported} registros sincronizados. Total no CRM: ${data.total}.`);
       await loadLeads();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Erro ao sincronizar Make.");
+      setMessage(error instanceof Error ? error.message : "Erro ao sincronizar leads.");
     } finally {
       setSyncing(false);
     }
@@ -174,7 +174,7 @@ export default function LeadsPage() {
             <div className="status-row">
               <button className="btn secondary" disabled={syncing} onClick={syncMake}>
                 {syncing ? <Loader2 className="spin" size={17} /> : <Database size={17} />}
-                Sincronizar Make
+                Sincronizar leads
               </button>
               <button className="btn secondary" disabled={loading} onClick={loadLeads}>
                 {loading ? <Loader2 className="spin" size={17} /> : <RefreshCw size={17} />}
@@ -242,7 +242,7 @@ export default function LeadsPage() {
             <div className="empty-state">
               <Users size={28} />
               <strong>Nenhuma lead encontrada</strong>
-              <span>Quando o Make enviar dados para o webhook, elas aparecem aqui.</span>
+              <span>Quando novas conversas chegarem pela integracao de WhatsApp, elas aparecem aqui.</span>
             </div>
           ) : (
             <div className="kanban-board" aria-label="Funil de atendimento">

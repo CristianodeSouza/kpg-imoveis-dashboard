@@ -21,8 +21,9 @@ export async function POST(request: Request) {
     const { leads } = await upsertLeads(payloads, session.tenantId);
     return NextResponse.json({ ok: true, imported: payloads.length, total: leads.length });
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro ao sincronizar leads.";
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Erro ao sincronizar Make." },
+      { error: message.replace("Make", "integracao de leads") },
       { status: 500 }
     );
   }

@@ -15,11 +15,18 @@ export async function GET(request: Request) {
   const makeConfig = { baseUrl: settings.makeBaseUrl, dataStoreId: settings.makeDataStoreId, token: settings.makeApiToken };
 
   if (hasMakeConfig(makeConfig) && !(process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL)) {
-    const payloads = await fetchMakeDataStoreRecords(makeConfig);
-    return NextResponse.json({
-      leads: payloads.map(normalizeLead),
-      storage: "make-live"
-    });
+    try {
+      const payloads = await fetchMakeDataStoreRecords(makeConfig);
+      return NextResponse.json({
+        leads: payloads.map(normalizeLead),
+        storage: "make-live"
+      });
+    } catch {
+      return NextResponse.json(
+        { error: "Nao foi possivel carregar as leads da integracao. Tente atualizar novamente." },
+        { status: 502 }
+      );
+    }
   }
 
   const leads = await readLeads(session.tenantId);

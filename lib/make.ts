@@ -9,26 +9,57 @@ type MakeConfig = {
   token?: string;
 };
 
+const DEFAULT_MAKE_BASE_URL = "https://us2.make.com/api/v2";
+const LEGACY_MAKE_DATA_STORE_ID = "47814";
+
+function clean(value?: string | null) {
+  return String(value || "").trim();
+}
+
+function resolveMakeConfig(config?: MakeConfig) {
+  const tenantToken = clean(config?.token);
+  const tenantDataStoreId = clean(config?.dataStoreId);
+
+  if (tenantToken && tenantDataStoreId) {
+    return {
+      token: tenantToken,
+      dataStoreId: tenantDataStoreId,
+      baseUrl: clean(config?.baseUrl) || DEFAULT_MAKE_BASE_URL
+    };
+  }
+
+  const platformToken = clean(process.env.MAKE_API_TOKEN);
+  const platformDataStoreId = clean(process.env.MAKE_DATA_STORE_ID) || LEGACY_MAKE_DATA_STORE_ID;
+
+  if (platformToken && platformDataStoreId) {
+    return {
+      token: platformToken,
+      dataStoreId: platformDataStoreId,
+      baseUrl: clean(process.env.MAKE_API_BASE_URL) || DEFAULT_MAKE_BASE_URL
+    };
+  }
+
+  return null;
+}
+
 export function hasMakeConfig(config?: MakeConfig) {
-  return Boolean(config?.token && config?.dataStoreId);
+  return Boolean(resolveMakeConfig(config));
 }
 
 async function fetchMakePage(offset: number, limit: number, config?: MakeConfig) {
-  const token = config?.token;
-  const makeBaseUrl = config?.baseUrl || "https://us2.make.com/api/v2";
-  const dataStoreId = config?.dataStoreId;
+  const resolvedConfig = resolveMakeConfig(config);
 
-  if (!token || !dataStoreId) {
-    throw new Error("Token e Data Store ID do Make nao configurados para este cliente.");
+  if (!resolvedConfig) {
+    throw new Error("Integracao de leads ainda nao configurada pela CSR Tecnologia.");
   }
 
-  const url = new URL(`${makeBaseUrl}/data-stores/${dataStoreId}/data`);
+  const url = new URL(`${resolvedConfig.baseUrl}/data-stores/${resolvedConfig.dataStoreId}/data`);
   url.searchParams.set("pg[limit]", String(limit));
   url.searchParams.set("pg[offset]", String(offset));
 
   const response = await fetch(url, {
     headers: {
-      Authorization: `Token ${token}`
+      Authorization: `Token ${resolvedConfig.token}`
     },
     cache: "no-store"
   });
