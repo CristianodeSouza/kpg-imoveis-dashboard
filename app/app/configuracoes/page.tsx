@@ -12,6 +12,7 @@ type PublicSettings = {
   metaAppSecretConfigured: boolean;
   instagramAccountId: string;
   instagramAccessTokenConfigured: boolean;
+  instagramOAuthAvailable: boolean;
   whatsappNumber: string;
   updatedAt?: string;
 };
@@ -232,8 +233,8 @@ export default function ConfiguracoesPage() {
               <strong>{configuredLabel(Boolean(settings?.sigaEndpoint && settings?.sigaTokenConfigured))}</strong>
             </div>
             <div className="metric">
-              <span>Meta App</span>
-              <strong>{configuredLabel(Boolean(settings?.metaAppId && settings?.metaAppSecretConfigured))}</strong>
+              <span>Login oficial Instagram</span>
+              <strong>{configuredLabel(Boolean(settings?.instagramOAuthAvailable))}</strong>
             </div>
             <div className="metric">
               <span>Instagram</span>
@@ -457,43 +458,24 @@ export default function ConfiguracoesPage() {
                 <div>
                   <strong>{settings?.instagramAccessTokenConfigured ? "Instagram conectado" : "Conectar Instagram pelo login oficial"}</strong>
                   <span>
-                    O cliente entra na tela oficial da Meta/Instagram, autoriza o aplicativo e o SaaS salva o token automaticamente.
+                    {settings?.instagramOAuthAvailable
+                      ? "O cliente entra na tela oficial da Meta/Instagram, autoriza o aplicativo e o SaaS salva o token automaticamente."
+                      : "Pendente de configuracao unica do app Meta da CSR Tecnologia. Depois disso, este botao abre a tela oficial do Instagram."}
                   </span>
                 </div>
-                <a className="btn success" href="/api/integrations/instagram/start">
-                  <Instagram size={17} />
-                  {settings?.instagramAccessTokenConfigured ? "Reconectar Instagram" : "Conectar Instagram"}
-                </a>
+                {settings?.instagramOAuthAvailable ? (
+                  <a className="btn success" href="/api/integrations/instagram/start">
+                    <Instagram size={17} />
+                    {settings?.instagramAccessTokenConfigured ? "Reconectar Instagram" : "Conectar Instagram"}
+                  </a>
+                ) : (
+                  <button className="btn secondary" disabled type="button">
+                    <Instagram size={17} />
+                    Aguardando CSR
+                  </button>
+                )}
               </div>
               <div className="settings-grid">
-                <div className="field">
-                  <label htmlFor="metaAppId">Meta App ID</label>
-                  <input
-                    className="input"
-                    id="metaAppId"
-                    onChange={(event) => updateField("metaAppId", event.target.value)}
-                    placeholder="App ID"
-                    value={form.metaAppId}
-                  />
-                </div>
-                <div className="field secret-field">
-                  <label htmlFor="metaAppSecret">Meta App Secret</label>
-                  <input
-                    autoComplete="off"
-                    className="input"
-                    id="metaAppSecret"
-                    onChange={(event) => updateField("metaAppSecret", event.target.value)}
-                    placeholder={settings?.metaAppSecretConfigured ? "Secret ja configurado. Preencha apenas para trocar." : "App Secret"}
-                    type="password"
-                    value={form.metaAppSecret}
-                  />
-                  {settings?.metaAppSecretConfigured ? (
-                    <span className="secret-status">
-                      <CheckCircle2 size={15} />
-                      Secret salvo
-                    </span>
-                  ) : null}
-                </div>
                 <div className="field">
                   <label htmlFor="instagramAccountId">Instagram Account ID <span className="required-mark">*</span></label>
                   <input

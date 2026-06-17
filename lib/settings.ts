@@ -25,6 +25,7 @@ export type PublicTenantSettings = Omit<
   sigaTokenConfigured: boolean;
   metaAppSecretConfigured: boolean;
   instagramAccessTokenConfigured: boolean;
+  instagramOAuthAvailable: boolean;
 };
 
 const text = (value: unknown) => String(value ?? "").trim();
@@ -118,10 +119,15 @@ export async function writeTenantSettings(tenantId: string, patch: Partial<Tenan
 
 export function publicTenantSettings(settings: TenantSettings): PublicTenantSettings {
   const { sigaToken, metaAppSecret, instagramAccessToken, makeBaseUrl, makeDataStoreId, makeApiToken, ...publicSettings } = settings;
+  const hasTenantMetaApp = Boolean(settings.metaAppId && metaAppSecret);
+  const hasPlatformMetaApp = Boolean(
+    (process.env.META_APP_ID || process.env.NEXT_PUBLIC_META_APP_ID) && process.env.META_APP_SECRET
+  );
   return {
     ...publicSettings,
     sigaTokenConfigured: Boolean(sigaToken),
     metaAppSecretConfigured: Boolean(metaAppSecret),
-    instagramAccessTokenConfigured: Boolean(instagramAccessToken)
+    instagramAccessTokenConfigured: Boolean(instagramAccessToken),
+    instagramOAuthAvailable: hasTenantMetaApp || hasPlatformMetaApp
   };
 }
