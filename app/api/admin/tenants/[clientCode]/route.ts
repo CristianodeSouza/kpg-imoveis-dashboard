@@ -3,7 +3,8 @@ import { requirePlatformAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/db";
 import { ensureBaseServices } from "@/lib/services";
 import { publicTenantSettings, readTenantSettings, writeTenantSettings } from "@/lib/settings";
-import { getInstagramUsage, listInstagramPublications } from "@/lib/publications";
+import { getInstagramUsage, listInstagramPublications, publicationTitleFromCaption } from "@/lib/publications";
+import { getTenantPaymentOverview } from "@/lib/payments";
 
 export const dynamic = "force-dynamic";
 
@@ -41,10 +42,11 @@ async function loadTenant(clientCode: string) {
 }
 
 async function serializeTenant(tenant: NonNullable<Awaited<ReturnType<typeof loadTenant>>>) {
-  const [settings, instagramUsage, publicationLogs] = await Promise.all([
+  const [settings, instagramUsage, publicationLogs, payments] = await Promise.all([
     readTenantSettings(tenant.id),
     getInstagramUsage(tenant.id),
-    listInstagramPublications(tenant.id, 80)
+    listInstagramPublications(tenant.id, 80),
+    getTenantPaymentOverview(tenant.id)
   ]);
   return {
     id: tenant.id,
@@ -81,9 +83,12 @@ async function serializeTenant(tenant: NonNullable<Awaited<ReturnType<typeof loa
       whatsapp: Boolean(tenant.settings?.whatsappNumber)
     },
     settings: publicTenantSettings(settings),
+    paymentSummary: payments.summary,
+    paymentRecords: payments.payments,
     instagramUsage,
     publicationLogs: publicationLogs.map((item) => ({
       id: item.id,
+      title: publicationTitleFromCaption(item.caption, item.mediaType),
       propertyCode: item.propertyCode,
       caption: item.caption,
       instagramPostId: item.instagramPostId,

@@ -37,6 +37,7 @@ type PublicationUsage = {
 
 type PublicationLog = {
   id: string;
+  title: string;
   propertyCode: string;
   caption: string;
   instagramPostId: string;
@@ -408,6 +409,9 @@ export default function HomePage() {
           <a className="tool-link" href="/app/leads">
             Mini CRM
           </a>
+          <a className="tool-link" href="/app/pagamentos">
+            Pagamentos
+          </a>
           <a className="tool-link" href="/app/configuracoes">
             Configuracoes
           </a>
@@ -741,7 +745,10 @@ export default function HomePage() {
               {publicationLogs.length ? (
                 publicationLogs.map((item) => (
                   <div className="table-row publication-row" key={item.id}>
-                    <span>{item.propertyCode ? `Imovel ${item.propertyCode}` : item.mediaType}</span>
+                    <span>
+                      {item.title || "Publicacao no Instagram"}
+                      <small>{item.propertyCode ? `Codigo do imovel: ${item.propertyCode}` : "Codigo do imovel nao registrado"}</small>
+                    </span>
                     <strong>{new Date(item.createdAt).toLocaleString("pt-BR")}</strong>
                     <small>
                       {item.photosCount} foto{item.photosCount === 1 ? "" : "s"} | {item.status}

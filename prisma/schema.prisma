@@ -27,6 +27,7 @@ model Tenant {
   services          TenantService[]
   auditLogs         AuditLog[]
   publicationLogs   PublicationLog[]
+  paymentRecords    PaymentRecord[]
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 }
@@ -126,4 +127,24 @@ model PublicationLog {
 
   @@index([tenantId, createdAt])
   @@index([tenantId, cycleStart, cycleEnd])
+}
+
+model PaymentRecord {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  description String   @default("")
+  amountCents Int      @default(0)
+  paidAt      DateTime?
+  dueAt       DateTime?
+  status      String   @default("paid")
+  method      String   @default("")
+  receiptUrl  String   @default("")
+  notes       String   @default("")
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, paidAt])
+  @@index([tenantId, dueAt])
 }

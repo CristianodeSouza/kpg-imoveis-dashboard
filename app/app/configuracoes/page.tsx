@@ -132,6 +132,9 @@ export default function ConfiguracoesPage() {
           <a className="tool-link" href="/app/leads">
             Mini CRM
           </a>
+          <a className="tool-link" href="/app/pagamentos">
+            Pagamentos
+          </a>
           <a className="tool-link active" href="/app/configuracoes">
             Configuracoes
           </a>

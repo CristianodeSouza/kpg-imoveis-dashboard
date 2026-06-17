@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, Building2, Instagram, LayoutDashboard, Loader2, Settings, Shield, Users } from "lucide-react";
+import { ArrowRight, Building2, CreditCard, Instagram, LayoutDashboard, Loader2, Settings, Shield, Users } from "lucide-react";
 import { LogoutButton } from "@/app/components/LogoutButton";
 
 type PortalService = {
@@ -33,7 +33,8 @@ const iconMap = {
   instagram: Instagram,
   users: Users,
   settings: Settings,
-  layout: LayoutDashboard
+  layout: LayoutDashboard,
+  payment: CreditCard
 };
 
 function ServiceIcon({ icon }: { icon: string }) {
@@ -68,6 +69,17 @@ export default function PortalPage() {
   }, []);
 
   const services = data?.services.filter((service) => service.slug !== "portal") || [];
+  const accountServices: PortalService[] = [
+    {
+      slug: "payments",
+      name: "Pagamentos",
+      description: "Status da assinatura, ciclo atual e historico de pagamentos.",
+      href: "/app/pagamentos",
+      icon: "payment",
+      plan: "conta",
+      status: "active"
+    }
+  ];
 
   return (
     <main className="shell">
@@ -113,8 +125,8 @@ export default function PortalPage() {
 
         {!loading && data ? (
           <section className="portal-grid">
-            {services.length ? (
-              services.map((service) => (
+            {services.length || accountServices.length ? (
+              [...services, ...accountServices].map((service) => (
                 <a className="portal-card" href={service.href} key={service.slug}>
                   <span className="portal-card-icon">
                     <ServiceIcon icon={service.icon} />

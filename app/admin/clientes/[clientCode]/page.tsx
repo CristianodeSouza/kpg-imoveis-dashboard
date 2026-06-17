@@ -50,6 +50,7 @@ type TenantDetail = {
   };
   publicationLogs: Array<{
     id: string;
+    title: string;
     propertyCode: string;
     caption: string;
     instagramPostId: string;
@@ -57,6 +58,27 @@ type TenantDetail = {
     mediaType: string;
     photosCount: number;
     status: string;
+    createdAt: string;
+  }>;
+  paymentSummary?: {
+    billingStatus: string;
+    monthlyValueCents: number;
+    cycleStart: string;
+    cycleEnd: string;
+    currentCyclePaid: boolean;
+    paymentsCount: number;
+    lastPaymentAt?: string | null;
+  };
+  paymentRecords: Array<{
+    id: string;
+    description: string;
+    amountCents: number;
+    paidAt?: string | null;
+    dueAt?: string | null;
+    status: string;
+    method: string;
+    receiptUrl: string;
+    notes: string;
     createdAt: string;
   }>;
   activityLogs: Array<{ id: string; action: string; target?: string; username?: string; createdAt: string }>;
@@ -514,6 +536,65 @@ export default function ClientDetailPage() {
             <section className="panel">
               <div className="panel-heading">
                 <div className="panel-title">
+                  <ShieldCheck size={22} />
+                  <h2>Pagamentos</h2>
+                </div>
+              </div>
+              {tenant.paymentSummary ? (
+                <div className="admin-summary-strip">
+                  <div>
+                    <span className="eyebrow">Status</span>
+                    <strong>{billingLabel(tenant.paymentSummary.billingStatus)}</strong>
+                  </div>
+                  <div>
+                    <span className="eyebrow">Valor mensal</span>
+                    <strong>{money(tenant.paymentSummary.monthlyValueCents)}</strong>
+                  </div>
+                  <div>
+                    <span className="eyebrow">Ciclo</span>
+                    <strong>{new Date(tenant.paymentSummary.cycleEnd).toLocaleDateString("pt-BR")}</strong>
+                  </div>
+                  <div>
+                    <span className="eyebrow">Pagamento do ciclo</span>
+                    <strong>{tenant.paymentSummary.currentCyclePaid ? "Confirmado" : "Pendente"}</strong>
+                  </div>
+                </div>
+              ) : null}
+              <div className="payment-table">
+                <div className="payment-table-head">
+                  <span>Descricao</span>
+                  <span>Valor</span>
+                  <span>Pago em</span>
+                  <span>Status</span>
+                  <span>Comprovante</span>
+                </div>
+                {tenant.paymentRecords.length ? (
+                  tenant.paymentRecords.map((payment) => (
+                    <div className="payment-table-row" key={payment.id}>
+                      <strong>{payment.description}</strong>
+                      <span>{money(payment.amountCents)}</span>
+                      <span>{payment.paidAt ? new Date(payment.paidAt).toLocaleString("pt-BR") : "Pendente"}</span>
+                      <span className={`payment-status ${payment.status}`}>{payment.status === "paid" ? "Sucesso" : payment.status}</span>
+                      {payment.receiptUrl ? (
+                        <a href={payment.receiptUrl} rel="noreferrer" target="_blank">
+                          Abrir
+                        </a>
+                      ) : (
+                        <span>Sem anexo</span>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="empty-state payment-empty">
+                    <strong>Nenhum pagamento registrado.</strong>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section className="panel">
+              <div className="panel-heading">
+                <div className="panel-title">
                   <Activity size={22} />
                   <h2>Publicacoes enviadas</h2>
                 </div>
@@ -522,7 +603,10 @@ export default function ClientDetailPage() {
                 {tenant.publicationLogs.length ? (
                   tenant.publicationLogs.map((item) => (
                     <div className="table-row publication-row" key={item.id}>
-                      <span>{item.propertyCode ? `Imovel ${item.propertyCode}` : item.mediaType}</span>
+                      <span>
+                        {item.title || "Publicacao no Instagram"}
+                        <small>{item.propertyCode ? `Codigo do imovel: ${item.propertyCode}` : "Codigo do imovel nao registrado"}</small>
+                      </span>
                       <strong>{new Date(item.createdAt).toLocaleString("pt-BR")}</strong>
                       <small>
                         {item.photosCount} foto{item.photosCount === 1 ? "" : "s"} | {item.status}

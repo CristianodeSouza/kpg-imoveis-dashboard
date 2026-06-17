@@ -115,3 +115,18 @@ export async function listInstagramPublications(tenantId: string, take = 50) {
     take
   });
 }
+
+export function publicationTitleFromCaption(caption?: string | null, fallback = "Publicacao no Instagram") {
+  const lines = String(caption || "")
+    .split(/\r?\n/)
+    .map((line) =>
+      line
+        .replace(/^[\s✨⭐🌟📍📌🏡🔸•\-–—:]+/u, "")
+        .replace(/\s+/g, " ")
+        .trim()
+    )
+    .filter(Boolean);
+
+  const locationLine = lines.find((line) => /excelente|apartamento|casa|resid[eê]ncia|lan[cç]amento|sofistica[cç][aã]o|im[oó]vel/i.test(line));
+  return (locationLine || lines[0] || fallback).slice(0, 120);
+}

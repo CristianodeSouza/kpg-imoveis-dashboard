@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireTenantService } from "@/lib/services";
-import { getInstagramUsage, listInstagramPublications } from "@/lib/publications";
+import { getInstagramUsage, listInstagramPublications, publicationTitleFromCaption } from "@/lib/publications";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +18,7 @@ export async function GET(request: Request) {
     usage,
     publications: publications.map((item) => ({
       id: item.id,
+      title: publicationTitleFromCaption(item.caption, item.mediaType),
       propertyCode: item.propertyCode,
       caption: item.caption,
       instagramPostId: item.instagramPostId,
