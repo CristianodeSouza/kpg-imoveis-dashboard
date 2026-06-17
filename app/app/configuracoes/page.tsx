@@ -119,9 +119,9 @@ export default function ConfiguracoesPage() {
     });
   }
 
-  async function loadSettings() {
+  async function loadSettings(options?: { preserveMessage?: boolean }) {
     setLoading(true);
-    setMessage(null);
+    if (!options?.preserveMessage) setMessage(null);
     try {
       const response = await fetch("/api/configuracoes", { cache: "no-store" });
       const data = await response.json();
@@ -169,17 +169,25 @@ export default function ConfiguracoesPage() {
 
   useEffect(() => {
     const instagramStatus = new URLSearchParams(window.location.search).get("instagram");
+    let preserveInitialMessage = false;
     if (instagramStatus === "connected") {
       setMessage({ type: "ok", text: "Instagram conectado com sucesso pela tela oficial da Meta." });
       window.history.replaceState(null, "", "/app/configuracoes");
+      preserveInitialMessage = true;
     } else if (instagramStatus === "missing_meta_app") {
-      setMessage({ type: "error", text: "Configure o Meta App ID e Secret antes de conectar pelo login oficial." });
+      setMessage({
+        type: "error",
+        text:
+          "A conexao oficial do Instagram ainda nao esta ativa porque falta configurar o Meta App ID e o Meta App Secret da plataforma CSR na Vercel."
+      });
       window.history.replaceState(null, "", "/app/configuracoes");
+      preserveInitialMessage = true;
     } else if (instagramStatus?.startsWith("error:")) {
       setMessage({ type: "error", text: decodeURIComponent(instagramStatus.replace("error:", "")) });
       window.history.replaceState(null, "", "/app/configuracoes");
+      preserveInitialMessage = true;
     }
-    loadSettings();
+    loadSettings({ preserveMessage: preserveInitialMessage });
   }, []);
 
   return (
@@ -204,7 +212,7 @@ export default function ConfiguracoesPage() {
           title="Configuracoes do cliente"
           description="Cadastre dados fiscais, CRM SIGA, WhatsApp e conexao Instagram deste tenant."
           actions={
-            <button className="btn secondary" disabled={loading} onClick={loadSettings}>
+            <button className="btn secondary" disabled={loading} onClick={() => loadSettings()}>
               {loading ? <Loader2 className="spin" size={17} /> : <RefreshCw size={17} />}
               Recarregar
             </button>
