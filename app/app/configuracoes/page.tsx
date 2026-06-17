@@ -15,8 +15,36 @@ type PublicSettings = {
   updatedAt?: string;
 };
 
+type AccountData = {
+  name: string;
+  legalName: string;
+  document: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  addressZip: string;
+  addressStreet: string;
+  addressNumber: string;
+  addressDistrict: string;
+  addressComplement: string;
+  addressCity: string;
+  addressState: string;
+};
+
 type FormState = {
   companyName: string;
+  legalName: string;
+  document: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  addressZip: string;
+  addressStreet: string;
+  addressNumber: string;
+  addressDistrict: string;
+  addressComplement: string;
+  addressCity: string;
+  addressState: string;
   sigaEndpoint: string;
   sigaToken: string;
   metaAppId: string;
@@ -28,6 +56,18 @@ type FormState = {
 
 const emptyForm: FormState = {
   companyName: "",
+  legalName: "",
+  document: "",
+  contactName: "",
+  contactEmail: "",
+  contactPhone: "",
+  addressZip: "",
+  addressStreet: "",
+  addressNumber: "",
+  addressDistrict: "",
+  addressComplement: "",
+  addressCity: "",
+  addressState: "",
   sigaEndpoint: "",
   sigaToken: "",
   metaAppId: "",
@@ -44,6 +84,7 @@ function configuredLabel(configured: boolean) {
 export default function ConfiguracoesPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [settings, setSettings] = useState<PublicSettings | null>(null);
+  const [account, setAccount] = useState<AccountData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
@@ -52,9 +93,21 @@ export default function ConfiguracoesPage() {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
-  function fillForm(nextSettings: PublicSettings) {
+  function fillForm(nextSettings: PublicSettings, nextAccount?: AccountData | null) {
     setForm({
       companyName: nextSettings.companyName || "",
+      legalName: nextAccount?.legalName || "",
+      document: nextAccount?.document || "",
+      contactName: nextAccount?.contactName || "",
+      contactEmail: nextAccount?.contactEmail || "",
+      contactPhone: nextAccount?.contactPhone || nextSettings.whatsappNumber || "",
+      addressZip: nextAccount?.addressZip || "",
+      addressStreet: nextAccount?.addressStreet || "",
+      addressNumber: nextAccount?.addressNumber || "",
+      addressDistrict: nextAccount?.addressDistrict || "",
+      addressComplement: nextAccount?.addressComplement || "",
+      addressCity: nextAccount?.addressCity || "",
+      addressState: nextAccount?.addressState || "",
       sigaEndpoint: nextSettings.sigaEndpoint || "",
       sigaToken: "",
       metaAppId: nextSettings.metaAppId || "",
@@ -77,7 +130,8 @@ export default function ConfiguracoesPage() {
       }
       if (!response.ok) throw new Error(data.error || "Nao foi possivel carregar configuracoes.");
       setSettings(data.settings);
-      fillForm(data.settings);
+      setAccount(data.account || null);
+      fillForm(data.settings, data.account);
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao carregar configuracoes." });
     } finally {
@@ -102,7 +156,8 @@ export default function ConfiguracoesPage() {
       }
       if (!response.ok) throw new Error(data.error || "Nao foi possivel salvar configuracoes.");
       setSettings(data.settings);
-      fillForm(data.settings);
+      setAccount(data.account || null);
+      fillForm(data.settings, data.account);
       setMessage({ type: "ok", text: "Configuracoes salvas para este cliente." });
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao salvar configuracoes." });
@@ -176,6 +231,140 @@ export default function ConfiguracoesPage() {
           {message ? <div className={`message ${message.type}`}>{message.text}</div> : null}
 
           <form className="settings-form" onSubmit={saveSettings}>
+            <section className="settings-section">
+              <div className="settings-section-title">
+                <Building2 size={20} />
+                <div>
+                  <h3>Dados da conta e faturamento</h3>
+                  <span>Identificacao do cliente usada para contrato, cobranca e suporte.</span>
+                </div>
+              </div>
+              <div className="settings-grid">
+                <div className="field">
+                  <label htmlFor="legalName">Razao social</label>
+                  <input
+                    className="input"
+                    id="legalName"
+                    onChange={(event) => updateField("legalName", event.target.value)}
+                    placeholder="Razao social ou nome completo"
+                    value={form.legalName}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="document">CPF/CNPJ</label>
+                  <input
+                    className="input"
+                    id="document"
+                    onChange={(event) => updateField("document", event.target.value)}
+                    placeholder="00.000.000/0000-00"
+                    value={form.document}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="contactName">Responsavel</label>
+                  <input
+                    className="input"
+                    id="contactName"
+                    onChange={(event) => updateField("contactName", event.target.value)}
+                    placeholder="Nome do responsavel"
+                    value={form.contactName}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="contactEmail">E-mail</label>
+                  <input
+                    className="input"
+                    id="contactEmail"
+                    onChange={(event) => updateField("contactEmail", event.target.value)}
+                    placeholder="financeiro@empresa.com.br"
+                    type="email"
+                    value={form.contactEmail}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="contactPhone">WhatsApp / telefone</label>
+                  <input
+                    className="input"
+                    id="contactPhone"
+                    onChange={(event) => updateField("contactPhone", event.target.value)}
+                    placeholder="Ex: 5554999999999"
+                    value={form.contactPhone}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="addressZip">CEP</label>
+                  <input
+                    className="input"
+                    id="addressZip"
+                    onChange={(event) => updateField("addressZip", event.target.value)}
+                    placeholder="00000-000"
+                    value={form.addressZip}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="addressStreet">Logradouro</label>
+                  <input
+                    className="input"
+                    id="addressStreet"
+                    onChange={(event) => updateField("addressStreet", event.target.value)}
+                    placeholder="Rua, avenida..."
+                    value={form.addressStreet}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="addressNumber">Numero</label>
+                  <input
+                    className="input"
+                    id="addressNumber"
+                    onChange={(event) => updateField("addressNumber", event.target.value)}
+                    placeholder="72"
+                    value={form.addressNumber}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="addressDistrict">Bairro</label>
+                  <input
+                    className="input"
+                    id="addressDistrict"
+                    onChange={(event) => updateField("addressDistrict", event.target.value)}
+                    placeholder="Bairro"
+                    value={form.addressDistrict}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="addressComplement">Complemento</label>
+                  <input
+                    className="input"
+                    id="addressComplement"
+                    onChange={(event) => updateField("addressComplement", event.target.value)}
+                    placeholder="Sala, casa, andar..."
+                    value={form.addressComplement}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="addressCity">Cidade</label>
+                  <input
+                    className="input"
+                    id="addressCity"
+                    onChange={(event) => updateField("addressCity", event.target.value)}
+                    placeholder="Cidade"
+                    value={form.addressCity}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="addressState">UF</label>
+                  <input
+                    className="input"
+                    id="addressState"
+                    maxLength={2}
+                    onChange={(event) => updateField("addressState", event.target.value.toUpperCase())}
+                    placeholder="RS"
+                    value={form.addressState}
+                  />
+                </div>
+              </div>
+            </section>
+
             <section className="settings-section">
               <div className="settings-section-title">
                 <Building2 size={20} />

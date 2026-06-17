@@ -19,10 +19,18 @@ type TenantDetail = {
   slug: string;
   status: string;
   billingStatus: string;
+  legalName: string;
   document: string;
   contactName: string;
   contactEmail: string;
   contactPhone: string;
+  addressZip: string;
+  addressStreet: string;
+  addressNumber: string;
+  addressDistrict: string;
+  addressComplement: string;
+  addressCity: string;
+  addressState: string;
   monthlyValueCents: number;
   acquiredAt?: string;
   notes: string;
@@ -239,10 +247,18 @@ export default function ClientDetailPage() {
           name: draft.name ?? tenant.name,
           status: draft.status ?? tenant.status,
           billingStatus: draft.billingStatus ?? tenant.billingStatus,
+          legalName: draft.legalName ?? tenant.legalName,
           document: draft.document ?? tenant.document,
           contactName: draft.contactName ?? tenant.contactName,
           contactEmail: draft.contactEmail ?? tenant.contactEmail,
           contactPhone: draft.contactPhone ?? tenant.contactPhone,
+          addressZip: draft.addressZip ?? tenant.addressZip,
+          addressStreet: draft.addressStreet ?? tenant.addressStreet,
+          addressNumber: draft.addressNumber ?? tenant.addressNumber,
+          addressDistrict: draft.addressDistrict ?? tenant.addressDistrict,
+          addressComplement: draft.addressComplement ?? tenant.addressComplement,
+          addressCity: draft.addressCity ?? tenant.addressCity,
+          addressState: draft.addressState ?? tenant.addressState,
           monthlyValue: draft.monthlyValueText ?? String(tenant.monthlyValueCents / 100),
           acquiredAt: draft.acquiredAt ?? dateInput(tenant.acquiredAt),
           notes: draft.notes ?? tenant.notes,
@@ -421,6 +437,10 @@ export default function ClientDetailPage() {
                   <input className="input" value={String(draft.name ?? tenant.name)} onChange={(event) => updateDraft({ name: event.target.value })} />
                 </div>
                 <div className="field">
+                  <label>Razao social</label>
+                  <input className="input" value={String(draft.legalName ?? tenant.legalName)} onChange={(event) => updateDraft({ legalName: event.target.value })} />
+                </div>
+                <div className="field">
                   <label>CPF/CNPJ</label>
                   <input className="input" value={String(draft.document ?? tenant.document)} onChange={(event) => updateDraft({ document: event.target.value })} />
                 </div>
@@ -443,6 +463,34 @@ export default function ClientDetailPage() {
                 <div className="field">
                   <label>Aquisicao</label>
                   <input className="input" type="date" value={String(draft.acquiredAt ?? dateInput(tenant.acquiredAt))} onChange={(event) => updateDraft({ acquiredAt: event.target.value })} />
+                </div>
+                <div className="field">
+                  <label>CEP</label>
+                  <input className="input" value={String(draft.addressZip ?? tenant.addressZip)} onChange={(event) => updateDraft({ addressZip: event.target.value })} />
+                </div>
+                <div className="field">
+                  <label>Logradouro</label>
+                  <input className="input" value={String(draft.addressStreet ?? tenant.addressStreet)} onChange={(event) => updateDraft({ addressStreet: event.target.value })} />
+                </div>
+                <div className="field">
+                  <label>Numero</label>
+                  <input className="input" value={String(draft.addressNumber ?? tenant.addressNumber)} onChange={(event) => updateDraft({ addressNumber: event.target.value })} />
+                </div>
+                <div className="field">
+                  <label>Bairro</label>
+                  <input className="input" value={String(draft.addressDistrict ?? tenant.addressDistrict)} onChange={(event) => updateDraft({ addressDistrict: event.target.value })} />
+                </div>
+                <div className="field">
+                  <label>Complemento</label>
+                  <input className="input" value={String(draft.addressComplement ?? tenant.addressComplement)} onChange={(event) => updateDraft({ addressComplement: event.target.value })} />
+                </div>
+                <div className="field">
+                  <label>Cidade</label>
+                  <input className="input" value={String(draft.addressCity ?? tenant.addressCity)} onChange={(event) => updateDraft({ addressCity: event.target.value })} />
+                </div>
+                <div className="field">
+                  <label>UF</label>
+                  <input className="input" maxLength={2} value={String(draft.addressState ?? tenant.addressState)} onChange={(event) => updateDraft({ addressState: event.target.value.toUpperCase() })} />
                 </div>
                 <div className="field wide">
                   <label>Observacoes</label>

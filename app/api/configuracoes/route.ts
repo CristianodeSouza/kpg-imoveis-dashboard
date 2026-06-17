@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auditLog } from "@/lib/audit";
+import { prisma } from "@/lib/db";
 import { requireTenantService } from "@/lib/services";
 import { publicTenantSettings, readTenantSettings, writeTenantSettings } from "@/lib/settings";
 
@@ -14,8 +15,30 @@ export async function GET(request: Request) {
   if (response) return response;
   if (!session) return NextResponse.json({ error: "Sessao invalida." }, { status: 401 });
 
-  const settings = await readTenantSettings(session.tenantId);
-  return NextResponse.json({ settings: publicTenantSettings(settings) });
+  const [settings, tenant] = await Promise.all([
+    readTenantSettings(session.tenantId),
+    prisma.tenant.findUnique({ where: { id: session.tenantId } })
+  ]);
+  return NextResponse.json({
+    settings: publicTenantSettings(settings),
+    account: tenant
+      ? {
+          name: tenant.name,
+          legalName: tenant.legalName,
+          document: tenant.document,
+          contactName: tenant.contactName,
+          contactEmail: tenant.contactEmail,
+          contactPhone: tenant.contactPhone,
+          addressZip: tenant.addressZip,
+          addressStreet: tenant.addressStreet,
+          addressNumber: tenant.addressNumber,
+          addressDistrict: tenant.addressDistrict,
+          addressComplement: tenant.addressComplement,
+          addressCity: tenant.addressCity,
+          addressState: tenant.addressState
+        }
+      : null
+  });
 }
 
 export async function POST(request: Request) {
@@ -53,6 +76,24 @@ export async function POST(request: Request) {
     whatsappNumber: body.whatsappNumber
   });
 
+  const tenant = await prisma.tenant.update({
+    where: { id: session.tenantId },
+    data: {
+      legalName: text(body.legalName),
+      document: text(body.document),
+      contactName: text(body.contactName),
+      contactEmail: text(body.contactEmail),
+      contactPhone: text(body.contactPhone),
+      addressZip: text(body.addressZip),
+      addressStreet: text(body.addressStreet),
+      addressNumber: text(body.addressNumber),
+      addressDistrict: text(body.addressDistrict),
+      addressComplement: text(body.addressComplement),
+      addressCity: text(body.addressCity),
+      addressState: text(body.addressState).toUpperCase().slice(0, 2)
+    }
+  });
+
   await auditLog({
     tenantId: session.tenantId,
     userId: session.userId,
@@ -65,6 +106,21 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     ok: true,
-    settings: publicTenantSettings(settings)
+    settings: publicTenantSettings(settings),
+    account: {
+      name: tenant.name,
+      legalName: tenant.legalName,
+      document: tenant.document,
+      contactName: tenant.contactName,
+      contactEmail: tenant.contactEmail,
+      contactPhone: tenant.contactPhone,
+      addressZip: tenant.addressZip,
+      addressStreet: tenant.addressStreet,
+      addressNumber: tenant.addressNumber,
+      addressDistrict: tenant.addressDistrict,
+      addressComplement: tenant.addressComplement,
+      addressCity: tenant.addressCity,
+      addressState: tenant.addressState
+    }
   });
 }

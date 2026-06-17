@@ -15,10 +15,18 @@ model Tenant {
   slug              String          @unique
   status            String          @default("active")
   billingStatus     String          @default("active")
+  legalName         String          @default("")
   document          String          @default("")
   contactName       String          @default("")
   contactEmail      String          @default("")
   contactPhone      String          @default("")
+  addressZip        String          @default("")
+  addressStreet     String          @default("")
+  addressNumber     String          @default("")
+  addressDistrict   String          @default("")
+  addressComplement String          @default("")
+  addressCity       String          @default("")
+  addressState      String          @default("")
   monthlyValueCents Int             @default(0)
   acquiredAt        DateTime?
   notes             String          @default("")
