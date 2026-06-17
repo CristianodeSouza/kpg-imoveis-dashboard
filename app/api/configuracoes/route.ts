@@ -47,22 +47,8 @@ export async function POST(request: Request) {
   if (!session) return NextResponse.json({ error: "Sessao invalida." }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));
-  const current = await readTenantSettings(session.tenantId);
-  const missingFields = [
-    ["Nome da imobiliaria", text(body.companyName)],
-    ["Endpoint da API SIGA", text(body.sigaEndpoint)],
-    ["Token da API SIGA", text(body.sigaToken) || current.sigaToken],
-    ["Instagram Account ID", text(body.instagramAccountId)],
-    ["Instagram Access Token", text(body.instagramAccessToken) || current.instagramAccessToken]
-  ]
-    .filter(([, value]) => !value)
-    .map(([label]) => label);
-
-  if (missingFields.length) {
-    return NextResponse.json(
-      { error: `Preencha os campos obrigatorios: ${missingFields.join(", ")}.` },
-      { status: 400 }
-    );
+  if (!text(body.companyName)) {
+    return NextResponse.json({ error: "Informe o nome da imobiliaria para salvar as configuracoes." }, { status: 400 });
   }
 
   const settings = await writeTenantSettings(session.tenantId, {

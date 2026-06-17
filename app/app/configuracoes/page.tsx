@@ -420,7 +420,6 @@ export default function ConfiguracoesPage() {
                     id="sigaEndpoint"
                     onChange={(event) => updateField("sigaEndpoint", event.target.value)}
                     placeholder="https://..."
-                    required
                     value={form.sigaEndpoint}
                   />
                 </div>
@@ -432,7 +431,6 @@ export default function ConfiguracoesPage() {
                     id="sigaToken"
                     onChange={(event) => updateField("sigaToken", event.target.value)}
                     placeholder={settings?.sigaTokenConfigured ? "Token ja configurado. Preencha apenas para trocar." : "Cole o token do CRM SIGA"}
-                    required={!settings?.sigaTokenConfigured}
                     type="password"
                     value={form.sigaToken}
                   />
@@ -456,7 +454,13 @@ export default function ConfiguracoesPage() {
               </div>
               <div className="oauth-connect-box">
                 <div>
-                  <strong>{settings?.instagramAccessTokenConfigured ? "Instagram conectado" : "Conectar Instagram pelo login oficial"}</strong>
+                  <strong>
+                    {settings?.instagramAccessTokenConfigured
+                      ? "Instagram conectado"
+                      : settings?.instagramOAuthAvailable
+                        ? "Conectar Instagram pelo login oficial"
+                        : "Conexao oficial Instagram indisponivel"}
+                  </strong>
                   <span>
                     {settings?.instagramOAuthAvailable
                       ? "O cliente entra na tela oficial da Meta/Instagram, autoriza o aplicativo e o SaaS salva o token automaticamente."
@@ -483,7 +487,6 @@ export default function ConfiguracoesPage() {
                     id="instagramAccountId"
                     onChange={(event) => updateField("instagramAccountId", event.target.value)}
                     placeholder="ID da conta profissional"
-                    required
                     value={form.instagramAccountId}
                   />
                 </div>
@@ -499,7 +502,6 @@ export default function ConfiguracoesPage() {
                         ? "Token ja configurado. Preencha apenas para trocar."
                         : "Token de acesso com permissoes da Graph API"
                     }
-                    required={!settings?.instagramAccessTokenConfigured}
                     type="password"
                     value={form.instagramAccessToken}
                   />
