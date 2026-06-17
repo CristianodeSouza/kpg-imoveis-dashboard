@@ -249,12 +249,12 @@ export default function LeadsPage() {
       />
 
       <section className="crm-metrics ds-metrics-grid">
-        <MetricCard label="Total de leads" value={leads.length.toLocaleString("pt-BR")} hint="Contatos recebidos no Mini CRM" />
-        <MetricCard label="Entraram hoje" value={todayCount.toLocaleString("pt-BR")} hint="Novas conversas no dia" tone="info" />
-        <MetricCard label="Novos" value={newCount.toLocaleString("pt-BR")} hint="Aguardando primeira triagem" />
-        <MetricCard label="Corretor acionado" value={brokerCount.toLocaleString("pt-BR")} hint="Ja encaminhados para atendimento" tone="warning" />
-        <MetricCard label="Sem acao ha 24h" value={waitingCount.toLocaleString("pt-BR")} hint="Leads abertos sem responsavel" tone={waitingCount ? "danger" : "success"} />
-        <MetricCard label="Leads quentes" value={hotCount.toLocaleString("pt-BR")} hint="Com codigo, interacoes ou atendimento humano" tone="success" />
+        <MetricCard label="Total" value={leads.length.toLocaleString("pt-BR")} hint="leads no CRM" />
+        <MetricCard label="Hoje" value={todayCount.toLocaleString("pt-BR")} hint="novas conversas" tone="info" />
+        <MetricCard label="Novos" value={newCount.toLocaleString("pt-BR")} hint="em triagem" />
+        <MetricCard label="Corretor" value={brokerCount.toLocaleString("pt-BR")} hint="acionado" tone="warning" />
+        <MetricCard label="Sem acao" value={waitingCount.toLocaleString("pt-BR")} hint="24h+" tone={waitingCount ? "danger" : "success"} />
+        <MetricCard label="Quentes" value={hotCount.toLocaleString("pt-BR")} hint="alta intencao" tone="success" />
       </section>
 
       <section className="panel crm-control-panel">
