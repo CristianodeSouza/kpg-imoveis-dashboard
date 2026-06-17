@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { Activity, Building2, Loader2, Plus, RefreshCw, ShieldCheck } from "lucide-react";
-import { LogoutButton } from "@/app/components/LogoutButton";
+import { AppShell, MetricCard, PageHeader, StatusBadge } from "@/app/components/ds";
 
 type AdminView = "overview" | "clients" | "finance" | "management";
 
@@ -162,24 +162,31 @@ export default function AdminPage() {
   }, []);
 
   return (
-    <main className="shell">
-      <header className="topbar">
-        <div className="brand">
-          <strong>CSR Tecnologia</strong>
-          <span>Admin SaaS</span>
-        </div>
-        <nav className="tool-nav" aria-label="Admin CSR">
-          <a className="tool-link" href="/portal">
-            Portal
-          </a>
-          <a className="tool-link active" href="/admin">
-            Admin
-          </a>
-          <LogoutButton />
-        </nav>
-      </header>
-
-      <section className="workspace admin-workspace">
+    <AppShell
+      subtitle="Admin SaaS"
+      navItems={[
+        { href: "/portal", label: "Portal" },
+        { href: "/admin", label: "Admin", active: true }
+      ]}
+      aside={
+        <>
+          <span>{activeTenants.length} cliente(s) ativo(s)</span>
+          <StatusBadge status={overdueTenants.length ? "warning" : "success"}>{overdueTenants.length ? "Financeiro em atencao" : "Operacao em dia"}</StatusBadge>
+        </>
+      }
+    >
+      <section className="admin-workspace">
+        <PageHeader
+          eyebrow="Painel da plataforma"
+          title="Gestao SaaS"
+          description="Acompanhe clientes, financeiro, servicos contratados, integracoes e riscos operacionais da plataforma CSR Tecnologia."
+          actions={
+            <button className="btn secondary" disabled={loading} onClick={loadTenants}>
+              {loading ? <Loader2 className="spin" size={17} /> : <RefreshCw size={17} />}
+              Atualizar
+            </button>
+          }
+        />
         <section className="admin-section-nav" aria-label="Areas do admin">
           <button className={view === "overview" ? "active" : ""} onClick={() => setView("overview")} type="button">
             Dados gerais
@@ -211,30 +218,12 @@ export default function AdminPage() {
           {message ? <div className={`message ${message.type}`}>{message.text}</div> : null}
 
           <div className="admin-summary-strip">
-            <div>
-              <span className="eyebrow">Clientes ativos</span>
-              <strong>{activeTenants.length}</strong>
-            </div>
-            <div>
-              <span className="eyebrow">Receita mensal</span>
-              <strong>{money(monthlyRevenue)}</strong>
-            </div>
-            <div>
-              <span className="eyebrow">Contratos em atraso</span>
-              <strong>{overdueTenants.length}</strong>
-            </div>
-            <div>
-              <span className="eyebrow">Servicos no catalogo</span>
-              <strong>{services.length}</strong>
-            </div>
-            <div>
-              <span className="eyebrow">Posts no ciclo</span>
-              <strong>{totalInstagramPosts}</strong>
-            </div>
-            <div>
-              <span className="eyebrow">Pacotes estourados</span>
-              <strong>{exceededInstagramPlans.length}</strong>
-            </div>
+            <MetricCard label="Clientes ativos" value={activeTenants.length} tone="success" />
+            <MetricCard label="Receita mensal" value={money(monthlyRevenue)} />
+            <MetricCard label="Contratos em atraso" value={overdueTenants.length} tone={overdueTenants.length ? "warning" : "success"} />
+            <MetricCard label="Servicos no catalogo" value={services.length} />
+            <MetricCard label="Posts no ciclo" value={totalInstagramPosts} tone="info" />
+            <MetricCard label="Pacotes estourados" value={exceededInstagramPlans.length} tone={exceededInstagramPlans.length ? "danger" : "success"} />
           </div>
 
           <div className="admin-audit-grid">
@@ -499,6 +488,6 @@ export default function AdminPage() {
         </>
         ) : null}
       </section>
-    </main>
+    </AppShell>
   );
 }

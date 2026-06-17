@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowRight, Building2, CreditCard, Instagram, LayoutDashboard, Loader2, Settings, Shield, Users } from "lucide-react";
-import { LogoutButton } from "@/app/components/LogoutButton";
+import { AppShell, LoadingState, PageHeader, StatusBadge } from "@/app/components/ds";
 
 type PortalService = {
   slug: string;
@@ -86,33 +86,31 @@ export default function PortalPage() {
     status: "active"
   };
   return (
-    <main className="shell">
-      <header className="topbar">
-        <div className="brand">
-          <strong>CSR Tecnologia</strong>
-          <span>Portal SaaS</span>
-        </div>
-        <nav className="tool-nav" aria-label="Portal CSR">
-          <a className="tool-link active" href="/portal">
-            Portal
-          </a>
-          {data?.user.isPlatformAdmin ? (
-            <a className="tool-link" href="/admin">
-              Admin
-            </a>
-          ) : null}
-          <LogoutButton />
-        </nav>
-      </header>
-
-      <section className="workspace">
-        <section className="portal-hero panel">
-          <div>
-            <span className="eyebrow">Cliente conectado</span>
-            <h1>{data?.tenant.name || "Portal CSR Tecnologia"}</h1>
-            <p>{data ? `Ola, ${data.user.name}. Acesse os servicos contratados para esta conta.` : "Carregando seus servicos contratados."}</p>
-          </div>
-          <div className="portal-quick-area">
+    <AppShell
+      subtitle="Portal SaaS"
+      userIsAdmin={Boolean(data?.user.isPlatformAdmin)}
+      navItems={[
+        { href: "/portal", label: "Portal", active: true },
+        { href: "/app/instagram", label: "Instagram Publisher" },
+        { href: "/app/leads", label: "Mini CRM" },
+        { href: "/app/pagamentos", label: "Pagamentos" },
+        { href: "/admin", label: "Admin", adminOnly: true }
+      ]}
+      aside={
+        data ? (
+          <>
+            <span>Cliente: {data.tenant.name}</span>
+            <StatusBadge status="success">Conta ativa</StatusBadge>
+          </>
+        ) : null
+      }
+    >
+      <section>
+        <PageHeader
+          eyebrow="Cliente conectado"
+          title={data?.tenant.name || "Portal CSR Tecnologia"}
+          description={data ? `Ola, ${data.user.name}. Acesse os servicos contratados para esta conta.` : "Carregando seus servicos contratados."}
+          actions={
             <div className="portal-account-actions" aria-label="Acoes da conta">
               <a className="portal-account-link" href="/app/pagamentos">
                 <CreditCard size={17} />
@@ -122,6 +120,15 @@ export default function PortalPage() {
                 <Settings size={19} />
               </a>
             </div>
+          }
+        />
+        <section className="portal-hero panel">
+          <div>
+            <span className="eyebrow">Conta SaaS</span>
+            <h2>{data?.tenant.name || "Carregando"}</h2>
+            <p>Produtos contratados, consumo da assinatura e configuracoes de integracao ficam centralizados nesta area.</p>
+          </div>
+          <div className="portal-quick-area">
             <div className="portal-account">
               <Building2 size={20} />
               <span>{data?.tenant.slug || "tenant"}</span>
@@ -130,9 +137,8 @@ export default function PortalPage() {
         </section>
 
         {loading ? (
-          <section className="panel empty-state">
-            <Loader2 className="spin" size={24} />
-            <strong>Carregando portal</strong>
+          <section className="panel">
+            <LoadingState title="Carregando portal" />
           </section>
         ) : null}
 
@@ -173,6 +179,6 @@ export default function PortalPage() {
           </section>
         ) : null}
       </section>
-    </main>
+    </AppShell>
   );
 }

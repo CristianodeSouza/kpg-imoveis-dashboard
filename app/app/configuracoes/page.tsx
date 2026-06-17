@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { Building2, CheckCircle2, Instagram, KeyRound, Loader2, RefreshCw, Save } from "lucide-react";
+import { AppShell, PageHeader, StatusBadge } from "@/app/components/ds";
 
 type PublicSettings = {
   companyName: string;
@@ -182,42 +183,39 @@ export default function ConfiguracoesPage() {
   }, []);
 
   return (
-    <main className="shell">
-      <header className="topbar">
-        <div className="brand">
-          <strong>CSR Tecnologia</strong>
-          <span>{settings?.companyName || "Configuracoes"}</span>
-        </div>
-        <nav className="tool-nav" aria-label="Ferramentas">
-          <a className="tool-link" href="/portal">
-            Portal
-          </a>
-          <a className="tool-link" href="/app/instagram">
-            Instagram Publisher
-          </a>
-          <a className="tool-link" href="/app/leads">
-            Mini CRM
-          </a>
-          <a className="tool-link" href="/app/pagamentos">
-            Pagamentos
-          </a>
-          <a className="tool-link active" href="/app/configuracoes">
-            Configuracoes
-          </a>
-        </nav>
-      </header>
-
-      <section className="workspace">
+    <AppShell
+      subtitle={settings?.companyName || "Configuracoes"}
+      navItems={[
+        { href: "/portal", label: "Portal" },
+        { href: "/app/instagram", label: "Instagram Publisher" },
+        { href: "/app/leads", label: "Mini CRM" },
+        { href: "/app/pagamentos", label: "Pagamentos" },
+        { href: "/app/configuracoes", label: "Configuracoes", active: true }
+      ]}
+      aside={
+        <StatusBadge status={settings?.instagramAccessTokenConfigured ? "success" : "warning"}>
+          {settings?.instagramAccessTokenConfigured ? "Instagram conectado" : "Instagram pendente"}
+        </StatusBadge>
+      }
+    >
+      <section>
+        <PageHeader
+          eyebrow="Onboarding e integracoes"
+          title="Configuracoes do cliente"
+          description="Cadastre dados fiscais, CRM SIGA, WhatsApp e conexao Instagram deste tenant."
+          actions={
+            <button className="btn secondary" disabled={loading} onClick={loadSettings}>
+              {loading ? <Loader2 className="spin" size={17} /> : <RefreshCw size={17} />}
+              Recarregar
+            </button>
+          }
+        />
         <section className="panel">
           <div className="panel-heading">
             <div className="panel-title">
               <KeyRound size={22} />
               <h2>Configuracoes do Cliente</h2>
             </div>
-            <button className="btn secondary" disabled={loading} onClick={loadSettings}>
-              {loading ? <Loader2 className="spin" size={17} /> : <RefreshCw size={17} />}
-              Recarregar
-            </button>
           </div>
 
           <div className="config-status-grid">
@@ -537,6 +535,6 @@ export default function ConfiguracoesPage() {
           </form>
         </section>
       </section>
-    </main>
+    </AppShell>
   );
 }

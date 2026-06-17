@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CreditCard, ExternalLink, Loader2, ReceiptText, RefreshCw } from "lucide-react";
+import { AppShell, DataTable, EmptyState, MetricCard, PageHeader, StatusBadge } from "@/app/components/ds";
 
 type PaymentSummary = {
   tenantName: string;
@@ -78,42 +79,35 @@ export default function PagamentosPage() {
   }, []);
 
   return (
-    <main className="shell">
-      <header className="topbar">
-        <div className="brand">
-          <strong>CSR Tecnologia</strong>
-          <span>Pagamentos</span>
-        </div>
-        <nav className="tool-nav" aria-label="Ferramentas CSR">
-          <a className="tool-link" href="/portal">
-            Portal
-          </a>
-          <a className="tool-link" href="/app/instagram">
-            Instagram Publisher
-          </a>
-          <a className="tool-link" href="/app/leads">
-            Mini CRM
-          </a>
-          <a className="tool-link active" href="/app/pagamentos">
-            Pagamentos
-          </a>
-          <a className="tool-link" href="/app/configuracoes">
-            Configuracoes
-          </a>
-        </nav>
-      </header>
-
-      <section className="workspace">
-        <section className="panel">
-          <div className="panel-heading">
-            <div className="panel-title">
-              <CreditCard size={22} />
-              <h2>Pagamentos e assinatura</h2>
-            </div>
+    <AppShell
+      subtitle="Pagamentos"
+      navItems={[
+        { href: "/portal", label: "Portal" },
+        { href: "/app/instagram", label: "Instagram Publisher" },
+        { href: "/app/leads", label: "Mini CRM" },
+        { href: "/app/pagamentos", label: "Pagamentos", active: true },
+        { href: "/app/configuracoes", label: "Configuracoes" }
+      ]}
+      aside={summary ? <StatusBadge status={summary.currentCyclePaid ? "success" : "warning"}>{summary.currentCyclePaid ? "Ciclo pago" : "Ciclo pendente"}</StatusBadge> : null}
+    >
+      <section>
+        <PageHeader
+          eyebrow="Conta e assinatura"
+          title="Pagamentos"
+          description="Acompanhe status da assinatura, ciclo atual, comprovantes e historico financeiro do cliente."
+          actions={
             <button className="btn secondary" disabled={loading} onClick={loadPayments} type="button">
               {loading ? <Loader2 className="spin" size={17} /> : <RefreshCw size={17} />}
               Atualizar
             </button>
+          }
+        />
+        <section className="panel">
+          <div className="panel-heading">
+            <div className="panel-title">
+              <CreditCard size={22} />
+              <h2>Resumo financeiro</h2>
+            </div>
           </div>
 
           {message ? <div className="message error">{message}</div> : null}
@@ -121,22 +115,14 @@ export default function PagamentosPage() {
           {summary ? (
             <>
               <div className="admin-summary-strip">
-                <div>
-                  <span className="eyebrow">Status atual</span>
-                  <strong>{billingLabel(summary.billingStatus)}</strong>
-                </div>
-                <div>
-                  <span className="eyebrow">Valor mensal</span>
-                  <strong>{money(summary.monthlyValueCents)}</strong>
-                </div>
-                <div>
-                  <span className="eyebrow">Ciclo atual</span>
-                  <strong>{new Date(summary.cycleEnd).toLocaleDateString("pt-BR")}</strong>
-                </div>
-                <div>
-                  <span className="eyebrow">Pagamento do ciclo</span>
-                  <strong>{summary.currentCyclePaid ? "Confirmado" : "Pendente"}</strong>
-                </div>
+                <MetricCard label="Status atual" value={billingLabel(summary.billingStatus)} tone={summary.billingStatus === "active" ? "success" : "warning"} />
+                <MetricCard label="Valor mensal" value={money(summary.monthlyValueCents)} />
+                <MetricCard label="Renova em" value={new Date(summary.cycleEnd).toLocaleDateString("pt-BR")} />
+                <MetricCard
+                  label="Pagamento do ciclo"
+                  value={summary.currentCyclePaid ? "Confirmado" : "Pendente"}
+                  tone={summary.currentCyclePaid ? "success" : "warning"}
+                />
               </div>
 
               <div className="payment-note">
@@ -158,38 +144,35 @@ export default function PagamentosPage() {
           </div>
 
           <div className="payment-table">
-            <div className="payment-table-head">
-              <span>Cliente/descricao</span>
-              <span>Valor</span>
-              <span>Pago em</span>
-              <span>Status da cobranca</span>
-              <span>Comprovante</span>
-            </div>
-            {payments.length ? (
-              payments.map((payment) => (
-                <div className="payment-table-row" key={payment.id}>
-                  <strong>{payment.description || summary?.tenantName || "Pagamento"}</strong>
-                  <span>{money(payment.amountCents)}</span>
-                  <span>{payment.paidAt ? new Date(payment.paidAt).toLocaleString("pt-BR") : "Pendente"}</span>
-                  <span className={`payment-status ${payment.status}`}>{paymentLabel(payment.status)}</span>
-                  {payment.receiptUrl ? (
-                    <a href={payment.receiptUrl} rel="noreferrer" target="_blank" title="Abrir comprovante">
+            <DataTable
+              columns={["Cliente/descricao", "Valor", "Pago em", "Status da cobranca", "Comprovante"]}
+              rows={payments.map((payment) => ({
+                id: payment.id,
+                cells: [
+                  <strong key="description">{payment.description || summary?.tenantName || "Pagamento"}</strong>,
+                  money(payment.amountCents),
+                  payment.paidAt ? new Date(payment.paidAt).toLocaleString("pt-BR") : "Pendente",
+                  <StatusBadge key="status" status={payment.status === "paid" ? "success" : payment.status === "pending" ? "warning" : "danger"}>
+                    {paymentLabel(payment.status)}
+                  </StatusBadge>,
+                  payment.receiptUrl ? (
+                    <a href={payment.receiptUrl} rel="noreferrer" target="_blank" title="Abrir comprovante" key="receipt">
                       <ExternalLink size={17} />
                     </a>
                   ) : (
-                    <span>Sem anexo</span>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="empty-state payment-empty">
-                <strong>Nenhum pagamento registrado para este cliente.</strong>
-                <span>Quando a CSR registrar pagamentos, eles aparecerao aqui com status, data e comprovante.</span>
-              </div>
-            )}
+                    "Sem anexo"
+                  )
+                ]
+              }))}
+              empty={
+                <EmptyState title="Nenhum pagamento registrado para este cliente.">
+                  Quando a CSR registrar pagamentos, eles aparecerao aqui com status, data e comprovante.
+                </EmptyState>
+              }
+            />
           </div>
         </section>
       </section>
-    </main>
+    </AppShell>
   );
 }
