@@ -25,11 +25,11 @@ export const serviceCatalog = [
     icon: "users"
   },
   {
-    slug: "service-03",
-    name: "Servico 03 - A definir",
-    description: "Modulo reservado para expansao do portal SaaS.",
-    href: "/sem-acesso",
-    icon: "layout"
+    slug: "blog-automatizado",
+    name: "Servico 03 - Blog Automatizado",
+    description: "Gera posts imobiliarios com estrategia SEO/GEO e publica no Blog SIGA.",
+    href: "/app/blog",
+    icon: "blog"
   },
   {
     slug: "service-04",

@@ -409,6 +409,9 @@ export default function HomePage() {
           <a className="tool-link" href="/app/leads">
             Mini CRM
           </a>
+          <a className="tool-link" href="/app/blog">
+            Blog Automatizado
+          </a>
           <a className="tool-link" href="/app/pagamentos">
             Pagamentos
           </a>

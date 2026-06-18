@@ -220,6 +220,7 @@ export default function LeadsPage() {
         { href: "/portal", label: "Portal" },
         { href: "/app/instagram", label: "Instagram Publisher" },
         { href: "/app/leads", label: "Mini CRM", active: true },
+        { href: "/app/blog", label: "Blog Automatizado" },
         { href: "/app/pagamentos", label: "Pagamentos" },
         { href: "/app/configuracoes", label: "Configuracoes" }
       ]}

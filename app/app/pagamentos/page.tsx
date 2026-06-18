@@ -85,6 +85,7 @@ export default function PagamentosPage() {
         { href: "/portal", label: "Portal" },
         { href: "/app/instagram", label: "Instagram Publisher" },
         { href: "/app/leads", label: "Mini CRM" },
+        { href: "/app/blog", label: "Blog Automatizado" },
         { href: "/app/pagamentos", label: "Pagamentos", active: true },
         { href: "/app/configuracoes", label: "Configuracoes" }
       ]}
