@@ -657,6 +657,11 @@
   grid-template-columns: minmax(180px, 1fr) 160px 120px minmax(140px, auto);
 }
 
+.v2-instagram-page textarea#caption {
+  min-height: 430px;
+  resize: vertical;
+}
+
 .v2-leads-page .ds-page-header {
   margin-bottom: 8px;
 }
