@@ -57,6 +57,12 @@ const normalizedBaseUrl = (baseUrl: string) => {
 const sigaPropertyEndpoint = (baseUrl: string, slug: string, codigo: string) =>
   `${normalizedBaseUrl(baseUrl)}/${encodeURIComponent(slug.trim().toLowerCase())}/imovel/${encodeURIComponent(codigo)}`;
 
+const sigaLookupCode = (codigo: string) => {
+  const clean = codigo.trim();
+  const numeric = clean.match(/\d+/)?.[0] || "";
+  return numeric || clean;
+};
+
 function endpointOrigin(endpoint: string) {
   try {
     const url = new URL(endpoint);
@@ -137,9 +143,10 @@ async function fetchFromSigaApi(codigo: string, tenantId: string): Promise<Looku
   const settings = await readTenantSettings(tenantId);
   if (!settings.sigaToken) return null;
 
+  const externalCode = sigaLookupCode(codigo);
   const sigaSlug = settings.sigaSlug.trim();
   if (sigaSlug) {
-    const endpoint = sigaPropertyEndpoint(settings.sigaBaseUrl, sigaSlug, codigo);
+    const endpoint = sigaPropertyEndpoint(settings.sigaBaseUrl, sigaSlug, externalCode);
     try {
       const response = await fetchWithTimeout(endpoint, {
         headers: sigaApiHeaders(settings.sigaToken),
@@ -167,7 +174,7 @@ async function fetchFromSigaApi(codigo: string, tenantId: string): Promise<Looku
   const referer = endpointOrigin(settings.sigaEndpoint);
   const headers = browserHeaders(settings.sigaToken, referer);
 
-  for (const endpoint of sigaEndpoints(settings.sigaEndpoint, codigo)) {
+  for (const endpoint of sigaEndpoints(settings.sigaEndpoint, externalCode)) {
     try {
       const getResponse = await fetchWithTimeout(endpoint, { headers, cache: "no-store" });
       const getText = await getResponse.text();
@@ -186,7 +193,7 @@ async function fetchFromSigaApi(codigo: string, tenantId: string): Promise<Looku
       const postResponse = await fetchWithTimeout(endpoint, {
         method: "POST",
         headers,
-        body: JSON.stringify({ codigo, code: codigo }),
+        body: JSON.stringify({ codigo: externalCode, code: externalCode }),
         cache: "no-store"
       });
       const postText = await postResponse.text();
