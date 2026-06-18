@@ -304,6 +304,7 @@ export default function BlogPage() {
         </>
       }
     >
+      <div className="v2-page v2-blog-page">
       <PageHeader
         eyebrow="Produto 03"
         title="Blog Automatizado SEO/GEO"
@@ -410,6 +411,7 @@ export default function BlogPage() {
           ) : null}
         </section>
       ) : null}
+      </div>
     </AppShell>
   );
 }

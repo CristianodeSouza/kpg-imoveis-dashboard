@@ -1,0 +1,335 @@
+/* CSR Design System v2
+   Camada incremental, prefixada e segura para evoluir telas sem quebrar o DS atual. */
+
+:root {
+  --v2-bg: #f6f7f9;
+  --v2-surface: #ffffff;
+  --v2-surface-soft: #f9fafb;
+  --v2-surface-raised: #ffffff;
+  --v2-text: #111827;
+  --v2-text-soft: #374151;
+  --v2-text-muted: #6b7280;
+  --v2-border: #e5e7eb;
+  --v2-border-strong: #d1d5db;
+  --v2-primary: #2563eb;
+  --v2-primary-strong: #1d4ed8;
+  --v2-primary-soft: #eff6ff;
+  --v2-success: #059669;
+  --v2-success-soft: #ecfdf5;
+  --v2-warning: #d97706;
+  --v2-warning-soft: #fffbeb;
+  --v2-danger: #dc2626;
+  --v2-danger-soft: #fef2f2;
+  --v2-radius-xs: 4px;
+  --v2-radius-sm: 6px;
+  --v2-radius-md: 8px;
+  --v2-shadow-xs: 0 1px 1px rgba(17, 24, 39, 0.04);
+  --v2-shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.06);
+  --v2-focus: 0 0 0 3px rgba(37, 99, 235, 0.16);
+}
+
+.v2-page {
+  color: var(--v2-text);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.v2-page h1,
+.v2-page h2,
+.v2-page h3,
+.v2-page p {
+  letter-spacing: 0;
+}
+
+.v2-page .ds-page-header {
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.v2-page .ds-page-header h1 {
+  font-size: 20px;
+  line-height: 1.2;
+  margin: 1px 0 3px;
+}
+
+.v2-page .ds-page-header p {
+  color: var(--v2-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  max-width: 760px;
+}
+
+.v2-page .eyebrow,
+.v2-page .field label,
+.v2-page .input-label {
+  color: var(--v2-text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.v2-page .panel,
+.v2-page .blog-generator-form,
+.v2-page .blog-preview-box,
+.v2-page .blog-history-card,
+.v2-page .blog-integration-banner,
+.v2-page .blog-post-preview {
+  background: var(--v2-surface);
+  border: 1px solid var(--v2-border);
+  border-radius: var(--v2-radius-md);
+  box-shadow: var(--v2-shadow-xs);
+}
+
+.v2-page .panel {
+  padding: 12px;
+}
+
+.v2-page .ds-metrics-grid {
+  gap: 8px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin-bottom: 10px;
+}
+
+.v2-page .ds-metric-card {
+  background: var(--v2-surface);
+  border-color: var(--v2-border);
+  border-radius: var(--v2-radius-md);
+  box-shadow: var(--v2-shadow-xs);
+  gap: 1px;
+  min-height: 64px;
+  padding: 8px 10px;
+}
+
+.v2-page .ds-metric-card strong {
+  font-size: 18px;
+  letter-spacing: 0;
+  line-height: 1.15;
+}
+
+.v2-page .ds-metric-card small {
+  color: var(--v2-text-muted);
+  font-size: 11px;
+  line-height: 1.25;
+  max-width: 24ch;
+}
+
+.v2-page .ds-metric-card.info {
+  background: var(--v2-primary-soft);
+  border-color: #bfdbfe;
+}
+
+.v2-page .ds-metric-card.success {
+  background: var(--v2-success-soft);
+  border-color: #bbf7d0;
+}
+
+.v2-page .ds-metric-card.warning {
+  background: var(--v2-warning-soft);
+  border-color: #fde68a;
+}
+
+.v2-page .ds-metric-card.danger {
+  background: var(--v2-danger-soft);
+  border-color: #fecaca;
+}
+
+.v2-page .blog-panel {
+  gap: 10px;
+}
+
+.v2-page .blog-stepper {
+  gap: 6px;
+}
+
+.v2-page .blog-step {
+  border-radius: var(--v2-radius-md);
+  gap: 7px;
+  grid-template-columns: 24px minmax(0, 1fr);
+  min-height: 58px;
+  padding: 8px;
+}
+
+.v2-page .blog-step-index {
+  font-size: 11px;
+  height: 22px;
+  width: 22px;
+}
+
+.v2-page .blog-step strong {
+  font-size: 11px;
+}
+
+.v2-page .blog-step small {
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+.v2-page .crm-view-tabs {
+  border-radius: var(--v2-radius-md);
+  gap: 2px;
+  padding: 3px;
+}
+
+.v2-page .crm-view-tabs button {
+  border-radius: var(--v2-radius-sm);
+  font-size: 12px;
+  min-height: 28px;
+  padding: 0 9px;
+}
+
+.v2-page .blog-tab-grid {
+  gap: 10px;
+}
+
+.v2-page .blog-generator-layout {
+  gap: 10px;
+}
+
+.v2-page .blog-generator-form,
+.v2-page .blog-preview-box {
+  gap: 10px;
+  padding: 12px;
+}
+
+.v2-page .blog-inline-grid,
+.v2-page .blog-editor-grid {
+  gap: 10px;
+}
+
+.v2-page .field {
+  gap: 4px;
+}
+
+.v2-page .input,
+.v2-page .select,
+.v2-page .textarea {
+  border-color: var(--v2-border);
+  border-radius: var(--v2-radius-sm);
+  font-size: 12px;
+  min-height: 32px;
+  padding: 7px 9px;
+}
+
+.v2-page .textarea.blog-textarea {
+  min-height: 116px;
+}
+
+.v2-page .input:focus,
+.v2-page .select:focus,
+.v2-page .textarea:focus,
+.v2-page .blog-rich-editor:focus {
+  border-color: var(--v2-primary);
+  box-shadow: var(--v2-focus);
+}
+
+.v2-page .btn {
+  border-radius: var(--v2-radius-sm);
+  font-size: 12px;
+  font-weight: 650;
+  min-height: 32px;
+  padding: 0 10px;
+}
+
+.v2-page .btn.primary {
+  background: var(--v2-primary);
+}
+
+.v2-page .btn.primary:hover {
+  background: var(--v2-primary-strong);
+}
+
+.v2-page .btn.secondary {
+  background: var(--v2-surface-soft);
+  border-color: var(--v2-border);
+}
+
+.v2-page .btn.success {
+  background: var(--v2-success);
+  color: #ffffff;
+}
+
+.v2-page .ds-status-badge {
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 750;
+  min-height: 21px;
+  padding: 0 7px;
+}
+
+.v2-page .blog-integration-banner {
+  padding: 10px 12px;
+}
+
+.v2-page .blog-integration-banner strong {
+  font-size: 13px;
+}
+
+.v2-page .blog-history-list {
+  gap: 8px;
+}
+
+.v2-page .blog-history-card {
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 132px;
+  padding: 12px;
+}
+
+.v2-page .blog-history-card h3 {
+  font-size: 15px;
+  line-height: 1.24;
+}
+
+.v2-page .blog-history-card p {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.v2-page .blog-history-card code,
+.v2-page .blog-preview-box code {
+  border-radius: var(--v2-radius-sm);
+  font-size: 11px;
+  padding: 7px 8px;
+}
+
+.v2-page .blog-post-preview {
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 10px;
+}
+
+.v2-page .blog-rich-editor {
+  min-height: 300px;
+}
+
+.v2-page .message {
+  border-radius: var(--v2-radius-sm);
+  font-size: 12px;
+  margin: 8px 0 10px;
+  padding: 8px 10px;
+}
+
+@media (max-width: 1200px) {
+  .v2-page .ds-metrics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 920px) {
+  .v2-page .ds-page-header {
+    align-items: flex-start;
+  }
+
+  .v2-page .blog-history-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .v2-page .ds-metrics-grid,
+  .v2-page .blog-stepper,
+  .v2-page .blog-tab-grid,
+  .v2-page .blog-generator-layout,
+  .v2-page .blog-inline-grid {
+    grid-template-columns: 1fr;
+  }
+}
