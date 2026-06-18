@@ -33,35 +33,39 @@
   grid-template-columns: 220px minmax(0, 1fr);
 }
 
-.ds-sidebar {
+.ds-shell .ds-sidebar {
   background: #111827;
   border-right: 1px solid #374151;
   color: #f9fafb;
   padding: 12px 0;
 }
 
-.ds-sidebar-brand {
+.ds-shell .ds-sidebar-brand {
   border-bottom: 1px solid #374151;
+  color: #f9fafb;
+  display: grid;
+  gap: 2px;
   margin: 0 0 8px;
   padding: 12px 16px;
 }
 
-.ds-sidebar-brand strong {
+.ds-shell .ds-sidebar-brand strong {
   color: #f9fafb;
   font-size: 14px;
+  line-height: 1.1;
 }
 
-.ds-sidebar-brand span {
+.ds-shell .ds-sidebar-brand span {
   color: #9ca3af;
   font-size: 11px;
   letter-spacing: 0.08em;
 }
 
-.ds-sidebar-nav {
+.ds-shell .ds-sidebar-nav {
   gap: 0;
 }
 
-.ds-sidebar-link {
+.ds-shell .ds-sidebar-link {
   border-radius: 0;
   color: #d1d5db;
   font-size: 13px;
@@ -70,61 +74,64 @@
   padding: 8px 16px;
 }
 
-.ds-sidebar-link.active,
-.ds-sidebar-link:hover {
+.ds-shell .ds-sidebar-link.active,
+.ds-shell .ds-sidebar-link:hover {
   background: var(--v2-primary);
   color: #ffffff;
 }
 
-.ds-sidebar-meta {
+.ds-shell .ds-sidebar-meta {
   border-top: 1px solid #374151;
   color: #9ca3af;
+  display: grid;
   font-size: 11px;
+  gap: 7px;
   margin: 8px 16px 0;
   padding-top: 12px;
 }
 
-.ds-sidebar-meta .ds-status-badge {
+.ds-shell .ds-sidebar-meta .ds-status-badge {
   background: rgba(99, 102, 241, 0.16);
   border-color: rgba(129, 140, 248, 0.45);
   color: #eef2ff;
 }
 
-.ds-sidebar-footer {
+.ds-shell .ds-sidebar-footer {
+  margin-top: auto;
   padding: 0 14px;
 }
 
-.ds-sidebar-footer .btn,
-.ds-sidebar-footer button,
-.ds-sidebar-footer a {
+.ds-shell .ds-sidebar-footer .btn,
+.ds-shell .ds-sidebar-footer button,
+.ds-shell .ds-sidebar-footer a {
   background: transparent;
   border: 1px solid #374151;
   color: #d1d5db;
 }
 
-.ds-main {
+.ds-shell .ds-main {
   background: var(--v2-bg);
   padding: 20px 24px;
 }
 
-.ds-page-header {
+.ds-shell .ds-page-header {
   align-items: center;
   margin-bottom: 14px;
 }
 
-.ds-page-header h1 {
+.ds-shell .ds-page-header h1 {
   font-size: 20px;
   line-height: 1.2;
   margin: 0 0 4px;
 }
 
-.ds-page-header p {
+.ds-shell .ds-page-header p {
   color: var(--v2-text-muted);
   font-size: 13px;
   line-height: 1.45;
 }
 
-.ds-page-actions {
+.ds-shell .ds-page-actions {
   gap: 8px;
 }
 
@@ -332,6 +339,7 @@
 
 .v2-page .btn.primary {
   background: var(--v2-primary);
+  color: #fff;
 }
 
 .v2-page .btn.primary:hover {
@@ -341,6 +349,7 @@
 .v2-page .btn.secondary {
   background: var(--v2-surface-soft);
   border-color: var(--v2-border);
+  color: var(--v2-text-soft);
 }
 
 .v2-page .btn.success {
@@ -496,6 +505,16 @@
   border-radius: var(--v2-radius-md);
   min-height: 196px;
   padding: 16px;
+}
+
+.v2-portal-page .portal-settings-link {
+  background: var(--v2-primary);
+  color: #fff;
+}
+
+.v2-portal-page .portal-account-link:hover,
+.v2-portal-page .portal-settings-link:hover {
+  border-color: var(--v2-primary);
 }
 
 .v2-portal-page .portal-card strong {
@@ -879,6 +898,22 @@
 .v2-leads-page .crm-detail-actions {
   gap: 6px;
   margin-bottom: 10px;
+}
+
+.v2-leads-page .crm-view-tabs button.active {
+  background: var(--v2-primary-soft);
+  border-color: var(--v2-primary);
+  color: var(--v2-primary);
+}
+
+.v2-leads-page .crm-conversation-item.active {
+  background: var(--v2-primary-soft);
+  border-color: var(--v2-primary);
+}
+
+.v2-leads-page .crm-contact-avatar {
+  background: var(--v2-primary);
+  color: #fff;
 }
 
 .v2-leads-page .crm-detail-grid {
