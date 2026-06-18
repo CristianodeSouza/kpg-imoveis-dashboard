@@ -662,6 +662,114 @@
   resize: vertical;
 }
 
+.v2-instagram-page .publication-table {
+  border: 1px solid var(--v2-border);
+  border-radius: var(--v2-radius-md);
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.v2-instagram-page .publication-table-head,
+.v2-instagram-page .publication-table-row {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(260px, 1.6fr) minmax(90px, 0.55fr) minmax(145px, 0.8fr) minmax(92px, 0.55fr) minmax(70px, 0.45fr) minmax(94px, 0.55fr) minmax(104px, 0.55fr);
+  padding: 10px 12px;
+}
+
+.v2-instagram-page .publication-table-head {
+  background: #f9fafb;
+  color: var(--v2-text-muted);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.v2-instagram-page .publication-table-row {
+  background: #fff;
+  border-top: 1px solid var(--v2-border);
+  color: var(--v2-text-soft);
+  font-size: 12px;
+  min-height: 58px;
+}
+
+.v2-instagram-page .publication-table-row:hover {
+  background: #fbfdff;
+}
+
+.v2-instagram-page .publication-title-cell {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.v2-instagram-page .publication-title-cell strong {
+  color: var(--v2-text);
+  display: -webkit-box;
+  font-size: 13px;
+  line-height: 1.25;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.v2-instagram-page .publication-title-cell small {
+  color: var(--v2-text-muted);
+  display: block;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.v2-instagram-page .publication-status {
+  align-items: center;
+  border: 1px solid var(--v2-border);
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 10px;
+  font-weight: 750;
+  min-height: 22px;
+  padding: 0 8px;
+  width: fit-content;
+}
+
+.v2-instagram-page .publication-status.published {
+  background: var(--v2-success-soft);
+  border-color: #bbf7d0;
+  color: #047857;
+}
+
+.v2-instagram-page .publication-status.pending {
+  background: var(--v2-warning-soft);
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.v2-instagram-page .publication-status.failed {
+  background: var(--v2-danger-soft);
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.v2-instagram-page .publication-link {
+  align-items: center;
+  color: var(--v2-primary);
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 750;
+  gap: 5px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.v2-instagram-page .publication-link:hover {
+  color: var(--v2-primary-strong);
+  text-decoration: underline;
+}
+
 .v2-leads-page .ds-page-header {
   margin-bottom: 8px;
 }

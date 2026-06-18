@@ -6,6 +6,7 @@ import {
   Building2,
   Check,
   Copy,
+  ExternalLink,
   Home,
   ImageIcon,
   Loader2,
@@ -121,6 +122,13 @@ function mediaTypeLabel(type: string) {
   if (type === "VIDEO" || type === "REELS") return "Video/Reels";
   if (type === "IMAGE") return "Imagem";
   return type || "Post";
+}
+
+function publicationStatusLabel(status: string) {
+  if (status === "published") return "Publicado";
+  if (status === "failed") return "Falhou";
+  if (status === "pending") return "Pendente";
+  return status || "Pendente";
 }
 
 function weekdayLabel(timestamp: string) {
@@ -744,27 +752,48 @@ export default function HomePage() {
                 Atualizar
               </button>
             </div>
-            <div className="compact-table">
+            <div className="publication-table" role="table" aria-label="Historico de posts enviados via SaaS">
               {publicationLogs.length ? (
-                publicationLogs.map((item) => (
-                  <div className="table-row publication-row" key={item.id}>
-                    <span>
-                      {item.title || "Publicacao no Instagram"}
-                      <small>{item.propertyCode ? `Codigo do imovel: ${item.propertyCode}` : "Codigo do imovel nao registrado"}</small>
-                    </span>
-                    <strong>{new Date(item.createdAt).toLocaleString("pt-BR")}</strong>
-                    <small>
-                      {item.photosCount} foto{item.photosCount === 1 ? "" : "s"} | {item.status}
-                    </small>
-                    {item.instagramUrl ? (
-                      <a href={item.instagramUrl} rel="noreferrer" target="_blank">
-                        Conferir no Instagram
-                      </a>
-                    ) : (
-                      <small>Link ainda nao retornado pela Meta</small>
-                    )}
+                <>
+                  <div className="publication-table-head" role="row">
+                    <span>Post</span>
+                    <span>Codigo</span>
+                    <span>Publicado em</span>
+                    <span>Formato</span>
+                    <span>Midias</span>
+                    <span>Status</span>
+                    <span>Instagram</span>
                   </div>
-                ))
+                  {publicationLogs.map((item) => (
+                    <div className="publication-table-row" key={item.id} role="row">
+                      <span className="publication-title-cell">
+                        <strong>{item.title || "Publicacao no Instagram"}</strong>
+                        <small>{item.caption ? shortCaption(item.caption, item.title || "Legenda nao registrada") : "Legenda nao registrada"}</small>
+                      </span>
+                      <span>{item.propertyCode || "Nao registrado"}</span>
+                      <span>{new Date(item.createdAt).toLocaleString("pt-BR")}</span>
+                      <span>{mediaTypeLabel(item.mediaType)}</span>
+                      <span>
+                        {item.photosCount} foto{item.photosCount === 1 ? "" : "s"}
+                      </span>
+                      <span>
+                        <span className={`publication-status ${item.status === "published" ? "published" : item.status === "failed" ? "failed" : "pending"}`}>
+                          {publicationStatusLabel(item.status)}
+                        </span>
+                      </span>
+                      <span>
+                        {item.instagramUrl ? (
+                          <a className="publication-link" href={item.instagramUrl} rel="noreferrer" target="_blank">
+                            Abrir post
+                            <ExternalLink size={13} />
+                          </a>
+                        ) : (
+                          <small>Sem link</small>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </>
               ) : (
                 <div className="empty-state">
                   <strong>Nenhuma publicacao enviada por este SaaS neste cliente.</strong>
