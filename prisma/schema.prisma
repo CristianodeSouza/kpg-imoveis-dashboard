@@ -35,7 +35,10 @@ model Tenant {
   services          TenantService[]
   auditLogs         AuditLog[]
   publicationLogs   PublicationLog[]
+  propertyCaches     PropertyCache[]
   paymentRecords    PaymentRecord[]
+  blogProfile       BlogProfile?
+  blogPosts         BlogPost[]
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 }
@@ -90,6 +93,8 @@ model TenantSettings {
   tenantId                      String   @unique
   tenant                        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   companyName                   String
+  sigaBaseUrl                   String   @default("https://api.sigacrm.com.br")
+  sigaSlug                      String   @default("")
   sigaEndpoint                  String   @default("")
   sigaTokenEncrypted            String?
   metaAppId                     String   @default("")
@@ -137,6 +142,26 @@ model PublicationLog {
   @@index([tenantId, cycleStart, cycleEnd])
 }
 
+model PropertyCache {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  code          String
+  origem        String   @default("")
+  sourceUrl     String   @default("")
+  imovel        Json
+  property      Json
+  lastSuccessAt DateTime @default(now())
+  lastCheckedAt DateTime @default(now())
+  failureCount  Int      @default(0)
+  lastError     String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId, lastSuccessAt])
+}
+
 model PaymentRecord {
   id          String   @id @default(cuid())
   tenantId    String
@@ -155,4 +180,73 @@ model PaymentRecord {
 
   @@index([tenantId, paidAt])
   @@index([tenantId, dueAt])
+}
+
+model BlogProfile {
+  id                  String   @id @default(cuid())
+  tenantId            String   @unique
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  companyName         String   @default("")
+  legalName           String   @default("")
+  creci               String   @default("")
+  address             String   @default("")
+  city                String   @default("")
+  state               String   @default("")
+  phone               String   @default("")
+  whatsapp            String   @default("")
+  email               String   @default("")
+  siteUrl             String   @default("")
+  blogUrl             String   @default("")
+  googleBusinessUrl   String   @default("")
+  instagramUrl        String   @default("")
+  institutionalText   String   @default("")
+  differentials       String   @default("")
+  services            String   @default("")
+  propertyTypes       String   @default("")
+  regions             String   @default("")
+  keywords            String   @default("")
+  forbiddenTopics     String   @default("")
+  tone                String   @default("consultivo")
+  targetAudience      String   @default("")
+  sigaImobiliariaSlug String   @default("")
+  sigaIdImob          Int      @default(1)
+  sigaIdUsuario       Int      @default(1)
+  sigaIdCategoria     Int      @default(1)
+  defaultStatus       Int      @default(1)
+  mostrarData         Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model BlogPost {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  topic         String   @default("")
+  intent        String   @default("")
+  region        String   @default("")
+  propertyType  String   @default("")
+  title         String
+  slug          String
+  description   String   @default("")
+  tags          String   @default("")
+  html          String   @default("")
+  fonte         String   @default("")
+  video         String   @default("")
+  linkExterno   String   @default("")
+  editorialStatus String @default("draft")
+  sigaStatus    String   @default("not_sent")
+  sigaPostId    String   @default("")
+  sigaResponse  Json?
+  payload       Json?
+  seoScore      Int      @default(0)
+  geoScore      Int      @default(0)
+  slugScore     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  publishedAt   DateTime?
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, editorialStatus])
 }

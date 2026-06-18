@@ -6,6 +6,8 @@ import { AppShell, PageHeader, StatusBadge } from "@/app/components/ds";
 
 type PublicSettings = {
   companyName: string;
+  sigaBaseUrl: string;
+  sigaSlug: string;
   sigaEndpoint: string;
   sigaTokenConfigured: boolean;
   metaAppId: string;
@@ -47,6 +49,8 @@ type FormState = {
   addressComplement: string;
   addressCity: string;
   addressState: string;
+  sigaBaseUrl: string;
+  sigaSlug: string;
   sigaEndpoint: string;
   sigaToken: string;
   metaAppId: string;
@@ -70,6 +74,8 @@ const emptyForm: FormState = {
   addressComplement: "",
   addressCity: "",
   addressState: "",
+  sigaBaseUrl: "https://api.sigacrm.com.br",
+  sigaSlug: "",
   sigaEndpoint: "",
   sigaToken: "",
   metaAppId: "",
@@ -114,6 +120,8 @@ export default function ConfiguracoesPage() {
       addressComplement: nextAccount?.addressComplement || "",
       addressCity: nextAccount?.addressCity || "",
       addressState: nextAccount?.addressState || "",
+      sigaBaseUrl: nextSettings.sigaBaseUrl || "https://api.sigacrm.com.br",
+      sigaSlug: nextSettings.sigaSlug || "",
       sigaEndpoint: nextSettings.sigaEndpoint || "",
       sigaToken: "",
       metaAppId: nextSettings.metaAppId || "",
@@ -234,7 +242,7 @@ export default function ConfiguracoesPage() {
           <div className="config-status-grid">
             <div className="metric">
               <span>CRM SIGA</span>
-              <strong>{configuredLabel(Boolean(settings?.sigaEndpoint && settings?.sigaTokenConfigured))}</strong>
+              <strong>{configuredLabel(Boolean(settings?.sigaBaseUrl && settings?.sigaSlug && settings?.sigaTokenConfigured))}</strong>
             </div>
             <div className="metric">
               <span>Login oficial Instagram</span>
@@ -417,13 +425,33 @@ export default function ConfiguracoesPage() {
                     value={form.whatsappNumber}
                   />
                 </div>
+                <div className="field">
+                  <label htmlFor="sigaBaseUrl">SIGA Base URL {publishRequirement()}</label>
+                  <input
+                    className="input"
+                    id="sigaBaseUrl"
+                    onChange={(event) => updateField("sigaBaseUrl", event.target.value)}
+                    placeholder="https://api.sigacrm.com.br"
+                    value={form.sigaBaseUrl}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="sigaSlug">Slug da imobiliaria no SIGA {publishRequirement()}</label>
+                  <input
+                    className="input"
+                    id="sigaSlug"
+                    onChange={(event) => updateField("sigaSlug", event.target.value.toLowerCase())}
+                    placeholder="kpg"
+                    value={form.sigaSlug}
+                  />
+                </div>
                 <div className="field wide">
-                  <label htmlFor="sigaEndpoint">Endpoint da API SIGA {publishRequirement()}</label>
+                  <label htmlFor="sigaEndpoint">Endpoint legado da API SIGA</label>
                   <input
                     className="input"
                     id="sigaEndpoint"
                     onChange={(event) => updateField("sigaEndpoint", event.target.value)}
-                    placeholder="https://..."
+                    placeholder="Opcional: usado apenas para compatibilidade"
                     value={form.sigaEndpoint}
                   />
                 </div>

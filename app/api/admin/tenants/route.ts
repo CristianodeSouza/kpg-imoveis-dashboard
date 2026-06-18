@@ -101,7 +101,7 @@ export async function GET(request: Request) {
         expiresAt: item.expiresAt
       })),
       integrations: {
-        siga: Boolean(tenant.settings?.sigaEndpoint && tenant.settings.sigaTokenEncrypted),
+        siga: Boolean(tenant.settings?.sigaBaseUrl && tenant.settings?.sigaSlug && tenant.settings.sigaTokenEncrypted),
         instagram: Boolean(tenant.settings?.instagramAccountId && tenant.settings.instagramAccessTokenEncrypted),
         whatsapp: Boolean(tenant.settings?.whatsappNumber)
       },

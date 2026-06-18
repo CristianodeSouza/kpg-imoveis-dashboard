@@ -53,6 +53,8 @@ export async function POST(request: Request) {
 
   const settings = await writeTenantSettings(session.tenantId, {
     companyName: body.companyName,
+    sigaBaseUrl: body.sigaBaseUrl,
+    sigaSlug: body.sigaSlug,
     sigaEndpoint: body.sigaEndpoint,
     sigaToken: body.sigaToken,
     metaAppId: body.metaAppId,

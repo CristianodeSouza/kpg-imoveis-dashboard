@@ -39,6 +39,8 @@ type TenantDetail = {
   integrations: { siga: boolean; instagram: boolean; whatsapp: boolean };
   settings: {
     companyName: string;
+    sigaBaseUrl: string;
+    sigaSlug: string;
     sigaEndpoint: string;
     sigaTokenConfigured: boolean;
     metaAppId: string;
@@ -94,6 +96,8 @@ type TenantDetail = {
 
 type SettingsDraft = {
   companyName: string;
+  sigaBaseUrl: string;
+  sigaSlug: string;
   sigaEndpoint: string;
   sigaToken: string;
   metaAppId: string;
@@ -144,6 +148,8 @@ function usagePercent(tenant: TenantDetail) {
 function settingsDraftFromTenant(tenant: TenantDetail): SettingsDraft {
   return {
     companyName: tenant.settings?.companyName || tenant.name,
+    sigaBaseUrl: tenant.settings?.sigaBaseUrl || "https://api.sigacrm.com.br",
+    sigaSlug: tenant.settings?.sigaSlug || tenant.slug,
     sigaEndpoint: tenant.settings?.sigaEndpoint || "",
     sigaToken: "",
     metaAppId: tenant.settings?.metaAppId || "",
@@ -556,9 +562,34 @@ export default function ClientDetailPage() {
                   <label>WhatsApp principal</label>
                   <input className="input" value={draft.settings?.whatsappNumber || ""} onChange={(event) => updateSettings("whatsappNumber", event.target.value)} />
                 </div>
+                <div className="field">
+                  <label>SIGA Base URL <span className="required-mark">*</span></label>
+                  <input
+                    className="input"
+                    required
+                    value={draft.settings?.sigaBaseUrl || ""}
+                    onChange={(event) => updateSettings("sigaBaseUrl", event.target.value)}
+                    placeholder="https://api.sigacrm.com.br"
+                  />
+                </div>
+                <div className="field">
+                  <label>Slug da imobiliaria no SIGA <span className="required-mark">*</span></label>
+                  <input
+                    className="input"
+                    required
+                    value={draft.settings?.sigaSlug || ""}
+                    onChange={(event) => updateSettings("sigaSlug", event.target.value.toLowerCase())}
+                    placeholder="kpg"
+                  />
+                </div>
                 <div className="field wide">
-                  <label>Endpoint CRM SIGA <span className="required-mark">*</span></label>
-                  <input className="input" required value={draft.settings?.sigaEndpoint || ""} onChange={(event) => updateSettings("sigaEndpoint", event.target.value)} />
+                  <label>Endpoint CRM SIGA legado</label>
+                  <input
+                    className="input"
+                    value={draft.settings?.sigaEndpoint || ""}
+                    onChange={(event) => updateSettings("sigaEndpoint", event.target.value)}
+                    placeholder="Opcional: usado apenas para clientes ainda nao migrados"
+                  />
                 </div>
                 <div className="field wide">
                   <label>Token CRM SIGA <span className="required-mark">*</span></label>

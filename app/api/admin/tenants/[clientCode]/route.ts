@@ -86,7 +86,7 @@ async function serializeTenant(tenant: NonNullable<Awaited<ReturnType<typeof loa
       expiresAt: item.expiresAt
     })),
     integrations: {
-      siga: Boolean(tenant.settings?.sigaEndpoint && tenant.settings.sigaTokenEncrypted),
+      siga: Boolean(tenant.settings?.sigaBaseUrl && tenant.settings?.sigaSlug && tenant.settings.sigaTokenEncrypted),
       instagram: Boolean(tenant.settings?.instagramAccountId && tenant.settings.instagramAccessTokenEncrypted),
       whatsapp: Boolean(tenant.settings?.whatsappNumber)
     },
@@ -155,7 +155,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ clien
     const currentSettings = await readTenantSettings(existing.id);
     const missingFields = [
       ["Nome da empresa", requiredText(body.settings.companyName)],
-      ["Endpoint CRM SIGA", requiredText(body.settings.sigaEndpoint)],
+      ["SIGA Base URL", requiredText(body.settings.sigaBaseUrl)],
+      ["Slug SIGA", requiredText(body.settings.sigaSlug)],
       ["Token CRM SIGA", requiredText(body.settings.sigaToken) || currentSettings.sigaToken],
       ["Instagram Account ID", requiredText(body.settings.instagramAccountId)],
       ["Instagram Access Token", requiredText(body.settings.instagramAccessToken) || currentSettings.instagramAccessToken]
@@ -172,6 +173,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ clien
 
     await writeTenantSettings(existing.id, {
       companyName: body.settings.companyName,
+      sigaBaseUrl: body.settings.sigaBaseUrl,
+      sigaSlug: body.settings.sigaSlug,
       sigaEndpoint: body.settings.sigaEndpoint,
       sigaToken: body.settings.sigaToken,
       metaAppId: body.settings.metaAppId,

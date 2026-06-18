@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   const settings = await readTenantSettings(session.tenantId);
 
   return NextResponse.json({
-    siga: settings.sigaEndpoint && settings.sigaToken ? "configurado" : "pendente",
+    siga: settings.sigaBaseUrl && settings.sigaSlug && settings.sigaToken ? "configurado" : "pendente",
     instagram: settings.instagramAccessToken && settings.instagramAccountId ? "configurado" : "pendente",
     whatsapp: settings.whatsappNumber ? "configurado" : "pendente",
     imgbb: process.env.IMGBB_API_KEY ? "configurado" : "pendente",

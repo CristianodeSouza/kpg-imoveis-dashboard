@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 export type TenantSettings = {
   tenantId: string;
   companyName: string;
+  sigaBaseUrl: string;
+  sigaSlug: string;
   sigaEndpoint: string;
   sigaToken?: string;
   metaAppId: string;
@@ -36,6 +38,8 @@ function mapSettings(settings: DbTenantSettings): TenantSettings {
   return {
     tenantId: settings.tenantId,
     companyName: settings.companyName,
+    sigaBaseUrl: settings.sigaBaseUrl,
+    sigaSlug: settings.sigaSlug,
     sigaEndpoint: settings.sigaEndpoint,
     sigaToken: decryptSecret(settings.sigaTokenEncrypted),
     metaAppId: settings.metaAppId,
@@ -61,6 +65,8 @@ export async function readTenantSettings(tenantId: string) {
       data: {
         tenantId: resolvedTenantId,
         companyName: tenant?.name || "Imobiliaria",
+        sigaBaseUrl: "https://api.sigacrm.com.br",
+        sigaSlug: tenant?.slug || "",
         sigaEndpoint: "",
         metaAppId: "",
         instagramAccountId: "",
@@ -81,6 +87,8 @@ export async function writeTenantSettings(tenantId: string, patch: Partial<Tenan
     create: {
       tenantId,
       companyName: text(patch.companyName) || "Imobiliaria",
+      sigaBaseUrl: text(patch.sigaBaseUrl) || "https://api.sigacrm.com.br",
+      sigaSlug: text(patch.sigaSlug),
       sigaEndpoint: text(patch.sigaEndpoint),
       sigaTokenEncrypted: encryptSecret(patch.sigaToken),
       metaAppId: text(patch.metaAppId),
@@ -94,6 +102,8 @@ export async function writeTenantSettings(tenantId: string, patch: Partial<Tenan
     },
     update: {
       companyName: text(patch.companyName) || current?.companyName || "Imobiliaria",
+      ...(hasField(patch, "sigaBaseUrl") ? { sigaBaseUrl: text(patch.sigaBaseUrl) || "https://api.sigacrm.com.br" } : {}),
+      ...(hasField(patch, "sigaSlug") ? { sigaSlug: text(patch.sigaSlug).toLowerCase() } : {}),
       ...(hasField(patch, "sigaEndpoint") ? { sigaEndpoint: text(patch.sigaEndpoint) } : {}),
       ...(hasField(patch, "metaAppId") ? { metaAppId: text(patch.metaAppId) } : {}),
       ...(hasField(patch, "instagramAccountId") ? { instagramAccountId: text(patch.instagramAccountId) } : {}),
