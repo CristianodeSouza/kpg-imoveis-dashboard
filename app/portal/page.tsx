@@ -108,7 +108,7 @@ export default function PortalPage() {
         ) : null
       }
     >
-      <section>
+      <section className="v2-page v2-portal-page">
         <PageHeader
           eyebrow="Cliente conectado"
           title={data?.tenant.name || "Portal CSR Tecnologia"}

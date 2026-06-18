@@ -91,7 +91,7 @@ export default function PagamentosPage() {
       ]}
       aside={summary ? <StatusBadge status={summary.currentCyclePaid ? "success" : "warning"}>{summary.currentCyclePaid ? "Ciclo pago" : "Ciclo pendente"}</StatusBadge> : null}
     >
-      <section>
+      <section className="v2-page v2-payments-page">
         <PageHeader
           eyebrow="Conta e assinatura"
           title="Pagamentos"

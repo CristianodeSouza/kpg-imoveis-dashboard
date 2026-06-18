@@ -220,7 +220,7 @@ export default function ConfiguracoesPage() {
         </StatusBadge>
       }
     >
-      <section>
+      <section className="v2-page v2-settings-page">
         <PageHeader
           eyebrow="Onboarding e integracoes"
           title="Configuracoes do cliente"

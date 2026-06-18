@@ -231,6 +231,7 @@ export default function LeadsPage() {
         </>
       }
     >
+      <div className="v2-page v2-leads-page">
       <PageHeader
         eyebrow="CRM conversacional"
         title="Mini CRM de Leads"
@@ -405,6 +406,7 @@ export default function LeadsPage() {
           </div>
         ) : null}
       </section>
+      </div>
     </AppShell>
   );
 }

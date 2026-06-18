@@ -393,7 +393,7 @@ export default function HomePage() {
   const facts = property?.facts ?? [];
 
   return (
-    <main className="shell">
+    <main className="shell v2-page v2-instagram-page">
       <header className="topbar">
         <div className="brand">
           <strong>CSR Tecnologia</strong>
