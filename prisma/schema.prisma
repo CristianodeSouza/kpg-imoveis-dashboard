@@ -39,6 +39,9 @@ model Tenant {
   paymentRecords    PaymentRecord[]
   blogProfile       BlogProfile?
   blogPosts         BlogPost[]
+  seoSites          SeoSite[]
+  seoCredentials    SeoCredential?
+  seoRecommendations SeoRecommendation[]
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 }
@@ -249,4 +252,152 @@ model BlogPost {
   @@unique([tenantId, slug])
   @@index([tenantId, createdAt])
   @@index([tenantId, editorialStatus])
+}
+
+model SeoCredential {
+  id                          String   @id @default(cuid())
+  tenantId                    String   @unique
+  tenant                      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  googleAccountEmail          String   @default("")
+  googleSearchConsoleProperty String   @default("")
+  googleAccessTokenEncrypted  String?
+  googleRefreshTokenEncrypted String?
+  googleTokenExpiresAt        DateTime?
+  scopes                      String   @default("")
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+}
+
+model SeoSite {
+  id                 String              @id @default(cuid())
+  tenantId           String
+  tenant             Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name               String
+  domain             String
+  propertyUrl        String              @default("")
+  sitemapUrl         String
+  status             String              @default("active")
+  seoScore           Int                 @default(0)
+  indexationScore    Int                 @default(0)
+  geoScore           Int                 @default(0)
+  sitemapScore       Int                 @default(0)
+  lastSitemapCheckAt DateTime?
+  sitemapUrls        SeoSitemapUrl[]
+  searchMetrics      SeoSearchMetric[]
+  keywords           SeoKeyword[]
+  pages              SeoPage[]
+  urlInspections     SeoUrlInspection[]
+  recommendations    SeoRecommendation[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@unique([tenantId, domain])
+  @@index([tenantId, status])
+}
+
+model SeoSearchMetric {
+  id          String   @id @default(cuid())
+  tenantId    String
+  siteId      String
+  site        SeoSite  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  date        DateTime
+  clicks      Int      @default(0)
+  impressions Int      @default(0)
+  ctr         Float    @default(0)
+  position    Float    @default(0)
+  createdAt   DateTime @default(now())
+
+  @@unique([siteId, date])
+  @@index([tenantId, date])
+}
+
+model SeoKeyword {
+  id          String   @id @default(cuid())
+  tenantId    String
+  siteId      String
+  site        SeoSite  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  keyword     String
+  clicks      Int      @default(0)
+  impressions Int      @default(0)
+  ctr         Float    @default(0)
+  position    Float    @default(0)
+  trend       String   @default("stable")
+  updatedAt   DateTime @updatedAt
+
+  @@unique([siteId, keyword])
+  @@index([tenantId, clicks])
+}
+
+model SeoPage {
+  id          String   @id @default(cuid())
+  tenantId    String
+  siteId      String
+  site        SeoSite  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  url         String
+  clicks      Int      @default(0)
+  impressions Int      @default(0)
+  ctr         Float    @default(0)
+  position    Float    @default(0)
+  trend       String   @default("stable")
+  updatedAt   DateTime @updatedAt
+
+  @@unique([siteId, url])
+  @@index([tenantId, clicks])
+}
+
+model SeoSitemapUrl {
+  id           String   @id @default(cuid())
+  tenantId     String
+  siteId       String
+  site         SeoSite  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  url          String
+  lastmod      DateTime?
+  changefreq   String   @default("")
+  priority     String   @default("")
+  status       String   @default("valid")
+  qualityScore Int      @default(0)
+  issues       Json?
+  metadata     Json?
+  firstSeenAt  DateTime @default(now())
+  lastSeenAt   DateTime @default(now())
+
+  @@unique([siteId, url])
+  @@index([tenantId, status])
+  @@index([siteId, qualityScore])
+}
+
+model SeoUrlInspection {
+  id         String   @id @default(cuid())
+  tenantId   String
+  siteId     String
+  site       SeoSite  @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  url        String
+  indexed    Boolean  @default(false)
+  canonical  String   @default("")
+  lastCrawl  DateTime?
+  status     String   @default("pending")
+  raw         Json?
+  inspectedAt DateTime @default(now())
+
+  @@unique([siteId, url])
+  @@index([tenantId, indexed])
+}
+
+model SeoRecommendation {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  siteId      String?
+  site        SeoSite? @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  impact      String   @default("medium")
+  priority    String   @default("medium")
+  source      String   @default("system")
+  status      String   @default("open")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, status])
+  @@index([siteId, priority])
 }

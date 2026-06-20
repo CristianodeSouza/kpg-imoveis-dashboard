@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, BookOpenText, Building2, CreditCard, Instagram, LayoutDashboard, Loader2, Settings, Shield, Users } from "lucide-react";
+import { ArrowRight, BookOpenText, Building2, CreditCard, Instagram, LayoutDashboard, Loader2, SearchCheck, Settings, Shield, Users } from "lucide-react";
 import { AppShell, LoadingState, PageHeader, StatusBadge } from "@/app/components/ds";
 
 type PortalService = {
@@ -33,6 +33,7 @@ const iconMap = {
   instagram: Instagram,
   users: Users,
   blog: BookOpenText,
+  search: SearchCheck,
   settings: Settings,
   layout: LayoutDashboard,
   payment: CreditCard
@@ -47,6 +48,7 @@ function productClass(slug: string) {
   if (slug === "instagram-publisher") return "portal-product-instagram";
   if (slug === "mini-crm") return "portal-product-crm";
   if (slug === "blog-automatizado") return "portal-product-blog";
+  if (slug === "seo-intelligence") return "portal-product-seo";
   return "portal-product-default";
 }
 
@@ -96,6 +98,7 @@ export default function PortalPage() {
         { href: "/app/instagram", label: "Instagram Publisher" },
         { href: "/app/leads", label: "Mini CRM" },
         { href: "/app/blog", label: "Blog Automatizado" },
+        { href: "/app/seo", label: "SEO Intelligence" },
         { href: "/app/pagamentos", label: "Pagamentos" },
         { href: "/admin", label: "Admin", adminOnly: true }
       ]}

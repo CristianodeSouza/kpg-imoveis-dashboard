@@ -32,15 +32,22 @@ export const serviceCatalog = [
     icon: "blog"
   },
   {
+    slug: "seo-intelligence",
+    name: "Servico 04 - SEO Intelligence",
+    description: "Monitora Search Console, sitemap, indexacao, GEO e oportunidades organicas.",
+    href: "/app/seo",
+    icon: "search"
+  },
+  {
     slug: "service-04",
-    name: "Servico 04 - A definir",
+    name: "Servico 05 - A definir",
     description: "Modulo reservado para expansao do portal SaaS.",
     href: "/sem-acesso",
     icon: "layout"
   },
   {
     slug: "service-05",
-    name: "Servico 05 - A definir",
+    name: "Servico 06 - A definir",
     description: "Modulo reservado para expansao do portal SaaS.",
     href: "/sem-acesso",
     icon: "layout"
