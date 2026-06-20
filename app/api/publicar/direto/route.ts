@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readTenantSettings } from "@/lib/settings";
 import { requireTenantService } from "@/lib/services";
 import { ensureInstagramQuota, recordInstagramPublication } from "@/lib/publications";
+import { prepareInstagramImages } from "@/lib/instagram-image";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -107,7 +108,11 @@ export async function POST(request: Request) {
 
     if (imageUrls.length) {
       await ensureInstagramQuota(session.tenantId);
-      const resultado = await publishFallback(caption, imageUrls, settings.instagramAccountId, settings.instagramAccessToken || "");
+      const preparedImageUrls = await prepareInstagramImages(imageUrls.slice(0, 10), {
+        tenantId: session.tenantId,
+        preset: "feed-portrait"
+      });
+      const resultado = await publishFallback(caption, preparedImageUrls, settings.instagramAccountId, settings.instagramAccessToken || "");
       const publishedPermalink = await fetchPublishedPermalink(String(resultado.id || ""), settings.instagramAccessToken || "");
       const permalink =
         publishedPermalink ||
@@ -123,11 +128,11 @@ export async function POST(request: Request) {
         instagramUrl: permalink,
         mediaType: resultado.tipo,
         photosCount: resultado.fotos_publicadas,
-        metadata: resultado
+        metadata: { ...resultado, originalImageUrls: imageUrls, preparedImageUrls, imagePreset: "feed-portrait" }
       });
       return NextResponse.json({
         sucesso: true,
-        resultado: { ...resultado, url: permalink },
+        resultado: { ...resultado, url: permalink, imagens_tratadas: preparedImageUrls.length },
         usage,
         origem: "next-selected-images"
       });

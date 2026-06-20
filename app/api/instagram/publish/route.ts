@@ -3,8 +3,10 @@ import { readTenantSettings } from "@/lib/settings";
 import { requireTenantService } from "@/lib/services";
 import type { PublishPayload } from "@/lib/types";
 import { ensureInstagramQuota, recordInstagramPublication } from "@/lib/publications";
+import { prepareInstagramImages } from "@/lib/instagram-image";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const graphVersion = process.env.META_GRAPH_VERSION || "v25.0";
 const graphBase = `https://graph.facebook.com/${graphVersion}`;
@@ -97,8 +99,13 @@ export async function POST(request: Request) {
 
     await ensureInstagramQuota(session.tenantId);
 
-    if (imageUrls.length === 1) {
-      const containerId = await createMediaContainer(imageUrls[0], caption, false, accountId, token);
+    const preparedImageUrls = await prepareInstagramImages(imageUrls.slice(0, 10), {
+      tenantId: session.tenantId,
+      preset: "feed-portrait"
+    });
+
+    if (preparedImageUrls.length === 1) {
+      const containerId = await createMediaContainer(preparedImageUrls[0], caption, false, accountId, token);
       const result = await publishContainer(containerId, accountId, token);
       const publishedPermalink = await fetchPublishedPermalink(String(result?.id || ""), token);
       const permalink = publishedPermalink || result?.permalink || result?.url || (result?.id ? `https://www.instagram.com/p/${result.id}/` : "");
@@ -110,13 +117,13 @@ export async function POST(request: Request) {
         instagramUrl: permalink,
         mediaType: "imagem",
         photosCount: 1,
-        metadata: result
+        metadata: { ...result, originalImageUrls: imageUrls, preparedImageUrls, imagePreset: "feed-portrait" }
       });
-      return NextResponse.json({ ok: true, result: { ...result, url: permalink }, usage });
+      return NextResponse.json({ ok: true, result: { ...result, url: permalink, imagens_tratadas: preparedImageUrls.length }, usage });
     }
 
     const children = [];
-    for (const imageUrl of imageUrls.slice(0, 10)) {
+    for (const imageUrl of preparedImageUrls) {
       children.push(await createMediaContainer(imageUrl, caption, true, accountId, token));
     }
 
@@ -150,9 +157,9 @@ export async function POST(request: Request) {
       instagramUrl: permalink,
       mediaType: "carrossel",
       photosCount: children.length,
-      metadata: result
+      metadata: { ...result, originalImageUrls: imageUrls, preparedImageUrls, imagePreset: "feed-portrait" }
     });
-    return NextResponse.json({ ok: true, result: { ...result, url: permalink }, usage });
+    return NextResponse.json({ ok: true, result: { ...result, url: permalink, imagens_tratadas: preparedImageUrls.length }, usage });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro inesperado ao publicar.";
     return NextResponse.json({ error: message }, { status: 500 });
