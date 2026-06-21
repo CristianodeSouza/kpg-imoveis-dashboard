@@ -291,7 +291,7 @@ export default function BlogPage() {
       subtitle="Blog Automatizado"
       navItems={[
         { href: "/portal", label: "Portal" },
-        { href: "/app/instagram", label: "Instagram Publisher" },
+        { href: "/app/instagram", label: "Publicador Multicanal" },
         { href: "/app/leads", label: "Mini CRM" },
         { href: "/app/blog", label: "Blog Automatizado", active: true },
         { href: "/app/pagamentos", label: "Pagamentos" },

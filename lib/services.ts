@@ -12,8 +12,8 @@ export const serviceCatalog = [
   },
   {
     slug: "instagram-publisher",
-    name: "Servico 01 - Publicacao no Instagram",
-    description: "Busca imoveis no SIGA, gera legendas e publica no Instagram.",
+    name: "Servico 01 - Publicador Multicanal",
+    description: "Busca imoveis no SIGA, gera textos e publica em canais sociais.",
     href: "/app/instagram",
     icon: "instagram"
   },

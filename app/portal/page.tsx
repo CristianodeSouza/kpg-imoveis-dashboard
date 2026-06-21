@@ -95,7 +95,7 @@ export default function PortalPage() {
       userIsAdmin={Boolean(data?.user.isPlatformAdmin)}
       navItems={[
         { href: "/portal", label: "Portal", active: true },
-        { href: "/app/instagram", label: "Instagram Publisher" },
+        { href: "/app/instagram", label: "Publicador Multicanal" },
         { href: "/app/leads", label: "Mini CRM" },
         { href: "/app/blog", label: "Blog Automatizado" },
         { href: "/app/seo", label: "SEO Intelligence" },

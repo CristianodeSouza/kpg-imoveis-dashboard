@@ -28,6 +28,19 @@ export type PublishPayload = {
   imageUrls: string[];
 };
 
+export type PublishChannels = {
+  instagram: boolean;
+  googleBusinessProfile: boolean;
+};
+
+export type GeneratedContent = {
+  instagram_caption: string;
+  instagram_hashtags: string[];
+  gmb_summary: string;
+  gmb_cta: "LEARN_MORE" | "CALL" | "BOOK" | "ORDER" | "SHOP" | "SIGN_UP";
+  gmb_url: string;
+};
+
 export type InsightMetric = {
   name: string;
   value: number;

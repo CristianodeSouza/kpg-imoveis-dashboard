@@ -61,6 +61,11 @@ export async function POST(request: Request) {
     metaAppSecret: body.metaAppSecret,
     instagramAccountId: body.instagramAccountId,
     instagramAccessToken: body.instagramAccessToken,
+    googleBusinessAccountId: body.googleBusinessAccountId,
+    googleBusinessLocationId: body.googleBusinessLocationId,
+    googleBusinessRefreshToken: body.googleBusinessRefreshToken,
+    googleBusinessAccessToken: body.googleBusinessAccessToken,
+    googleBusinessTokenExpiresAt: body.googleBusinessTokenExpiresAt,
     whatsappNumber: body.whatsappNumber
   });
 

@@ -16,18 +16,31 @@ export type TenantSettings = {
   makeBaseUrl: string;
   makeDataStoreId: string;
   makeApiToken?: string;
+  googleBusinessAccountId: string;
+  googleBusinessLocationId: string;
+  googleBusinessRefreshToken?: string;
+  googleBusinessAccessToken?: string;
+  googleBusinessTokenExpiresAt?: string | null;
   whatsappNumber: string;
   updatedAt?: string;
 };
 
 export type PublicTenantSettings = Omit<
   TenantSettings,
-  "sigaToken" | "metaAppSecret" | "instagramAccessToken" | "makeBaseUrl" | "makeDataStoreId" | "makeApiToken"
+  | "sigaToken"
+  | "metaAppSecret"
+  | "instagramAccessToken"
+  | "makeBaseUrl"
+  | "makeDataStoreId"
+  | "makeApiToken"
+  | "googleBusinessRefreshToken"
+  | "googleBusinessAccessToken"
 > & {
   sigaTokenConfigured: boolean;
   metaAppSecretConfigured: boolean;
   instagramAccessTokenConfigured: boolean;
   instagramOAuthAvailable: boolean;
+  googleBusinessTokenConfigured: boolean;
 };
 
 const text = (value: unknown) => String(value ?? "").trim();
@@ -49,6 +62,11 @@ function mapSettings(settings: DbTenantSettings): TenantSettings {
     makeBaseUrl: settings.makeBaseUrl,
     makeDataStoreId: settings.makeDataStoreId,
     makeApiToken: decryptSecret(settings.makeApiTokenEncrypted),
+    googleBusinessAccountId: settings.googleBusinessAccountId,
+    googleBusinessLocationId: settings.googleBusinessLocationId,
+    googleBusinessRefreshToken: decryptSecret(settings.googleBusinessRefreshTokenEncrypted),
+    googleBusinessAccessToken: decryptSecret(settings.googleBusinessAccessTokenEncrypted),
+    googleBusinessTokenExpiresAt: settings.googleBusinessTokenExpiresAt?.toISOString() || null,
     whatsappNumber: settings.whatsappNumber,
     updatedAt: settings.updatedAt.toISOString()
   };
@@ -72,6 +90,8 @@ export async function readTenantSettings(tenantId: string) {
         instagramAccountId: "",
         makeBaseUrl: "",
         makeDataStoreId: "",
+        googleBusinessAccountId: "",
+        googleBusinessLocationId: "",
         whatsappNumber: ""
       }
     });
@@ -98,6 +118,11 @@ export async function writeTenantSettings(tenantId: string, patch: Partial<Tenan
       makeBaseUrl: text(patch.makeBaseUrl),
       makeDataStoreId: text(patch.makeDataStoreId),
       makeApiTokenEncrypted: encryptSecret(patch.makeApiToken),
+      googleBusinessAccountId: text(patch.googleBusinessAccountId),
+      googleBusinessLocationId: text(patch.googleBusinessLocationId),
+      googleBusinessRefreshTokenEncrypted: encryptSecret(patch.googleBusinessRefreshToken),
+      googleBusinessAccessTokenEncrypted: encryptSecret(patch.googleBusinessAccessToken),
+      googleBusinessTokenExpiresAt: patch.googleBusinessTokenExpiresAt ? new Date(patch.googleBusinessTokenExpiresAt) : null,
       whatsappNumber: text(patch.whatsappNumber)
     },
     update: {
@@ -109,13 +134,24 @@ export async function writeTenantSettings(tenantId: string, patch: Partial<Tenan
       ...(hasField(patch, "instagramAccountId") ? { instagramAccountId: text(patch.instagramAccountId) } : {}),
       ...(hasField(patch, "makeBaseUrl") ? { makeBaseUrl: text(patch.makeBaseUrl) } : {}),
       ...(hasField(patch, "makeDataStoreId") ? { makeDataStoreId: text(patch.makeDataStoreId) } : {}),
+      ...(hasField(patch, "googleBusinessAccountId") ? { googleBusinessAccountId: text(patch.googleBusinessAccountId) } : {}),
+      ...(hasField(patch, "googleBusinessLocationId") ? { googleBusinessLocationId: text(patch.googleBusinessLocationId) } : {}),
+      ...(hasField(patch, "googleBusinessTokenExpiresAt")
+        ? { googleBusinessTokenExpiresAt: patch.googleBusinessTokenExpiresAt ? new Date(patch.googleBusinessTokenExpiresAt) : null }
+        : {}),
       ...(hasField(patch, "whatsappNumber") ? { whatsappNumber: text(patch.whatsappNumber) } : {}),
       ...(text(patch.sigaToken) ? { sigaTokenEncrypted: encryptSecret(patch.sigaToken) } : {}),
       ...(text(patch.metaAppSecret) ? { metaAppSecretEncrypted: encryptSecret(patch.metaAppSecret) } : {}),
       ...(text(patch.instagramAccessToken)
         ? { instagramAccessTokenEncrypted: encryptSecret(patch.instagramAccessToken) }
         : {}),
-      ...(text(patch.makeApiToken) ? { makeApiTokenEncrypted: encryptSecret(patch.makeApiToken) } : {})
+      ...(text(patch.makeApiToken) ? { makeApiTokenEncrypted: encryptSecret(patch.makeApiToken) } : {}),
+      ...(text(patch.googleBusinessRefreshToken)
+        ? { googleBusinessRefreshTokenEncrypted: encryptSecret(patch.googleBusinessRefreshToken) }
+        : {}),
+      ...(text(patch.googleBusinessAccessToken)
+        ? { googleBusinessAccessTokenEncrypted: encryptSecret(patch.googleBusinessAccessToken) }
+        : {})
     }
   });
 
@@ -128,7 +164,17 @@ export async function writeTenantSettings(tenantId: string, patch: Partial<Tenan
 }
 
 export function publicTenantSettings(settings: TenantSettings): PublicTenantSettings {
-  const { sigaToken, metaAppSecret, instagramAccessToken, makeBaseUrl, makeDataStoreId, makeApiToken, ...publicSettings } = settings;
+  const {
+    sigaToken,
+    metaAppSecret,
+    instagramAccessToken,
+    makeBaseUrl,
+    makeDataStoreId,
+    makeApiToken,
+    googleBusinessRefreshToken,
+    googleBusinessAccessToken,
+    ...publicSettings
+  } = settings;
   const hasTenantMetaApp = Boolean(settings.metaAppId && metaAppSecret);
   const hasPlatformMetaApp = Boolean(
     (process.env.META_APP_ID || process.env.NEXT_PUBLIC_META_APP_ID) && process.env.META_APP_SECRET
@@ -138,6 +184,7 @@ export function publicTenantSettings(settings: TenantSettings): PublicTenantSett
     sigaTokenConfigured: Boolean(sigaToken),
     metaAppSecretConfigured: Boolean(metaAppSecret),
     instagramAccessTokenConfigured: Boolean(instagramAccessToken),
-    instagramOAuthAvailable: hasTenantMetaApp || hasPlatformMetaApp
+    instagramOAuthAvailable: hasTenantMetaApp || hasPlatformMetaApp,
+    googleBusinessTokenConfigured: Boolean(googleBusinessRefreshToken || googleBusinessAccessToken)
   };
 }

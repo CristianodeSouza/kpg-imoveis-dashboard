@@ -1,4 +1,4 @@
-import type { Property } from "@/lib/types";
+import type { GeneratedContent, Property } from "@/lib/types";
 
 type LooseRecord = Record<string, unknown>;
 
@@ -381,4 +381,46 @@ export function buildHashtags(property: Property) {
       ].filter(Boolean)
     )
   );
+}
+
+export function buildPropertyPublicUrl(property: Property) {
+  if (property.sourceUrl && /^https?:\/\//i.test(property.sourceUrl)) return property.sourceUrl;
+  const baseUrl = (process.env.NEXT_PUBLIC_PROPERTY_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
+  if (!baseUrl) return "";
+  const slug = property.title
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+  return `${baseUrl}/imovel/${slug}/${property.code}`;
+}
+
+export function buildGoogleBusinessSummary(property: Property) {
+  const location = compact([property.neighborhood, property.city, property.state]).join(", ");
+  const specs = compact([
+    property.privateArea ? `${property.privateArea} m2` : "",
+    positive(property.bedrooms) ? `${property.bedrooms} dormitorios` : "",
+    positive(property.suites) ? `${property.suites} suites` : "",
+    positive(property.parking) ? `${property.parking} vagas` : ""
+  ]).join(", ");
+  const intro = `${property.category || "Imovel"} ${property.purpose?.toLowerCase() || "disponivel"}${location ? ` em ${location}` : ""}`;
+  const details = specs ? ` com ${specs}` : "";
+  const value = property.price && property.price !== "Consulte" ? ` Valor: ${property.price}.` : "";
+  return `${intro}${details}. Excelente oportunidade para moradia ou investimento com a KPG Imoveis. Conheca os detalhes, fotos e condicoes no site.${value}`
+    .replace(/\s+/g, " ")
+    .slice(0, 1400)
+    .trim();
+}
+
+export function buildGeneratedContent(property: Property, options: { tone: string; channel: string; includePrice: boolean }): GeneratedContent {
+  const hashtags = buildHashtags(property);
+  return {
+    instagram_caption: buildCaption(property, options),
+    instagram_hashtags: hashtags,
+    gmb_summary: buildGoogleBusinessSummary(property),
+    gmb_cta: "LEARN_MORE",
+    gmb_url: buildPropertyPublicUrl(property)
+  };
 }

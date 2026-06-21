@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { Building2, CheckCircle2, Instagram, KeyRound, Loader2, RefreshCw, Save } from "lucide-react";
+import { Building2, CheckCircle2, Instagram, KeyRound, Loader2, MapPin, RefreshCw, Save } from "lucide-react";
 import { AppShell, PageHeader, StatusBadge } from "@/app/components/ds";
 
 type PublicSettings = {
@@ -15,6 +15,10 @@ type PublicSettings = {
   instagramAccountId: string;
   instagramAccessTokenConfigured: boolean;
   instagramOAuthAvailable: boolean;
+  googleBusinessAccountId: string;
+  googleBusinessLocationId: string;
+  googleBusinessTokenConfigured: boolean;
+  googleBusinessTokenExpiresAt?: string | null;
   whatsappNumber: string;
   updatedAt?: string;
 };
@@ -57,6 +61,11 @@ type FormState = {
   metaAppSecret: string;
   instagramAccountId: string;
   instagramAccessToken: string;
+  googleBusinessAccountId: string;
+  googleBusinessLocationId: string;
+  googleBusinessRefreshToken: string;
+  googleBusinessAccessToken: string;
+  googleBusinessTokenExpiresAt: string;
   whatsappNumber: string;
 };
 
@@ -82,6 +91,11 @@ const emptyForm: FormState = {
   metaAppSecret: "",
   instagramAccountId: "",
   instagramAccessToken: "",
+  googleBusinessAccountId: "",
+  googleBusinessLocationId: "",
+  googleBusinessRefreshToken: "",
+  googleBusinessAccessToken: "",
+  googleBusinessTokenExpiresAt: "",
   whatsappNumber: ""
 };
 
@@ -128,6 +142,13 @@ export default function ConfiguracoesPage() {
       metaAppSecret: "",
       instagramAccountId: nextSettings.instagramAccountId || "",
       instagramAccessToken: "",
+      googleBusinessAccountId: nextSettings.googleBusinessAccountId || "",
+      googleBusinessLocationId: nextSettings.googleBusinessLocationId || "",
+      googleBusinessRefreshToken: "",
+      googleBusinessAccessToken: "",
+      googleBusinessTokenExpiresAt: nextSettings.googleBusinessTokenExpiresAt
+        ? nextSettings.googleBusinessTokenExpiresAt.slice(0, 16)
+        : "",
       whatsappNumber: nextSettings.whatsappNumber || ""
     });
   }
@@ -208,7 +229,7 @@ export default function ConfiguracoesPage() {
       subtitle={settings?.companyName || "Configuracoes"}
       navItems={[
         { href: "/portal", label: "Portal" },
-        { href: "/app/instagram", label: "Instagram Publisher" },
+        { href: "/app/instagram", label: "Publicador Multicanal" },
         { href: "/app/leads", label: "Mini CRM" },
         { href: "/app/blog", label: "Blog Automatizado" },
         { href: "/app/pagamentos", label: "Pagamentos" },
@@ -256,6 +277,10 @@ export default function ConfiguracoesPage() {
             <div className="metric">
               <span>WhatsApp CTA</span>
               <strong>{settings?.whatsappNumber || "Pendente"}</strong>
+            </div>
+            <div className="metric">
+              <span>Google Meu Negocio</span>
+              <strong>{configuredLabel(Boolean(settings?.googleBusinessLocationId && settings?.googleBusinessTokenConfigured))}</strong>
             </div>
           </div>
 
@@ -391,6 +416,82 @@ export default function ConfiguracoesPage() {
                     onChange={(event) => updateField("addressState", event.target.value.toUpperCase())}
                     placeholder="RS"
                     value={form.addressState}
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section className="settings-section">
+              <div className="settings-section-title">
+                <MapPin size={20} />
+                <div>
+                  <h3>Google Meu Negocio</h3>
+                  <span>Credenciais OAuth e location do Google Business Profile para publicar Local Posts por cliente.</span>
+                </div>
+              </div>
+              <div className="settings-grid">
+                <div className="field">
+                  <label htmlFor="googleBusinessAccountId">Google Business Account ID {publishRequirement()}</label>
+                  <input
+                    className="input"
+                    id="googleBusinessAccountId"
+                    onChange={(event) => updateField("googleBusinessAccountId", event.target.value)}
+                    placeholder="accounts/123456789 ou 123456789"
+                    value={form.googleBusinessAccountId}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="googleBusinessLocationId">Google Business Location ID {publishRequirement()}</label>
+                  <input
+                    className="input"
+                    id="googleBusinessLocationId"
+                    onChange={(event) => updateField("googleBusinessLocationId", event.target.value)}
+                    placeholder="locations/987654321 ou 987654321"
+                    value={form.googleBusinessLocationId}
+                  />
+                </div>
+                <div className="field secret-field">
+                  <label htmlFor="googleBusinessRefreshToken">Google Refresh Token {publishRequirement()}</label>
+                  <input
+                    autoComplete="off"
+                    className="input"
+                    id="googleBusinessRefreshToken"
+                    onChange={(event) => updateField("googleBusinessRefreshToken", event.target.value)}
+                    placeholder={
+                      settings?.googleBusinessTokenConfigured
+                        ? "Token ja configurado. Preencha apenas para trocar."
+                        : "Refresh token OAuth com escopo business.manage"
+                    }
+                    type="password"
+                    value={form.googleBusinessRefreshToken}
+                  />
+                  {settings?.googleBusinessTokenConfigured ? (
+                    <span className="secret-status">
+                      <CheckCircle2 size={15} />
+                      Token salvo
+                    </span>
+                  ) : null}
+                </div>
+                <div className="field secret-field">
+                  <label htmlFor="googleBusinessAccessToken">Google Access Token</label>
+                  <input
+                    autoComplete="off"
+                    className="input"
+                    id="googleBusinessAccessToken"
+                    onChange={(event) => updateField("googleBusinessAccessToken", event.target.value)}
+                    placeholder="Opcional. O sistema renova usando refresh token."
+                    type="password"
+                    value={form.googleBusinessAccessToken}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="googleBusinessTokenExpiresAt">Expira em</label>
+                  <input
+                    className="input"
+                    id="googleBusinessTokenExpiresAt"
+                    onChange={(event) => updateField("googleBusinessTokenExpiresAt", event.target.value)}
+                    type="datetime-local"
+                    value={form.googleBusinessTokenExpiresAt}
                   />
                 </div>
               </div>

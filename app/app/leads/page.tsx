@@ -218,7 +218,7 @@ export default function LeadsPage() {
       subtitle="Mini CRM"
       navItems={[
         { href: "/portal", label: "Portal" },
-        { href: "/app/instagram", label: "Instagram Publisher" },
+        { href: "/app/instagram", label: "Publicador Multicanal" },
         { href: "/app/leads", label: "Mini CRM", active: true },
         { href: "/app/blog", label: "Blog Automatizado" },
         { href: "/app/pagamentos", label: "Pagamentos" },
