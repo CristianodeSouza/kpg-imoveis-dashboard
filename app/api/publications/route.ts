@@ -10,10 +10,15 @@ export async function GET(request: Request) {
   if (response) return response;
   if (!session) return NextResponse.json({ error: "Sessao invalida." }, { status: 401 });
 
-  const [usage, instagramPublications, socialPublications] = await Promise.all([
+  const [usage, instagramPublications, socialPublications, googleBusinessPosts] = await Promise.all([
     getInstagramUsage(session.tenantId),
     listInstagramPublications(session.tenantId, 80),
     prisma.socialPublication.findMany({
+      where: { tenantId: session.tenantId },
+      orderBy: { createdAt: "desc" },
+      take: 80
+    }),
+    prisma.googleBusinessPost.findMany({
       where: { tenantId: session.tenantId },
       orderBy: { createdAt: "desc" },
       take: 80
@@ -21,6 +26,7 @@ export async function GET(request: Request) {
   ]);
 
   const socialInstagramIds = new Set(socialPublications.map((item) => item.instagramPostId).filter(Boolean));
+  const socialGoogleBusinessIds = new Set(socialPublications.map((item) => item.gmbPostId).filter(Boolean));
   const socialRows = socialPublications.map((item) => {
     const metadata = (item.metadata || {}) as any;
     const content = metadata?.content || {};
@@ -85,7 +91,34 @@ export async function GET(request: Request) {
       cycleEnd: item.cycleEnd
     }));
 
-  const publications = [...socialRows, ...legacyRows]
+  const googleBusinessRows = googleBusinessPosts
+    .filter((item) => !item.postId || !socialGoogleBusinessIds.has(item.postId))
+    .map((item) => ({
+      id: item.id,
+      kind: "google_business_profile",
+      title: publicationTitleFromCaption(item.summary, "Google Meu Negocio"),
+      propertyCode: item.propertyCode,
+      propertyUrl: item.targetUrl,
+      caption: item.summary,
+      channels: {
+        instagram: { status: "skipped", postId: "", url: "" },
+        googleBusinessProfile: {
+          status: item.status === "DELETED" ? "deleted" : item.status === "FAILED" ? "failed" : "published",
+          postId: item.postId,
+          url: item.targetUrl
+        },
+        facebook: { status: "future", postId: "", url: "" },
+        blog: { status: "future", postId: "", url: "" }
+      },
+      results: [],
+      mediaType: "local post",
+      photosCount: item.imageUrl ? 1 : 0,
+      status: item.status,
+      errorMessage: "",
+      createdAt: item.createdAt
+    }));
+
+  const publications = [...socialRows, ...legacyRows, ...googleBusinessRows]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 80);
 

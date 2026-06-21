@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { googleBusinessService } from "@/lib/google-business";
+import { googleBusinessPostService } from "@/lib/google-business";
 import { publishInstagramForTenant } from "@/lib/instagram-publisher";
 import { prisma } from "@/lib/db";
 import { requireTenantService } from "@/lib/services";
@@ -82,8 +82,10 @@ export async function POST(request: Request) {
 
   if (channels.googleBusinessProfile) {
     try {
-      const published = await googleBusinessService.publishLocalPost({
+      const published = await googleBusinessPostService.createPost({
         tenantId: session.tenantId,
+        userId: session.userId,
+        propertyCode,
         summary: String(content.gmb_summary || ""),
         imageUrl: firstImage(assets, property),
         cta: content.gmb_cta || "LEARN_MORE",

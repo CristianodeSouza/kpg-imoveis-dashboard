@@ -16,6 +16,7 @@ export async function POST(request: Request) {
       tenantId: session.tenantId,
       userId: session.userId,
       propertyCode: body.propertyCode,
+      accountId: body.accountId,
       locationId: body.locationId,
       summary: body.summary,
       imageUrl: body.imageUrl,
@@ -27,9 +28,9 @@ export async function POST(request: Request) {
       success: true,
       provider: "google_business_profile",
       postId: published.postId,
-      status: published.status,
-      message: "Publicado no Google Meu Negocio com sucesso",
-      url: published.url
+      status: published.status || "LIVE",
+      url: published.url,
+      historyId: published.historyId
     });
   } catch (error) {
     return NextResponse.json(
