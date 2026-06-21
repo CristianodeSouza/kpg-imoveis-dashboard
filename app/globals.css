@@ -470,9 +470,9 @@ a {
   border-radius: 8px;
   box-shadow: var(--shadow);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   margin: 0 auto 28px;
-  max-width: 940px;
+  max-width: 880px;
   overflow: hidden;
 }
 
@@ -480,9 +480,10 @@ a {
   align-items: center;
   border-right: 1px solid var(--line);
   display: flex;
-  gap: 12px;
-  min-height: 64px;
-  padding: 12px 20px;
+  gap: 9px;
+  min-height: 56px;
+  min-width: 0;
+  padding: 10px 12px;
 }
 
 .step:last-child {
@@ -512,12 +513,14 @@ a {
   display: block;
   font-size: 12px;
   font-weight: 800;
+  line-height: 1.15;
 }
 
 .step-caption {
   color: #99a3b3;
   display: block;
-  font-size: 11px;
+  font-size: 10px;
+  line-height: 1.2;
 }
 
 .panel {
@@ -1923,8 +1926,8 @@ a {
 
 .channel-question-grid {
   display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .channel-question-option {
@@ -1934,10 +1937,10 @@ a {
   border-radius: 8px;
   cursor: pointer;
   display: grid;
-  gap: 3px 10px;
+  gap: 2px 9px;
   grid-template-columns: 18px minmax(0, 1fr);
-  min-height: 68px;
-  padding: 12px;
+  min-height: 58px;
+  padding: 10px 11px;
 }
 
 .channel-question-option input {
@@ -1948,14 +1951,14 @@ a {
 }
 
 .channel-question-option span {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
   overflow-wrap: anywhere;
 }
 
 .channel-question-option small {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .channel-question-option.active {
