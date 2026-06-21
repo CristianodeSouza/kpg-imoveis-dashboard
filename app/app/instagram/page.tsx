@@ -38,15 +38,43 @@ type PublicationUsage = {
 
 type PublicationLog = {
   id: string;
+  kind?: string;
   title: string;
   propertyCode: string;
+  propertyUrl?: string;
   caption: string;
-  instagramPostId: string;
-  instagramUrl: string;
+  channels?: {
+    instagram?: ChannelPublication;
+    googleBusinessProfile?: ChannelPublication;
+    facebook?: ChannelPublication;
+    blog?: ChannelPublication;
+  };
   mediaType: string;
   photosCount: number;
   status: string;
+  errorMessage?: string;
   createdAt: string;
+};
+
+type ChannelPublication = {
+  status: string;
+  postId?: string;
+  url?: string;
+};
+
+type PublicationChannelRow = {
+  id: string;
+  title: string;
+  propertyCode: string;
+  caption: string;
+  channel: "instagram" | "googleBusinessProfile" | "facebook" | "blog";
+  channelLabel: string;
+  status: string;
+  url: string;
+  mediaType: string;
+  photosCount: number;
+  createdAt: string;
+  errorMessage?: string;
 };
 
 const steps = [
@@ -129,7 +157,30 @@ function publicationStatusLabel(status: string) {
   if (status === "published") return "Publicado";
   if (status === "failed") return "Falhou";
   if (status === "pending") return "Pendente";
+  if (status === "partial") return "Parcial";
+  if (status === "skipped") return "Nao enviado";
+  if (status === "future") return "Futuro";
   return status || "Pendente";
+}
+
+function channelLabel(channel: PublicationChannelRow["channel"]) {
+  if (channel === "instagram") return "Instagram";
+  if (channel === "googleBusinessProfile") return "Google Meu Negocio";
+  if (channel === "facebook") return "Facebook";
+  return "Blog";
+}
+
+function channelFormat(row: PublicationChannelRow) {
+  if (row.channel === "googleBusinessProfile") return "Local Post";
+  if (row.channel === "blog") return "Artigo";
+  return mediaTypeLabel(row.mediaType);
+}
+
+function channelLinkLabel(channel: PublicationChannelRow["channel"]) {
+  if (channel === "googleBusinessProfile") return "Abrir no Google";
+  if (channel === "facebook") return "Abrir no Facebook";
+  if (channel === "blog") return "Abrir artigo";
+  return "Abrir post";
 }
 
 function weekdayLabel(timestamp: string) {
@@ -466,6 +517,35 @@ export default function HomePage() {
   const bestDay = bestDays[0];
   const bestHour = bestHours[0];
   const facts = property?.facts ?? [];
+  const publicationChannelRows: PublicationChannelRow[] = publicationLogs.flatMap((item) => {
+    const channels = item.channels || {
+      instagram: {
+        status: item.status,
+        url: ""
+      }
+    };
+    const order: PublicationChannelRow["channel"][] = ["instagram", "googleBusinessProfile", "facebook", "blog"];
+    return order
+      .map((channelName) => {
+        const channel = channels[channelName];
+        if (!channel || ["skipped", "future"].includes(channel.status)) return null;
+        return {
+          id: `${item.id}-${channelName}`,
+          title: item.title,
+          propertyCode: item.propertyCode,
+          caption: item.caption,
+          channel: channelName,
+          channelLabel: channelLabel(channelName),
+          status: channel.status || item.status,
+          url: channel.url || "",
+          mediaType: item.mediaType,
+          photosCount: item.photosCount,
+          createdAt: item.createdAt,
+          errorMessage: item.errorMessage
+        };
+      })
+      .filter(Boolean) as PublicationChannelRow[];
+  });
 
   return (
     <main className="shell v2-page v2-instagram-page">
@@ -735,36 +815,6 @@ export default function HomePage() {
               </button>
             </div>
             <div className="channel-publish-layout">
-              <section className="channel-picker">
-                <span className="eyebrow">Etapa 4</span>
-                <h3>Canais selecionados</h3>
-                <div className="selected-channel-list">
-                  {publishChannels.instagram ? <span>Instagram</span> : null}
-                  {publishChannels.googleBusinessProfile ? <span>Google Meu Negocio</span> : null}
-                  {!publishChannels.instagram && !publishChannels.googleBusinessProfile ? <small>Nenhum canal selecionado</small> : null}
-                </div>
-                <a className="channel-edit-link" href="#channel-question">
-                  Alterar canais
-                </a>
-              </section>
-
-              <section className="channel-preview">
-                <span className="eyebrow">Previews</span>
-                {publishChannels.instagram ? (
-                  <article className="channel-preview-card">
-                    <strong>Instagram</strong>
-                    <p>{caption.replace(/\s+/g, " ").slice(0, 220)}</p>
-                  </article>
-                ) : null}
-                {publishChannels.googleBusinessProfile ? (
-                  <article className="channel-preview-card">
-                    <strong>Google Meu Negocio</strong>
-                    <p>{(generatedContent?.gmb_summary || buildGoogleBusinessSummary(property)).replace(/\s+/g, " ").slice(0, 220)}</p>
-                    <small>{generatedContent?.gmb_url || buildPropertyPublicUrl(property)}</small>
-                  </article>
-                ) : null}
-              </section>
-
               <section className="publish-area multichannel-publish-area">
                 <span className="eyebrow">Etapa 5</span>
                 <button
@@ -924,49 +974,57 @@ export default function HomePage() {
           <section className="analytics-block publication-history">
             <div className="section-inline-heading">
               <div>
-                <span className="eyebrow">Historico de envios</span>
-                <h3>Posts enviados via SaaS</h3>
+                <span className="eyebrow">Historico multicanal</span>
+                <h3>Publicacoes realizadas</h3>
               </div>
               <button className="btn secondary" onClick={loadPublications} type="button">
                 <RefreshCw size={16} />
                 Atualizar
               </button>
             </div>
-            <div className="publication-table" role="table" aria-label="Historico de posts enviados via SaaS">
-              {publicationLogs.length ? (
+            <div className="publication-table" role="table" aria-label="Historico multicanal de publicacoes">
+              {publicationChannelRows.length ? (
                 <>
                   <div className="publication-table-head" role="row">
-                    <span>Post</span>
+                    <span>Publicacao</span>
                     <span>Codigo</span>
+                    <span>Canal</span>
                     <span>Publicado em</span>
                     <span>Formato</span>
                     <span>Midias</span>
                     <span>Status</span>
-                    <span>Instagram</span>
+                    <span>Links</span>
                   </div>
-                  {publicationLogs.map((item) => (
+                  {publicationChannelRows.map((item) => (
                     <div className="publication-table-row" key={item.id} role="row">
-                      <span className="publication-title-cell">
-                        <strong>{item.title || "Publicacao no Instagram"}</strong>
+                      <span className="publication-title-cell" data-label="Publicacao">
+                        <strong>{item.title || "Publicacao multicanal"}</strong>
                         <small>{item.caption ? shortCaption(item.caption, item.title || "Legenda nao registrada") : "Legenda nao registrada"}</small>
                       </span>
-                      <span>{item.propertyCode || "Nao registrado"}</span>
-                      <span>{new Date(item.createdAt).toLocaleString("pt-BR")}</span>
-                      <span>{mediaTypeLabel(item.mediaType)}</span>
-                      <span>
-                        {item.photosCount} foto{item.photosCount === 1 ? "" : "s"}
+                      <span data-label="Codigo">{item.propertyCode || "Nao registrado"}</span>
+                      <span data-label="Canal">
+                        <span className={`channel-badge ${item.channel === "googleBusinessProfile" ? "google-business" : item.channel}`}>
+                          {item.channelLabel}
+                        </span>
                       </span>
-                      <span>
-                        <span className={`publication-status ${item.status === "published" ? "published" : item.status === "failed" ? "failed" : "pending"}`}>
+                      <span data-label="Publicado em">{new Date(item.createdAt).toLocaleString("pt-BR")}</span>
+                      <span data-label="Formato">{channelFormat(item)}</span>
+                      <span data-label="Midias">
+                        {item.photosCount ? `${item.photosCount} foto${item.photosCount === 1 ? "" : "s"}` : "-"}
+                      </span>
+                      <span data-label="Status">
+                        <span className={`publication-status ${item.status}`}>
                           {publicationStatusLabel(item.status)}
                         </span>
                       </span>
-                      <span>
-                        {item.instagramUrl ? (
-                          <a className="publication-link" href={item.instagramUrl} rel="noreferrer" target="_blank">
-                            Abrir post
+                      <span className="publication-actions" data-label="Links">
+                        {item.url ? (
+                          <a className="publication-link" href={item.url} rel="noreferrer" target="_blank">
+                            {channelLinkLabel(item.channel)}
                             <ExternalLink size={13} />
                           </a>
+                        ) : item.status === "failed" ? (
+                          <small>{item.errorMessage || "Sem link"}</small>
                         ) : (
                           <small>Sem link</small>
                         )}
