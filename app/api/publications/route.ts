@@ -10,18 +10,26 @@ export async function GET(request: Request) {
   if (response) return response;
   if (!session) return NextResponse.json({ error: "Sessao invalida." }, { status: 401 });
 
-  const [usage, instagramPublications, socialPublications, googleBusinessPosts] = await Promise.all([
+  const params = new URL(request.url).searchParams;
+  const page = Math.max(1, Number(params.get("page") || 1));
+  const pageSize = Math.min(100, Math.max(10, Number(params.get("pageSize") || 50)));
+  const take = Math.min(300, page * pageSize);
+
+  const [usage, instagramTotal, socialTotal, googleBusinessTotal, instagramPublications, socialPublications, googleBusinessPosts] = await Promise.all([
     getInstagramUsage(session.tenantId),
-    listInstagramPublications(session.tenantId, 80),
+    prisma.publicationLog.count({ where: { tenantId: session.tenantId } }),
+    prisma.socialPublication.count({ where: { tenantId: session.tenantId } }),
+    prisma.googleBusinessPost.count({ where: { tenantId: session.tenantId } }),
+    listInstagramPublications(session.tenantId, take),
     prisma.socialPublication.findMany({
       where: { tenantId: session.tenantId },
       orderBy: { createdAt: "desc" },
-      take: 80
+      take
     }),
     prisma.googleBusinessPost.findMany({
       where: { tenantId: session.tenantId },
       orderBy: { createdAt: "desc" },
-      take: 80
+      take
     })
   ]);
 
@@ -120,10 +128,18 @@ export async function GET(request: Request) {
 
   const publications = [...socialRows, ...legacyRows, ...googleBusinessRows]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 80);
+    .slice((page - 1) * pageSize, page * pageSize);
+
+  const total = instagramTotal + socialTotal + googleBusinessTotal;
 
   return NextResponse.json({
     usage,
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / pageSize))
+    },
     publications
   });
 }

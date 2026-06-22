@@ -10,13 +10,14 @@ export async function GET(request: Request) {
   if (!session) return NextResponse.json({ error: "Sessao invalida." }, { status: 401 });
 
   const params = new URL(request.url).searchParams;
-  const leads = await readLeads(session.tenantId, {
+  const { leads, pagination } = await readLeads(session.tenantId, {
     page: Number(params.get("page") || 1),
     pageSize: Number(params.get("pageSize") || 100),
     status: params.get("status") || undefined
   });
   return NextResponse.json({
     leads,
+    pagination,
     storage: "supabase"
   });
 }

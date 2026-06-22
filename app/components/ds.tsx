@@ -25,6 +25,8 @@ export function AppShell({
   userIsAdmin?: boolean;
 }) {
   const visibleItems = navItems.filter((item) => !item.adminOnly || userIsAdmin);
+  const navAccents = ["var(--ds-background-accent-blue-bolder)", "var(--ds-background-accent-purple-bolder)", "var(--ds-background-accent-teal-bolder)", "var(--ds-background-accent-green-bolder)", "var(--ds-background-accent-orange-bolder)", "var(--ds-background-accent-magenta-bolder)"];
+
   return (
     <main className="ds-shell">
       <aside className="ds-sidebar">
@@ -33,8 +35,14 @@ export function AppShell({
           <span>{subtitle}</span>
         </a>
         <nav className="ds-sidebar-nav" aria-label="Navegacao principal">
-          {visibleItems.map((item) => (
-            <a className={`ds-sidebar-link ${item.active ? "active" : ""}`} href={item.href} key={item.href}>
+          {visibleItems.map((item, index) => (
+            <a
+              className={`ds-sidebar-link ${item.active ? "active" : ""}`}
+              href={item.href}
+              key={item.href}
+              style={{ "--nav-accent": navAccents[index % navAccents.length] } as CSSProperties}
+            >
+              <span className="ds-sidebar-link-dot" aria-hidden="true" />
               <span>{item.label}</span>
             </a>
           ))}

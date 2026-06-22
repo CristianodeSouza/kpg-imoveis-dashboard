@@ -2,46 +2,58 @@
    Camada incremental, prefixada e segura para evoluir telas sem quebrar o DS atual. */
 
 :root {
-  --v2-bg: #f6f7f9;
-  --v2-surface: #ffffff;
-  --v2-surface-soft: #f9fafb;
-  --v2-surface-raised: #ffffff;
-  --v2-text: #111827;
-  --v2-text-soft: #374151;
-  --v2-text-muted: #6b7280;
-  --v2-border: #e5e7eb;
-  --v2-border-strong: #d1d5db;
-  --v2-primary: #6366f1;
-  --v2-primary-strong: #4f46e5;
-  --v2-primary-soft: #eef2ff;
-  --v2-success: #059669;
-  --v2-success-soft: #ecfdf5;
-  --v2-warning: #d97706;
-  --v2-warning-soft: #fffbeb;
-  --v2-danger: #dc2626;
-  --v2-danger-soft: #fef2f2;
+  --v2-bg: var(--ds-surface-sunken, #f7f8f9);
+  --v2-surface: var(--ds-surface, #ffffff);
+  --v2-surface-soft: var(--ds-surface-raised, #ffffff);
+  --v2-surface-raised: var(--ds-surface-overlay, #ffffff);
+  --v2-text: var(--ds-text, #172b4d);
+  --v2-text-soft: var(--ds-text-subtle, #44546f);
+  --v2-text-muted: var(--ds-text-subtlest, #626f86);
+  --v2-border: var(--ds-border, #dfe1e6);
+  --v2-border-strong: var(--ds-border-bold, #8590a2);
+  --v2-primary: var(--ds-background-brand-bold, #0c66e4);
+  --v2-primary-strong: var(--ds-background-brand-bold-hovered, #0055cc);
+  --v2-primary-soft: var(--ds-background-accent-blue-subtlest, #e9f2ff);
+  --v2-discovery: var(--ds-background-discovery-bold, #6e5dc6);
+  --v2-discovery-soft: var(--ds-background-accent-purple-subtlest, #f3f0ff);
+  --v2-teal: var(--ds-background-accent-teal-bolder, #1d7f8c);
+  --v2-teal-soft: var(--ds-background-accent-teal-subtlest, #e7f9ff);
+  --v2-success: var(--ds-background-success-bold, #1f845a);
+  --v2-success-soft: var(--ds-background-accent-green-subtlest, #dcfff1);
+  --v2-warning: var(--ds-background-warning-bold, #f5cd47);
+  --v2-warning-soft: var(--ds-background-accent-orange-subtlest, #fff3eb);
+  --v2-danger: var(--ds-background-danger-bold, #c9372c);
+  --v2-danger-soft: var(--ds-background-accent-red-subtlest, #ffeceb);
   --v2-radius-xs: 4px;
   --v2-radius-sm: 6px;
   --v2-radius-md: 8px;
-  --v2-shadow-xs: 0 1px 1px rgba(17, 24, 39, 0.04);
-  --v2-shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.06);
-  --v2-focus: 0 0 0 3px rgba(37, 99, 235, 0.16);
+  --v2-shadow-xs: var(--ds-shadow-raised, 0 1px 3px rgba(9, 30, 66, 0.16));
+  --v2-shadow-sm: var(--ds-shadow-overflow, 0 8px 24px rgba(9, 30, 66, 0.16));
+  --v2-focus: 0 0 0 3px rgba(56, 139, 255, 0.28);
+  --v2-gradient-brand: linear-gradient(135deg, #0c66e4 0%, #6e5dc6 52%, #c9378c 100%);
+  --v2-gradient-fresh: linear-gradient(135deg, #0c66e4 0%, #1d7f8c 48%, #22a06b 100%);
+  --v2-gradient-warm: linear-gradient(135deg, #fca700 0%, #e56910 48%, #c9378c 100%);
 }
 
 .ds-shell {
-  background: var(--v2-bg);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(12, 102, 228, 0.12), transparent 28rem),
+    radial-gradient(circle at 90% 8%, rgba(201, 55, 140, 0.12), transparent 22rem),
+    var(--v2-bg);
   grid-template-columns: 220px minmax(0, 1fr);
 }
 
 .ds-shell .ds-sidebar {
-  background: #111827;
-  border-right: 1px solid #374151;
+  background:
+    linear-gradient(180deg, rgba(9, 30, 66, 0.98), rgba(23, 43, 77, 0.96)),
+    #172b4d;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
   color: #f9fafb;
   padding: 12px 0;
 }
 
 .ds-shell .ds-sidebar-brand {
-  border-bottom: 1px solid #374151;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   color: #f9fafb;
   display: grid;
   gap: 2px;
@@ -56,7 +68,7 @@
 }
 
 .ds-shell .ds-sidebar-brand span {
-  color: #9ca3af;
+  color: #b6c2cf;
   font-size: 11px;
   letter-spacing: 0.08em;
 }
@@ -67,7 +79,7 @@
 
 .ds-shell .ds-sidebar-link {
   border-radius: 0;
-  color: #d1d5db;
+  color: #dcdfe4;
   font-size: 13px;
   font-weight: 600;
   min-height: 36px;
@@ -76,13 +88,13 @@
 
 .ds-shell .ds-sidebar-link.active,
 .ds-shell .ds-sidebar-link:hover {
-  background: var(--v2-primary);
+  background: linear-gradient(90deg, var(--nav-accent, #0c66e4), rgba(255, 255, 255, 0.1));
   color: #ffffff;
 }
 
 .ds-shell .ds-sidebar-meta {
-  border-top: 1px solid #374151;
-  color: #9ca3af;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  color: #b6c2cf;
   display: grid;
   font-size: 11px;
   gap: 7px;
@@ -105,12 +117,12 @@
 .ds-shell .ds-sidebar-footer button,
 .ds-shell .ds-sidebar-footer a {
   background: transparent;
-  border: 1px solid #374151;
-  color: #d1d5db;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #dcdfe4;
 }
 
 .ds-shell .ds-main {
-  background: var(--v2-bg);
+  background: transparent;
   padding: 20px 24px;
 }
 
@@ -185,10 +197,23 @@
   border: 1px solid var(--v2-border);
   border-radius: var(--v2-radius-md);
   box-shadow: var(--v2-shadow-xs);
+  position: relative;
 }
 
 .v2-page .panel {
   padding: 12px;
+}
+
+.v2-page .panel::before,
+.v2-page .blog-generator-form::before,
+.v2-page .blog-preview-box::before {
+  background: var(--v2-gradient-brand);
+  border-radius: var(--v2-radius-md) var(--v2-radius-md) 0 0;
+  content: "";
+  display: block;
+  height: 3px;
+  inset: 0 0 auto;
+  position: absolute;
 }
 
 .v2-page .ds-metrics-grid {
@@ -198,7 +223,7 @@
 }
 
 .v2-page .ds-metric-card {
-  background: var(--v2-surface);
+  background: linear-gradient(180deg, #ffffff, #f7f8ff);
   border-color: var(--v2-border);
   border-radius: var(--v2-radius-md);
   box-shadow: var(--v2-shadow-xs);
@@ -221,23 +246,23 @@
 }
 
 .v2-page .ds-metric-card.info {
-  background: var(--v2-primary-soft);
-  border-color: #bfdbfe;
+  background: linear-gradient(135deg, var(--v2-primary-soft), #ffffff);
+  border-color: var(--ds-border-accent-blue, #85b8ff);
 }
 
 .v2-page .ds-metric-card.success {
-  background: var(--v2-success-soft);
-  border-color: #bbf7d0;
+  background: linear-gradient(135deg, var(--v2-success-soft), #ffffff);
+  border-color: var(--ds-border-accent-green, #7ee2b8);
 }
 
 .v2-page .ds-metric-card.warning {
-  background: var(--v2-warning-soft);
-  border-color: #fde68a;
+  background: linear-gradient(135deg, var(--v2-warning-soft), #ffffff);
+  border-color: var(--ds-border-accent-orange, #fec57b);
 }
 
 .v2-page .ds-metric-card.danger {
-  background: var(--v2-danger-soft);
-  border-color: #fecaca;
+  background: linear-gradient(135deg, var(--v2-danger-soft), #ffffff);
+  border-color: var(--ds-border-accent-red, #fd9891);
 }
 
 .v2-page .blog-panel {
@@ -310,6 +335,7 @@
 .v2-page .input,
 .v2-page .select,
 .v2-page .textarea {
+  background: var(--ds-surface-input, #ffffff);
   border-color: var(--v2-border);
   border-radius: var(--v2-radius-sm);
   font-size: 12px;
@@ -325,7 +351,7 @@
 .v2-page .select:focus,
 .v2-page .textarea:focus,
 .v2-page .blog-rich-editor:focus {
-  border-color: var(--v2-primary);
+  border-color: var(--ds-border-focused, #388bff);
   box-shadow: var(--v2-focus);
 }
 
@@ -338,22 +364,24 @@
 }
 
 .v2-page .btn.primary {
-  background: var(--v2-primary);
+  background: var(--v2-gradient-brand);
+  border-color: transparent;
   color: #fff;
 }
 
 .v2-page .btn.primary:hover {
-  background: var(--v2-primary-strong);
+  filter: saturate(1.08) brightness(0.96);
 }
 
 .v2-page .btn.secondary {
-  background: var(--v2-surface-soft);
+  background: #ffffff;
   border-color: var(--v2-border);
   color: var(--v2-text-soft);
 }
 
 .v2-page .btn.success {
-  background: var(--v2-success);
+  background: linear-gradient(135deg, var(--v2-success), var(--v2-teal));
+  border-color: transparent;
   color: #ffffff;
 }
 
@@ -415,6 +443,18 @@
   font-size: 12px;
   margin: 8px 0 10px;
   padding: 8px 10px;
+}
+
+.v2-page .message.ok {
+  background: var(--v2-success-soft);
+  border-color: var(--ds-border-accent-green, #7ee2b8);
+  color: var(--ds-text-success, #216e4e);
+}
+
+.v2-page .message.error {
+  background: var(--v2-danger-soft);
+  border-color: var(--ds-border-accent-red, #fd9891);
+  color: var(--ds-text-danger, #ae2e24);
 }
 
 .v2-page .panel {
@@ -508,7 +548,7 @@
 }
 
 .v2-portal-page .portal-settings-link {
-  background: var(--v2-primary);
+  background: var(--v2-gradient-brand);
   color: #fff;
 }
 

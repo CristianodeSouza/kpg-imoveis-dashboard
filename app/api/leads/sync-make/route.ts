@@ -18,8 +18,8 @@ export async function POST(request: Request) {
       dataStoreId: settings.makeDataStoreId,
       token: settings.makeApiToken
     });
-    const { leads } = await upsertLeads(payloads, session.tenantId);
-    return NextResponse.json({ ok: true, imported: payloads.length, total: leads.length });
+    const { pagination } = await upsertLeads(payloads, session.tenantId);
+    return NextResponse.json({ ok: true, imported: payloads.length, total: pagination.total, pagination });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro ao sincronizar leads.";
     return NextResponse.json(

@@ -40,6 +40,13 @@ const stageTone: Record<LeadStatus, "neutral" | "info" | "warning" | "success" |
   perdido: "danger"
 };
 
+type Pagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
 function formatDate(value: string) {
   if (!value) return "-";
   return new Intl.DateTimeFormat("pt-BR", {
@@ -109,12 +116,17 @@ export default function LeadsPage() {
   const [viewMode, setViewMode] = useState<"inbox" | "funil">("inbox");
   const [selectedLeadId, setSelectedLeadId] = useState("");
   const [message, setMessage] = useState("");
+  const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: 100, total: 0, totalPages: 1 });
 
-  async function loadLeads() {
+  async function loadLeads(page = pagination.page) {
     setLoading(true);
     setMessage("");
     try {
-      const response = await fetch("/api/leads", { cache: "no-store" });
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pagination.pageSize)
+      });
+      const response = await fetch(`/api/leads?${params.toString()}`, { cache: "no-store" });
       const data = await response.json();
       if (response.status === 401) {
         window.location.href = `/login?next=${encodeURIComponent("/app/leads")}`;
@@ -122,6 +134,7 @@ export default function LeadsPage() {
       }
       if (!response.ok) throw new Error(data.error || "Nao foi possivel carregar leads.");
       setLeads(data.leads || []);
+      setPagination(data.pagination || { page, pageSize: pagination.pageSize, total: data.leads?.length || 0, totalPages: 1 });
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro ao carregar leads.");
     } finally {
@@ -154,7 +167,7 @@ export default function LeadsPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Nao foi possivel sincronizar as leads.");
       setMessage(`${data.imported} registros sincronizados. Total no CRM: ${data.total}.`);
-      await loadLeads();
+      await loadLeads(1);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro ao sincronizar leads.");
     } finally {
@@ -225,7 +238,7 @@ export default function LeadsPage() {
       ]}
       aside={
         <>
-          <span>{leads.length.toLocaleString("pt-BR")} leads no CRM</span>
+          <span>{pagination.total.toLocaleString("pt-BR")} leads no CRM</span>
           <StatusBadge status={waitingCount ? "warning" : "success"}>{waitingCount ? `${waitingCount} sem acao` : "Operacao em dia"}</StatusBadge>
         </>
       }
@@ -241,7 +254,7 @@ export default function LeadsPage() {
               {syncing ? <Loader2 className="spin" size={17} /> : <Database size={17} />}
               Sincronizar leads
             </button>
-            <button className="btn secondary" disabled={loading} onClick={loadLeads}>
+            <button className="btn secondary" disabled={loading} onClick={() => loadLeads()}>
               {loading ? <Loader2 className="spin" size={17} /> : <RefreshCw size={17} />}
               Atualizar
             </button>
@@ -250,7 +263,7 @@ export default function LeadsPage() {
       />
 
       <section className="crm-metrics ds-metrics-grid">
-        <MetricCard label="Total" value={leads.length.toLocaleString("pt-BR")} hint="leads no CRM" />
+        <MetricCard label="Total" value={pagination.total.toLocaleString("pt-BR")} hint="leads no CRM" />
         <MetricCard label="Hoje" value={todayCount.toLocaleString("pt-BR")} hint="novas conversas" tone="info" />
         <MetricCard label="Novos" value={newCount.toLocaleString("pt-BR")} hint="em triagem" />
         <MetricCard label="Corretor" value={brokerCount.toLocaleString("pt-BR")} hint="acionado" tone="warning" />
@@ -402,6 +415,19 @@ export default function LeadsPage() {
                 </div>
               </section>
             ))}
+          </div>
+        ) : null}
+        {!loading && pagination.totalPages > 1 ? (
+          <div className="actions crm-pagination">
+            <span className="step-caption">
+              Pagina {pagination.page} de {pagination.totalPages} | {pagination.total} leads
+            </span>
+            <button className="btn secondary" disabled={pagination.page <= 1} onClick={() => loadLeads(pagination.page - 1)} type="button">
+              Anterior
+            </button>
+            <button className="btn secondary" disabled={pagination.page >= pagination.totalPages} onClick={() => loadLeads(pagination.page + 1)} type="button">
+              Proxima
+            </button>
           </div>
         ) : null}
       </section>

@@ -176,14 +176,25 @@ export async function readLeads(tenantId?: string | null, options?: { page?: num
     ...(status ? { status } : {})
   };
 
-  const leads = await prisma.lead.findMany({
-    where,
-    orderBy: [{ lastMessageAt: "desc" }, { createdAt: "desc" }],
-    skip: (page - 1) * pageSize,
-    take: pageSize
-  });
+  const [total, leads] = await Promise.all([
+    prisma.lead.count({ where }),
+    prisma.lead.findMany({
+      where,
+      orderBy: [{ lastMessageAt: "desc" }, { createdAt: "desc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize
+    })
+  ]);
 
-  return leads.map(leadFromDb);
+  return {
+    leads: leads.map(leadFromDb),
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / pageSize))
+    }
+  };
 }
 
 async function createInteraction(tenantId: string, leadId: string, lead: Lead) {
@@ -262,8 +273,8 @@ async function persistLead(payload: unknown, tenantId: string) {
 export async function upsertLead(payload: unknown, tenantId?: string | null) {
   const resolvedTenantId = await resolveTenantId(tenantId);
   const lead = await persistLead(payload, resolvedTenantId);
-  const leads = await readLeads(resolvedTenantId);
-  return { lead, leads };
+  const result = await readLeads(resolvedTenantId);
+  return { lead, ...result };
 }
 
 export async function upsertLeads(payloads: unknown[], tenantId?: string | null) {
@@ -274,8 +285,8 @@ export async function upsertLeads(payloads: unknown[], tenantId?: string | null)
     imported.push(await persistLead(payload, resolvedTenantId));
   }
 
-  const leads = await readLeads(resolvedTenantId);
-  return { imported, leads };
+  const result = await readLeads(resolvedTenantId);
+  return { imported, ...result };
 }
 
 export async function updateLead(id: string, patch: Partial<Pick<Lead, "status" | "notes">>, tenantId?: string | null) {

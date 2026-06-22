@@ -55,6 +55,13 @@ type PublicationLog = {
   createdAt: string;
 };
 
+type Pagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
 type ChannelPublication = {
   status: string;
   postId?: string;
@@ -214,6 +221,7 @@ export default function HomePage() {
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [publicationUsage, setPublicationUsage] = useState<PublicationUsage | null>(null);
   const [publicationLogs, setPublicationLogs] = useState<PublicationLog[]>([]);
+  const [publicationPagination, setPublicationPagination] = useState<Pagination>({ page: 1, pageSize: 50, total: 0, totalPages: 1 });
 
   const currentStep = property ? (caption ? (publishResults.length ? 5 : 4) : 2) : 1;
   const hashtags = useMemo(() => (property ? buildHashtags(property) : []), [property]);
@@ -332,7 +340,7 @@ export default function HomePage() {
         text: "Publicacao enviada para o Instagram."
       });
       if (data.usage) setPublicationUsage(data.usage);
-      await loadPublications();
+      await loadPublications(1);
     } catch (error) {
       const text =
         error instanceof DOMException && error.name === "AbortError"
@@ -368,13 +376,18 @@ export default function HomePage() {
     }
   }
 
-  async function loadPublications() {
+  async function loadPublications(page = publicationPagination.page) {
     try {
-      const response = await fetch("/api/publications", { cache: "no-store" });
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(publicationPagination.pageSize)
+      });
+      const response = await fetch(`/api/publications?${params.toString()}`, { cache: "no-store" });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Falha ao buscar historico de publicacoes.");
       setPublicationUsage(data.usage || null);
       setPublicationLogs(data.publications || []);
+      setPublicationPagination(data.pagination || { page, pageSize: publicationPagination.pageSize, total: data.publications?.length || 0, totalPages: 1 });
     } catch {
       setPublicationUsage(null);
       setPublicationLogs([]);
@@ -869,7 +882,7 @@ export default function HomePage() {
                 <span className="eyebrow">Historico Instagram</span>
                 <h3>Publicacoes realizadas</h3>
               </div>
-              <button className="btn secondary" onClick={loadPublications} type="button">
+              <button className="btn secondary" onClick={() => loadPublications()} type="button">
                 <RefreshCw size={16} />
                 Atualizar
               </button>
@@ -929,6 +942,27 @@ export default function HomePage() {
                   <strong>Nenhuma publicacao enviada por este SaaS neste cliente.</strong>
                 </div>
               )}
+            </div>
+            <div className="actions">
+              <span className="step-caption">
+                Pagina {publicationPagination.page} de {publicationPagination.totalPages} | {publicationPagination.total} publicacao(oes)
+              </span>
+              <button
+                className="btn secondary"
+                disabled={publicationPagination.page <= 1}
+                onClick={() => loadPublications(publicationPagination.page - 1)}
+                type="button"
+              >
+                Anterior
+              </button>
+              <button
+                className="btn secondary"
+                disabled={publicationPagination.page >= publicationPagination.totalPages}
+                onClick={() => loadPublications(publicationPagination.page + 1)}
+                type="button"
+              >
+                Proxima
+              </button>
             </div>
           </section>
 
