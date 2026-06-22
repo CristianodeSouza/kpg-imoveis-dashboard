@@ -4,6 +4,7 @@ import { requireTenantService } from "@/lib/services";
 import type { PublishPayload } from "@/lib/types";
 import { ensureInstagramQuota, recordInstagramPublication } from "@/lib/publications";
 import { prepareInstagramImages } from "@/lib/instagram-image";
+import { completeJob, createJob, failJob, startJob } from "@/lib/jobs";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -77,6 +78,7 @@ async function fetchPublishedPermalink(mediaId: string, token: string) {
 }
 
 export async function POST(request: Request) {
+  let jobId = "";
   try {
     const { session, response } = await requireTenantService(request, "instagram-publisher");
     if (response) return response;
@@ -98,6 +100,17 @@ export async function POST(request: Request) {
     }
 
     await ensureInstagramQuota(session.tenantId);
+    const job = await createJob({
+      tenantId: session.tenantId,
+      type: "instagram.publish",
+      payload: {
+        userId: session.userId,
+        imageCount: imageUrls.length,
+        captionPreview: caption.slice(0, 160)
+      }
+    });
+    jobId = job.id;
+    await startJob(jobId);
 
     const preparedImageUrls = await prepareInstagramImages(imageUrls.slice(0, 10), {
       tenantId: session.tenantId,
@@ -119,7 +132,15 @@ export async function POST(request: Request) {
         photosCount: 1,
         metadata: { ...result, originalImageUrls: imageUrls, preparedImageUrls, imagePreset: "feed-portrait" }
       });
-      return NextResponse.json({ ok: true, result: { ...result, url: permalink, imagens_tratadas: preparedImageUrls.length }, usage });
+      await completeJob(jobId, {
+        provider: "instagram",
+        postId: result?.id,
+        url: permalink,
+        mediaType: "imagem",
+        photosCount: 1,
+        usage
+      });
+      return NextResponse.json({ ok: true, jobId, result: { ...result, url: permalink, imagens_tratadas: preparedImageUrls.length }, usage });
     }
 
     const children = [];
@@ -159,9 +180,18 @@ export async function POST(request: Request) {
       photosCount: children.length,
       metadata: { ...result, originalImageUrls: imageUrls, preparedImageUrls, imagePreset: "feed-portrait" }
     });
-    return NextResponse.json({ ok: true, result: { ...result, url: permalink, imagens_tratadas: preparedImageUrls.length }, usage });
+    await completeJob(jobId, {
+      provider: "instagram",
+      postId: result?.id,
+      url: permalink,
+      mediaType: "carrossel",
+      photosCount: children.length,
+      usage
+    });
+    return NextResponse.json({ ok: true, jobId, result: { ...result, url: permalink, imagens_tratadas: preparedImageUrls.length }, usage });
   } catch (error) {
+    if (jobId) await failJob(jobId, error).catch(() => null);
     const message = error instanceof Error ? error.message : "Erro inesperado ao publicar.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message, jobId: jobId || undefined }, { status: 500 });
   }
 }

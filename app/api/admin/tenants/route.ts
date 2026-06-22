@@ -68,7 +68,7 @@ export async function GET(request: Request) {
       : {})
   };
 
-  const [total, tenants] = await Promise.all([
+  const [total, tenants, jobGroups, recentJobs] = await Promise.all([
     prisma.tenant.count({ where }),
     prisma.tenant.findMany({
       where,
@@ -83,6 +83,22 @@ export async function GET(request: Request) {
           orderBy: { createdAt: "desc" },
           take: 8,
           include: { user: true }
+        }
+      }
+    }),
+    prisma.job.groupBy({
+      by: ["status"],
+      _count: { _all: true }
+    }),
+    prisma.job.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 12,
+      include: {
+        tenant: {
+          select: {
+            name: true,
+            clientCode: true
+          }
         }
       }
     })
@@ -108,6 +124,28 @@ export async function GET(request: Request) {
       href: service.href,
       status: service.status
     })),
+    jobs: {
+      summary: {
+        total: jobGroups.reduce((sum, group) => sum + group._count._all, 0),
+        pending: jobGroups.find((group) => group.status === "pending")?._count._all || 0,
+        processing: jobGroups.find((group) => group.status === "processing")?._count._all || 0,
+        completed: jobGroups.find((group) => group.status === "completed")?._count._all || 0,
+        failed: jobGroups.find((group) => group.status === "failed")?._count._all || 0
+      },
+      recent: recentJobs.map((job) => ({
+        id: job.id,
+        tenantId: job.tenantId,
+        tenantName: job.tenant.name,
+        clientCode: job.tenant.clientCode,
+        type: job.type,
+        status: job.status,
+        attempts: job.attempts,
+        error: job.error,
+        createdAt: job.createdAt,
+        startedAt: job.startedAt,
+        finishedAt: job.finishedAt
+      }))
+    },
     tenants: tenants.map((tenant) => ({
       id: tenant.id,
       clientCode: tenant.clientCode,

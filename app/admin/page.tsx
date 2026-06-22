@@ -48,10 +48,33 @@ type Pagination = {
   totalPages: number;
 };
 
+type AdminJobs = {
+  summary: {
+    total: number;
+    pending: number;
+    processing: number;
+    completed: number;
+    failed: number;
+  };
+  recent: Array<{
+    id: string;
+    tenantName: string;
+    clientCode?: string;
+    type: string;
+    status: string;
+    attempts: number;
+    error?: string;
+    createdAt: string;
+    startedAt?: string;
+    finishedAt?: string;
+  }>;
+};
+
 export default function AdminPage() {
   const [tenants, setTenants] = useState<AdminTenant[]>([]);
   const [services, setServices] = useState<AdminService[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: 50, total: 0, totalPages: 1 });
+  const [jobs, setJobs] = useState<AdminJobs>({ summary: { total: 0, pending: 0, processing: 0, completed: 0, failed: 0 }, recent: [] });
   const [search, setSearch] = useState("");
   const [view, setView] = useState<AdminView>("overview");
   const [selectedServices, setSelectedServices] = useState<string[]>(["instagram-publisher", "mini-crm"]);
@@ -89,6 +112,7 @@ export default function AdminPage() {
       }
       if (!response.ok) throw new Error(data.error || "Nao foi possivel carregar clientes.");
       setTenants(data.tenants || []);
+      setJobs(data.jobs || { summary: { total: 0, pending: 0, processing: 0, completed: 0, failed: 0 }, recent: [] });
       setPagination(data.pagination || { page: nextPage, pageSize: pagination.pageSize, total: data.tenants?.length || 0, totalPages: 1 });
       setServices((data.services || []).filter((service: AdminService) => !["portal", "settings"].includes(service.slug)));
     } catch (error) {
@@ -172,6 +196,14 @@ export default function AdminPage() {
     return status;
   }
 
+  function jobStatusLabel(status: string) {
+    if (status === "pending") return "Pendente";
+    if (status === "processing") return "Processando";
+    if (status === "completed") return "Concluido";
+    if (status === "failed") return "Falhou";
+    return status;
+  }
+
   useEffect(() => {
     loadTenants(1);
   }, [search, pagination.pageSize]);
@@ -239,6 +271,7 @@ export default function AdminPage() {
             <MetricCard label="Servicos no catalogo" value={services.length} />
             <MetricCard label="Posts no ciclo" value={totalInstagramPosts} tone="info" />
             <MetricCard label="Pacotes estourados" value={exceededInstagramPlans.length} tone={exceededInstagramPlans.length ? "danger" : "success"} />
+            <MetricCard label="Jobs com falha" value={jobs.summary.failed} tone={jobs.summary.failed ? "danger" : "success"} />
           </div>
 
           <div className="admin-audit-grid">
@@ -455,6 +488,30 @@ export default function AdminPage() {
             </div>
           </div>
           <p className="section-kicker">Controle de status, liberacao de servicos, integracoes e historico operacional de cada cliente.</p>
+          <div className="admin-summary-strip">
+            <MetricCard label="Jobs totais" value={jobs.summary.total} tone="info" />
+            <MetricCard label="Pendentes" value={jobs.summary.pending} tone={jobs.summary.pending ? "warning" : "success"} />
+            <MetricCard label="Processando" value={jobs.summary.processing} tone="info" />
+            <MetricCard label="Concluidos" value={jobs.summary.completed} tone="success" />
+            <MetricCard label="Falhas" value={jobs.summary.failed} tone={jobs.summary.failed ? "danger" : "success"} />
+          </div>
+          <div className="compact-table">
+            {jobs.recent.length ? (
+              jobs.recent.map((job) => (
+                <div className="table-row" key={job.id}>
+                  <span>
+                    {job.type} | {jobStatusLabel(job.status)} | {job.clientCode || "sem codigo"} - {job.tenantName}
+                  </span>
+                  <small>
+                    tentativa {job.attempts} | {new Date(job.createdAt).toLocaleString("pt-BR")}
+                    {job.error ? ` | ${job.error}` : ""}
+                  </small>
+                </div>
+              ))
+            ) : (
+              <small className="step-caption">Nenhum job registrado ainda.</small>
+            )}
+          </div>
         </section>
 
         <section className="tenant-list">
