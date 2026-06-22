@@ -68,6 +68,14 @@ type AdminJobs = {
     startedAt?: string;
     finishedAt?: string;
   }>;
+  failed?: Array<{ id: string; tenantName: string; clientCode?: string; type: string; attempts: number; error?: string; finishedAt?: string }>;
+  recentAttempts?: Array<{ id: string; jobId: string; attempt: number; status: string; error?: string; createdAt: string; finishedAt?: string }>;
+};
+
+type OperationalSummary = {
+  pendingIntegrations: number;
+  exceededPlans: number;
+  alerts: Array<{ type: string; severity: string; tenantName?: string; clientCode?: string; message: string }>;
 };
 
 export default function AdminPage() {
@@ -75,6 +83,7 @@ export default function AdminPage() {
   const [services, setServices] = useState<AdminService[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: 50, total: 0, totalPages: 1 });
   const [jobs, setJobs] = useState<AdminJobs>({ summary: { total: 0, pending: 0, processing: 0, completed: 0, failed: 0 }, recent: [] });
+  const [operational, setOperational] = useState<OperationalSummary>({ pendingIntegrations: 0, exceededPlans: 0, alerts: [] });
   const [search, setSearch] = useState("");
   const [view, setView] = useState<AdminView>("overview");
   const [selectedServices, setSelectedServices] = useState<string[]>(["instagram-publisher", "mini-crm"]);
@@ -113,6 +122,7 @@ export default function AdminPage() {
       if (!response.ok) throw new Error(data.error || "Nao foi possivel carregar clientes.");
       setTenants(data.tenants || []);
       setJobs(data.jobs || { summary: { total: 0, pending: 0, processing: 0, completed: 0, failed: 0 }, recent: [] });
+      setOperational(data.operational || { pendingIntegrations: 0, exceededPlans: 0, alerts: [] });
       setPagination(data.pagination || { page: nextPage, pageSize: pagination.pageSize, total: data.tenants?.length || 0, totalPages: 1 });
       setServices((data.services || []).filter((service: AdminService) => !["portal", "settings"].includes(service.slug)));
     } catch (error) {
@@ -153,6 +163,26 @@ export default function AdminPage() {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao criar cliente." });
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function runJobsNow() {
+    setLoading(true);
+    setMessage(null);
+    try {
+      const response = await fetch("/api/jobs/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limit: 10 })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Nao foi possivel processar a fila.");
+      setMessage({ type: "ok", text: `${data.processed?.length || 0} job(s) processado(s).` });
+      await loadTenants();
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao processar fila." });
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -494,6 +524,28 @@ export default function AdminPage() {
             <MetricCard label="Processando" value={jobs.summary.processing} tone="info" />
             <MetricCard label="Concluidos" value={jobs.summary.completed} tone="success" />
             <MetricCard label="Falhas" value={jobs.summary.failed} tone={jobs.summary.failed ? "danger" : "success"} />
+            <MetricCard label="Integracoes pendentes" value={operational.pendingIntegrations} tone={operational.pendingIntegrations ? "warning" : "success"} />
+            <MetricCard label="Planos no limite" value={operational.exceededPlans} tone={operational.exceededPlans ? "danger" : "success"} />
+          </div>
+          <div className="actions">
+            <span className="step-caption">Processamento manual disponivel para contas Vercel Hobby ou emergencias operacionais.</span>
+            <button className="btn success" disabled={loading} onClick={runJobsNow} type="button">
+              {loading ? <Loader2 className="spin" size={17} /> : <Activity size={17} />}
+              Processar fila agora
+            </button>
+          </div>
+          <div className="compact-table">
+            {operational.alerts.length ? (
+              operational.alerts.map((alert, index) => (
+                <div className="table-row" key={`${alert.type}-${index}`}>
+                  <span>{alert.clientCode || "alerta"} | {alert.tenantName || "plataforma"}</span>
+                  <strong>{alert.severity === "danger" ? "Critico" : "Atencao"}</strong>
+                  <small>{alert.message}</small>
+                </div>
+              ))
+            ) : (
+              <small className="step-caption">Nenhum alerta operacional no momento.</small>
+            )}
           </div>
           <div className="compact-table">
             {jobs.recent.length ? (

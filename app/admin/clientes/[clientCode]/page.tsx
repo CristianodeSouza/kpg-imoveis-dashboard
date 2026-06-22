@@ -49,6 +49,15 @@ type TenantDetail = {
     instagramAccessTokenConfigured: boolean;
     whatsappNumber: string;
   };
+  webhookSecrets: Array<{
+    id: string;
+    name: string;
+    tokenPreview: string;
+    status: string;
+    lastUsedAt?: string | null;
+    revokedAt?: string | null;
+    createdAt: string;
+  }>;
   instagramUsage?: {
     planName: string;
     monthlyLimit: number;
@@ -184,6 +193,7 @@ export default function ClientDetailPage() {
   const [savingPayment, setSavingPayment] = useState(false);
   const [paymentDraft, setPaymentDraft] = useState<PaymentDraft | null>(null);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
+  const [webhookToken, setWebhookToken] = useState("");
 
   async function loadClient() {
     setLoading(true);
@@ -305,6 +315,24 @@ export default function ClientDetailPage() {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao registrar pagamento." });
     } finally {
       setSavingPayment(false);
+    }
+  }
+
+  async function rotateWebhookSecret() {
+    if (!tenant?.clientCode) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      const response = await fetch(`/api/admin/tenants/${tenant.clientCode}/webhook-secret`, { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Nao foi possivel gerar token.");
+      setWebhookToken(data.token || "");
+      setMessage({ type: "ok", text: "Token de webhook gerado. Copie agora; ele nao sera exibido novamente." });
+      await loadClient();
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao gerar token." });
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -661,6 +689,40 @@ export default function ClientDetailPage() {
                     </small>
                   </div>
                 ))}
+              </div>
+            </section>
+
+            <section className="panel">
+              <div className="panel-heading">
+                <div className="panel-title">
+                  <ShieldCheck size={22} />
+                  <h2>Webhook CRM WhatsApp</h2>
+                </div>
+                <button className="btn secondary" disabled={saving} onClick={rotateWebhookSecret} type="button">
+                  {saving ? <Loader2 className="spin" size={17} /> : <RefreshCw size={17} />}
+                  Regenerar token
+                </button>
+              </div>
+              {webhookToken ? (
+                <div className="message ok">
+                  Token novo: <strong>{webhookToken}</strong>
+                </div>
+              ) : null}
+              <div className="compact-table">
+                {tenant.webhookSecrets?.length ? (
+                  tenant.webhookSecrets.map((secret) => (
+                    <div className="table-row" key={secret.id}>
+                      <span>{secret.name} | {secret.tokenPreview}</span>
+                      <strong>{secret.status === "active" ? "Ativo" : "Revogado"}</strong>
+                      <small>
+                        criado em {new Date(secret.createdAt).toLocaleString("pt-BR")}
+                        {secret.lastUsedAt ? ` | ultimo uso ${new Date(secret.lastUsedAt).toLocaleString("pt-BR")}` : ""}
+                      </small>
+                    </div>
+                  ))
+                ) : (
+                  <small className="step-caption">Nenhum token criado ainda. Gere um token para configurar o webhook deste cliente.</small>
+                )}
               </div>
             </section>
 

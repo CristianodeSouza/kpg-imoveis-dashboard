@@ -333,11 +333,11 @@ export default function HomePage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || data.detail || "Falha ao publicar.");
-      const result = { provider: "instagram", success: true, postId: data.result?.id, url: data.result?.url };
+      const result = { provider: "instagram", success: true, postId: data.jobId, url: "" };
       setPublishResults([result]);
       setPublishMessage({
         type: "ok",
-        text: "Publicacao enviada para o Instagram."
+        text: data.message || "Publicacao enviada para a fila do Instagram."
       });
       if (data.usage) setPublicationUsage(data.usage);
       await loadPublications(1);

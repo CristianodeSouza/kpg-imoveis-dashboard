@@ -32,6 +32,7 @@ async function loadTenant(clientCode: string) {
       users: { select: { id: true, name: true, username: true, role: true, createdAt: true } },
       services: { include: { service: true }, orderBy: { createdAt: "asc" } },
       settings: true,
+      webhookSecrets: { orderBy: { createdAt: "desc" }, take: 10 },
       auditLogs: {
         orderBy: { createdAt: "desc" },
         take: 30,
@@ -91,6 +92,15 @@ async function serializeTenant(tenant: NonNullable<Awaited<ReturnType<typeof loa
       whatsapp: Boolean(tenant.settings?.whatsappNumber)
     },
     settings: publicTenantSettings(settings),
+    webhookSecrets: tenant.webhookSecrets.map((secret) => ({
+      id: secret.id,
+      name: secret.name,
+      tokenPreview: secret.tokenPreview,
+      status: secret.status,
+      lastUsedAt: secret.lastUsedAt,
+      revokedAt: secret.revokedAt,
+      createdAt: secret.createdAt
+    })),
     paymentSummary: payments.summary,
     paymentRecords: payments.payments,
     instagramUsage,

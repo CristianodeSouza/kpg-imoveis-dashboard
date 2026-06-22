@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/session";
+import { roleCan } from "@/lib/rbac";
 
 export const serviceCatalog = [
   {
@@ -170,6 +171,16 @@ export async function requireTenantService(request: Request, slug: string) {
       session,
       response: NextResponse.json({ error: "Servico nao contratado ou inativo." }, { status: 403 })
     };
+  }
+
+  if (!["GET", "HEAD", "OPTIONS"].includes(request.method)) {
+    const permission =
+      slug === "settings" ? "settings:write" :
+      slug === "mini-crm" ? "leads:write" :
+      "content:write";
+    if (!roleCan(user.role, permission)) {
+      return { session, response: NextResponse.json({ error: "Usuario sem permissao para esta acao." }, { status: 403 }) };
+    }
   }
 
   return { session, response: null };

@@ -132,6 +132,7 @@ export async function writeTenantSettings(tenantId: string, patch: Partial<Tenan
       googleBusinessRefreshTokenEncrypted: encryptSecret(patch.googleBusinessRefreshToken),
       googleBusinessAccessTokenEncrypted: encryptSecret(patch.googleBusinessAccessToken),
       googleBusinessTokenExpiresAt: patch.googleBusinessTokenExpiresAt ? new Date(patch.googleBusinessTokenExpiresAt) : null,
+      encryptionKeyVersion: Number(process.env.SETTINGS_ENCRYPTION_KEY_VERSION || 1),
       whatsappNumber: text(patch.whatsappNumber)
     },
     update: {
@@ -164,7 +165,8 @@ export async function writeTenantSettings(tenantId: string, patch: Partial<Tenan
         : {}),
       ...(text(patch.googleBusinessAccessToken)
         ? { googleBusinessAccessTokenEncrypted: encryptSecret(patch.googleBusinessAccessToken) }
-        : {})
+        : {}),
+      encryptionKeyVersion: Number(process.env.SETTINGS_ENCRYPTION_KEY_VERSION || current?.encryptionKeyVersion || 1)
     }
   });
 

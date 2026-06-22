@@ -4,6 +4,7 @@ import { requirePlatformAdmin } from "@/lib/admin";
 import { prisma } from "@/lib/db";
 import { ensureBaseServices, ensureTenantServices } from "@/lib/services";
 import { getInstagramUsage } from "@/lib/publications";
+import { createTenantWebhookSecret } from "@/lib/webhook-secrets";
 
 export const dynamic = "force-dynamic";
 
@@ -68,7 +69,7 @@ export async function GET(request: Request) {
       : {})
   };
 
-  const [total, tenants, jobGroups, recentJobs] = await Promise.all([
+  const [total, tenants, jobGroups, recentJobs, failedJobs, recentAttempts] = await Promise.all([
     prisma.tenant.count({ where }),
     prisma.tenant.findMany({
       where,
@@ -101,6 +102,17 @@ export async function GET(request: Request) {
           }
         }
       }
+    }),
+    prisma.job.findMany({
+      where: { status: "failed" },
+      orderBy: { finishedAt: "desc" },
+      take: 10,
+      include: { tenant: { select: { name: true, clientCode: true } } }
+    }),
+    prisma.jobAttempt.findMany({
+      where: { status: { in: ["failed", "retry_scheduled"] } },
+      orderBy: { createdAt: "desc" },
+      take: 10
     })
   ]);
 
@@ -109,6 +121,37 @@ export async function GET(request: Request) {
   const usageByTenant = new Map(
     await Promise.all(tenants.map(async (tenant) => [tenant.id, await getInstagramUsage(tenant.id)] as const))
   );
+
+  const pendingIntegrations = tenants.filter((tenant) => {
+    const siga = Boolean(tenant.settings?.sigaBaseUrl && tenant.settings?.sigaSlug && tenant.settings.sigaTokenEncrypted);
+    const instagram = Boolean(tenant.settings?.instagramAccountId && tenant.settings.instagramAccessTokenEncrypted);
+    const whatsapp = Boolean(tenant.settings?.whatsappNumber);
+    return !siga || !instagram || !whatsapp;
+  });
+  const exceededPlans = Array.from(usageByTenant.values()).filter((usage) => usage.exceeded);
+  const alerts = [
+    ...failedJobs.map((job) => ({
+      type: "job_failed",
+      severity: "danger",
+      tenantName: job.tenant.name,
+      clientCode: job.tenant.clientCode,
+      message: `${job.type} falhou: ${job.error || "sem detalhe"}`
+    })),
+    ...pendingIntegrations.slice(0, 10).map((tenant) => ({
+      type: "integration_pending",
+      severity: "warning",
+      tenantName: tenant.name,
+      clientCode: tenant.clientCode,
+      message: "Cliente com SIGA, Instagram ou WhatsApp pendente."
+    })),
+    ...exceededPlans.map((usage) => ({
+      type: "quota_exceeded",
+      severity: "danger",
+      tenantName: "",
+      clientCode: "",
+      message: `Pacote ${usage.planName} excedido.`
+    }))
+  ].slice(0, 20);
 
   return NextResponse.json({
     pagination: {
@@ -144,7 +187,30 @@ export async function GET(request: Request) {
         createdAt: job.createdAt,
         startedAt: job.startedAt,
         finishedAt: job.finishedAt
+      })),
+      failed: failedJobs.map((job) => ({
+        id: job.id,
+        tenantName: job.tenant.name,
+        clientCode: job.tenant.clientCode,
+        type: job.type,
+        attempts: job.attempts,
+        error: job.error,
+        finishedAt: job.finishedAt
+      })),
+      recentAttempts: recentAttempts.map((attempt) => ({
+        id: attempt.id,
+        jobId: attempt.jobId,
+        attempt: attempt.attempt,
+        status: attempt.status,
+        error: attempt.error,
+        createdAt: attempt.createdAt,
+        finishedAt: attempt.finishedAt
       }))
+    },
+    operational: {
+      pendingIntegrations: pendingIntegrations.length,
+      exceededPlans: exceededPlans.length,
+      alerts
     },
     tenants: tenants.map((tenant) => ({
       id: tenant.id,
@@ -229,6 +295,7 @@ export async function POST(request: Request) {
   });
 
   await ensureTenantServices(tenant.id, ["portal", "settings", ...selectedServices]);
+  await createTenantWebhookSecret(tenant.id, "default");
   await prisma.auditLog.create({
     data: {
       tenantId: tenant.id,

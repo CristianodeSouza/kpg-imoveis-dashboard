@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { publishInstagramForTenant } from "@/lib/instagram-publisher";
+import { createJob } from "@/lib/jobs";
 import { requireTenantService } from "@/lib/services";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
 
 export async function POST(request: Request) {
   try {
@@ -19,20 +18,25 @@ export async function POST(request: Request) {
 
     if (!codigo) return NextResponse.json({ sucesso: false, error: "Informe o codigo." }, { status: 400 });
 
-    const published = await publishInstagramForTenant({
+    const job = await createJob({
       tenantId: session.tenantId,
-      userId: session.userId,
-      propertyCode: codigo,
-      caption: String(body.caption || ""),
-      imageUrls
+      type: "instagram.publish",
+      priority: 50,
+      maxAttempts: 3,
+      payload: {
+        userId: session.userId,
+        propertyCode: String(codigo),
+        caption: String(body.caption || ""),
+        imageUrls
+      }
     });
 
     return NextResponse.json({
       sucesso: true,
-      resultado: published.result,
-      usage: published.usage,
+      queued: true,
+      jobId: job.id,
       origem: "next-selected-images"
-    });
+    }, { status: 202 });
   } catch (error) {
     return NextResponse.json(
       { sucesso: false, error: error instanceof Error ? error.message : "Erro ao publicar." },

@@ -179,7 +179,7 @@ export default function SeoIntelligencePage() {
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Nao foi possivel analisar o sitemap.");
-      setMessage({ type: "ok", text: `Sitemap analisado: ${payload.result.unique} URLs unicas e score ${payload.result.sitemapScore}/100.` });
+      setMessage({ type: "ok", text: payload.message || "Analise de sitemap enviada para a fila." });
       await loadSeo();
       setSelectedSiteId(siteId);
     } catch (error) {

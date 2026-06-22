@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { googleBusinessPostService } from "@/lib/google-business";
-import { publishInstagramForTenant } from "@/lib/instagram-publisher";
+import { createJob } from "@/lib/jobs";
 import { prisma } from "@/lib/db";
 import { requireTenantService } from "@/lib/services";
 import type { PublishChannels } from "@/lib/types";
@@ -57,19 +57,24 @@ export async function POST(request: Request) {
 
   if (channels.instagram) {
     try {
-      const published = await publishInstagramForTenant({
+      const job = await createJob({
         tenantId: session.tenantId,
-        userId: session.userId,
-        propertyCode,
-        caption: String(content.instagram_caption || body.caption || ""),
-        imageUrls
+        type: "instagram.publish",
+        priority: 50,
+        maxAttempts: 3,
+        payload: {
+          userId: session.userId,
+          propertyCode,
+          caption: String(content.instagram_caption || body.caption || ""),
+          imageUrls
+        }
       });
       results.push({
         provider: "instagram",
         success: true,
-        postId: published.postId,
-        url: published.url,
-        usage: published.usage
+        postId: job.id,
+        url: "",
+        usage: { queued: true }
       });
     } catch (error) {
       results.push({
