@@ -17,7 +17,7 @@ NEXT_PUBLIC_APP_URL=https://saas.csrtecnologia.com.br
 ## Variaveis obrigatorias
 
 ```env
-DATABASE_URL=postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&sslmode=require
+DATABASE_URL=postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-1-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&sslmode=require
 DIRECT_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres?sslmode=require
 SETTINGS_ENCRYPTION_KEY=...
 SETTINGS_ENCRYPTION_KEY_PREVIOUS=
@@ -80,7 +80,7 @@ Storage final definido: Supabase Storage, bucket `tenant-assets` ou valor de `SU
 
 Use `DATABASE_URL` no Pooler/Supavisor do Supabase na Vercel. Mantenha `DIRECT_URL` apontando para a conexao direta apenas para migrations/db push. Se o volume de jobs subir e o pooler ainda saturar, avaliar Prisma Accelerate como camada adicional de pooling/cache.
 
-Status verificado em 2026-06-22: o `.env` local ainda aponta `DATABASE_URL` para `db.bdxmgfhoxileqpjwhqwy.supabase.co`, ou seja, conexao direta. Antes de operar com 200 clientes, atualize a variavel `DATABASE_URL` da Vercel para o Pooler/Supavisor e mantenha `DIRECT_URL` direto apenas para operacoes de schema.
+Status verificado em 2026-06-22: a `DATABASE_URL` de producao na Vercel foi atualizada para o Transaction Pooler/Supavisor validado em `aws-1-us-east-1.pooler.supabase.com:6543`. O `.env` local pode continuar usando conexao direta para desenvolvimento, e `DIRECT_URL` deve permanecer direto apenas para operacoes de schema.
 
 ## RLS e seguranca
 
