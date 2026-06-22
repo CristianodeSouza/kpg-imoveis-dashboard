@@ -313,7 +313,7 @@ export default function ClientDetailPage() {
   }, [clientCode]);
 
   return (
-    <main className="shell">
+    <main className="shell v2-page v2-admin-detail-page">
       <header className="topbar">
         <div className="brand">
           <strong>CSR Tecnologia</strong>

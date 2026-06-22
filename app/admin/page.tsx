@@ -222,7 +222,7 @@ export default function AdminPage() {
         </>
       }
     >
-      <section className="admin-workspace">
+      <section className="v2-page v2-admin-page admin-workspace">
         <PageHeader
           eyebrow="Painel da plataforma"
           title="Gestao SaaS"

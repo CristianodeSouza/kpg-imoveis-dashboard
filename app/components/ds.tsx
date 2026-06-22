@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { AlertCircle, CheckCircle2, Circle, Info, Loader2 } from "lucide-react";
+import { token } from "@atlaskit/tokens";
 import { LogoutButton } from "@/app/components/LogoutButton";
 
 export type NavItem = {
@@ -25,7 +26,14 @@ export function AppShell({
   userIsAdmin?: boolean;
 }) {
   const visibleItems = navItems.filter((item) => !item.adminOnly || userIsAdmin);
-  const navAccents = ["var(--ds-background-accent-blue-bolder)", "var(--ds-background-accent-purple-bolder)", "var(--ds-background-accent-teal-bolder)", "var(--ds-background-accent-green-bolder)", "var(--ds-background-accent-orange-bolder)", "var(--ds-background-accent-magenta-bolder)"];
+  const navAccents = [
+    token("color.background.accent.blue.bolder", "#0c66e4"),
+    token("color.background.accent.purple.bolder", "#6e5dc6"),
+    token("color.background.accent.teal.bolder", "#1d7f8c"),
+    token("color.background.accent.green.bolder", "#22a06b"),
+    token("color.background.accent.orange.bolder", "#e56910"),
+    token("color.background.accent.magenta.bolder", "#c9378c")
+  ];
 
   return (
     <main className="ds-shell">

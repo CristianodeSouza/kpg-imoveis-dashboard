@@ -1,26 +1,21 @@
 import { ShieldAlert } from "lucide-react";
+import { AppShell, EmptyState } from "@/app/components/ds";
 
 export default function SemAcessoPage() {
   return (
-    <main className="shell">
-      <header className="topbar">
-        <div className="brand">
-          <strong>CSR Tecnologia</strong>
-          <span>Portal SaaS</span>
-        </div>
-        <nav className="tool-nav" aria-label="Portal CSR">
-          <a className="tool-link" href="/portal">
-            Portal
-          </a>
-        </nav>
-      </header>
-      <section className="workspace">
-        <section className="panel empty-state">
-          <ShieldAlert size={28} />
-          <strong>Servico nao contratado</strong>
-          <span>Este modulo nao esta ativo para a sua empresa. Fale com a CSR Tecnologia para liberar o acesso.</span>
+    <AppShell
+      subtitle="Portal SaaS"
+      navItems={[
+        { href: "/portal", label: "Portal", active: true }
+      ]}
+    >
+      <section className="v2-page">
+        <section className="panel">
+          <EmptyState icon={<ShieldAlert size={28} />} title="Servico nao contratado">
+            Este modulo nao esta ativo para a sua empresa. Fale com a CSR Tecnologia para liberar o acesso.
+          </EmptyState>
         </section>
       </section>
-    </main>
+    </AppShell>
   );
 }
