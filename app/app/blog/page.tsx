@@ -291,10 +291,9 @@ export default function BlogPage() {
       subtitle="Blog Automatizado"
       navItems={[
         { href: "/portal", label: "Portal" },
-        { href: "/app/instagram", label: "Publicador Multicanal" },
-        { href: "/app/leads", label: "Mini CRM" },
+        { href: "/app/instagram", label: "Publicador no Instagram" },
+        { href: "/app/leads", label: "CRM WhatsApp" },
         { href: "/app/blog", label: "Blog Automatizado", active: true },
-        { href: "/app/pagamentos", label: "Pagamentos" },
         { href: "/app/configuracoes", label: "Configuracoes" }
       ]}
       aside={

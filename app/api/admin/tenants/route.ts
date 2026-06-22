@@ -49,20 +49,45 @@ export async function GET(request: Request) {
   const { response } = await requirePlatformAdmin(request);
   if (response) return response;
 
-  const tenants = await prisma.tenant.findMany({
-    where: { slug: { not: PLATFORM_TENANT_SLUG } },
-    orderBy: { createdAt: "desc" },
-    include: {
-      users: { select: { id: true } },
-      services: { include: { service: true } },
-      settings: true,
-      auditLogs: {
-        orderBy: { createdAt: "desc" },
-        take: 8,
-        include: { user: true }
+  const params = new URL(request.url).searchParams;
+  const page = Math.max(1, Number(params.get("page") || 1));
+  const pageSize = Math.min(100, Math.max(10, Number(params.get("pageSize") || 50)));
+  const search = String(params.get("search") || "").trim();
+  const where = {
+    slug: { not: PLATFORM_TENANT_SLUG },
+    ...(search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" as const } },
+            { slug: { contains: search.toLowerCase(), mode: "insensitive" as const } },
+            { clientCode: { contains: search.toUpperCase(), mode: "insensitive" as const } },
+            { contactEmail: { contains: search, mode: "insensitive" as const } },
+            { contactPhone: { contains: search, mode: "insensitive" as const } }
+          ]
+        }
+      : {})
+  };
+
+  const [total, tenants] = await Promise.all([
+    prisma.tenant.count({ where }),
+    prisma.tenant.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        users: { select: { id: true } },
+        services: { include: { service: true } },
+        settings: true,
+        auditLogs: {
+          orderBy: { createdAt: "desc" },
+          take: 8,
+          include: { user: true }
+        }
       }
-    }
-  });
+    })
+  ]);
+
   const services = await ensureBaseServices();
 
   const usageByTenant = new Map(
@@ -70,6 +95,12 @@ export async function GET(request: Request) {
   );
 
   return NextResponse.json({
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / pageSize))
+    },
     services: services.map((service) => ({
       slug: service.slug,
       name: service.name,

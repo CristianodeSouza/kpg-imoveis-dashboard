@@ -12,14 +12,14 @@ export const serviceCatalog = [
   },
   {
     slug: "instagram-publisher",
-    name: "Servico 01 - Publicador Multicanal",
-    description: "Busca imoveis no SIGA, gera textos e publica em canais sociais.",
+    name: "Servico 01 - Publicador no Instagram",
+    description: "Busca imoveis no SIGA, gera textos e publica no Instagram.",
     href: "/app/instagram",
     icon: "instagram"
   },
   {
     slug: "mini-crm",
-    name: "Servico 02 - Mini CRM WhatsApp",
+    name: "Servico 02 - CRM WhatsApp",
     description: "Organiza leads do WhatsApp por etapa de atendimento.",
     href: "/app/leads",
     icon: "users"
@@ -111,6 +111,10 @@ export async function getActiveTenantServices(tenantId: string) {
   return prisma.tenantService.findMany({
     where: {
       tenantId,
+      tenant: {
+        status: "active",
+        billingStatus: { in: ["active", "trial", "overdue"] }
+      },
       status: "active",
       service: { status: "active" },
       OR: [{ expiresAt: null }, { expiresAt: { gt: now } }]
@@ -125,6 +129,10 @@ export async function tenantHasService(tenantId: string, slug: string) {
   const found = await prisma.tenantService.findFirst({
     where: {
       tenantId,
+      tenant: {
+        status: "active",
+        billingStatus: { in: ["active", "trial", "overdue"] }
+      },
       status: "active",
       service: { slug, status: "active" },
       OR: [{ expiresAt: null }, { expiresAt: { gt: now } }]
@@ -138,6 +146,22 @@ export async function requireTenantService(request: Request, slug: string) {
   const session = await getSessionFromRequest(request);
   if (!session) {
     return { session: null, response: NextResponse.json({ error: "Sessao invalida." }, { status: 401 }) };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    include: { tenant: true }
+  });
+  if (!user || user.tenantId !== session.tenantId) {
+    return { session, response: NextResponse.json({ error: "Sessao invalida." }, { status: 401 }) };
+  }
+
+  if (user.tenant.status !== "active") {
+    return { session, response: NextResponse.json({ error: "Cliente inativo ou bloqueado." }, { status: 403 }) };
+  }
+
+  if (!["active", "trial", "overdue"].includes(user.tenant.billingStatus)) {
+    return { session, response: NextResponse.json({ error: "Acesso suspenso por status financeiro." }, { status: 402 }) };
   }
 
   const allowed = await tenantHasService(session.tenantId, slug);

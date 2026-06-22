@@ -215,13 +215,12 @@ export default function LeadsPage() {
 
   return (
     <AppShell
-      subtitle="Mini CRM"
+      subtitle="CRM WhatsApp"
       navItems={[
         { href: "/portal", label: "Portal" },
-        { href: "/app/instagram", label: "Publicador Multicanal" },
-        { href: "/app/leads", label: "Mini CRM", active: true },
+        { href: "/app/instagram", label: "Publicador no Instagram" },
+        { href: "/app/leads", label: "CRM WhatsApp", active: true },
         { href: "/app/blog", label: "Blog Automatizado" },
-        { href: "/app/pagamentos", label: "Pagamentos" },
         { href: "/app/configuracoes", label: "Configuracoes" }
       ]}
       aside={
@@ -234,7 +233,7 @@ export default function LeadsPage() {
       <div className="v2-page v2-leads-page">
       <PageHeader
         eyebrow="CRM conversacional"
-        title="Mini CRM de Leads"
+        title="CRM WhatsApp de Leads"
         description="Atenda leads vindas do WhatsApp com contexto do imovel, etapa comercial, responsavel e historico em uma unica tela."
         actions={
           <>

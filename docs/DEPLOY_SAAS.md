@@ -25,15 +25,13 @@ NEXT_PUBLIC_SUPABASE_URL=https://bdxmgfhoxileqpjwhqwy.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 META_GRAPH_VERSION=v25.0
+DEFAULT_ADMIN_PASSWORD=...
+PLATFORM_ADMIN_PASSWORD=...
 ```
 
-## Variaveis opcionais/fallback
+## Variaveis opcionais da plataforma
 
 ```env
-SIGA_TOKEN=
-SIGA_ENDPOINT=
-INSTAGRAM_ACCESS_TOKEN=
-INSTAGRAM_ACCOUNT_ID=
 META_APP_ID=
 META_APP_SECRET=
 IMGBB_API_KEY=
@@ -41,14 +39,29 @@ WHATSAPP_CTA=
 BACKEND_URL=
 NEXT_PUBLIC_BACKEND_URL=
 LEADS_WEBHOOK_SECRET=
-KV_REST_API_URL=
-KV_REST_API_TOKEN=
-MAKE_API_TOKEN=
 MAKE_API_BASE_URL=
-MAKE_DATA_STORE_ID=
 DEFAULT_ADMIN_USERNAME=
-DEFAULT_ADMIN_PASSWORD=
+PLATFORM_ADMIN_USERNAME=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
 ```
+
+## Credenciais por cliente
+
+Nao configure no Vercel credenciais individuais de clientes. Com muitos clientes, esses dados devem ficar no Supabase, vinculados ao `tenantId`, principalmente em `TenantSettings`.
+
+Configure pela tela do cliente ou pelo painel admin:
+
+- token SIGA;
+- slug/endpoint SIGA;
+- Instagram Account ID;
+- Instagram Access Token;
+- Make API Token;
+- Make Data Store ID;
+- Google Business Account ID;
+- Google Business Location ID;
+- Google Refresh Token;
+- WhatsApp do cliente.
 
 ## Comandos de validacao
 
@@ -75,4 +88,5 @@ npx prisma db push
 - Rotacione a senha do banco antes do deploy final, pois ela foi compartilhada durante a configuracao.
 - Use valores fortes e diferentes para `SETTINGS_ENCRYPTION_KEY` e `SESSION_SECRET`.
 - Nunca exponha `SUPABASE_SERVICE_ROLE_KEY` no frontend.
-- Tokens SIGA, Meta, Instagram e Make devem entrar pela tela de configuracoes do cliente.
+- Tokens SIGA, Instagram, Make e Google Business devem entrar pela tela de configuracoes do cliente.
+- Nunca use variaveis Vercel para separar credenciais de 200 clientes.

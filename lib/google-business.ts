@@ -41,7 +41,7 @@ function normalizeResourceId(value: string, prefix: "accounts" | "locations" | "
   return clean.startsWith(`${prefix}/`) ? clean.split("/").pop() || "" : clean;
 }
 
-function googleClientCredentials() {
+function fallbackGoogleClientCredentials() {
   return {
     clientId: process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_BUSINESS_CLIENT_ID || "",
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || process.env.GOOGLE_BUSINESS_CLIENT_SECRET || ""
@@ -66,10 +66,14 @@ export class GoogleBusinessPostService {
       return settings.googleBusinessAccessToken;
     }
 
-    const refreshToken = settings.googleBusinessRefreshToken || process.env.GOOGLE_REFRESH_TOKEN || "";
-    const { clientId, clientSecret } = googleClientCredentials();
+    const refreshToken = settings.googleBusinessRefreshToken || "";
+    const fallbackCredentials = fallbackGoogleClientCredentials();
+    const clientId = settings.googleBusinessClientId || fallbackCredentials.clientId;
+    const clientSecret = settings.googleBusinessClientSecret || fallbackCredentials.clientSecret;
     if (!refreshToken) throw new Error("Google Business Refresh Token nao configurado para este cliente.");
-    if (!clientId || !clientSecret) throw new Error("GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET nao configurados na plataforma.");
+    if (!clientId || !clientSecret) {
+      throw new Error("Google Business Client ID e Client Secret nao configurados para este cliente.");
+    }
 
     const response = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
@@ -99,11 +103,11 @@ export class GoogleBusinessPostService {
   async credentials(tenantId: string, input?: { accountId?: string; locationId?: string }): Promise<Credentials> {
     const settings = await readTenantSettings(tenantId);
     const accountId = normalizeResourceId(
-      input?.accountId || settings.googleBusinessAccountId || process.env.GOOGLE_BUSINESS_ACCOUNT_ID || "",
+      input?.accountId || settings.googleBusinessAccountId || "",
       "accounts"
     );
     const locationId = normalizeResourceId(
-      input?.locationId || settings.googleBusinessLocationId || process.env.GOOGLE_BUSINESS_LOCATION_ID || "",
+      input?.locationId || settings.googleBusinessLocationId || "",
       "locations"
     );
 

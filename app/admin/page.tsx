@@ -41,9 +41,18 @@ type AdminTenant = {
   activityLogs: Array<{ id: string; action: string; target?: string; username?: string; createdAt: string }>;
 };
 
+type Pagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
 export default function AdminPage() {
   const [tenants, setTenants] = useState<AdminTenant[]>([]);
   const [services, setServices] = useState<AdminService[]>([]);
+  const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: 50, total: 0, totalPages: 1 });
+  const [search, setSearch] = useState("");
   const [view, setView] = useState<AdminView>("overview");
   const [selectedServices, setSelectedServices] = useState<string[]>(["instagram-publisher", "mini-crm"]);
   const [form, setForm] = useState({
@@ -63,11 +72,16 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "ok" | "error"; text: string } | null>(null);
 
-  async function loadTenants() {
+  async function loadTenants(nextPage = pagination.page) {
     setLoading(true);
     setMessage(null);
     try {
-      const response = await fetch("/api/admin/tenants", { cache: "no-store" });
+      const params = new URLSearchParams({
+        page: String(nextPage),
+        pageSize: String(pagination.pageSize)
+      });
+      if (search.trim()) params.set("search", search.trim());
+      const response = await fetch(`/api/admin/tenants?${params.toString()}`, { cache: "no-store" });
       const data = await response.json();
       if (response.status === 401 || response.status === 403) {
         window.location.href = `/login?next=${encodeURIComponent("/admin")}`;
@@ -75,6 +89,7 @@ export default function AdminPage() {
       }
       if (!response.ok) throw new Error(data.error || "Nao foi possivel carregar clientes.");
       setTenants(data.tenants || []);
+      setPagination(data.pagination || { page: nextPage, pageSize: pagination.pageSize, total: data.tenants?.length || 0, totalPages: 1 });
       setServices((data.services || []).filter((service: AdminService) => !["portal", "settings"].includes(service.slug)));
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao carregar clientes." });
@@ -109,7 +124,7 @@ export default function AdminPage() {
         notes: ""
       });
       setMessage({ type: "ok", text: "Cliente criado com acesso inicial." });
-      await loadTenants();
+      await loadTenants(1);
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao criar cliente." });
     } finally {
@@ -158,8 +173,8 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    loadTenants();
-  }, []);
+    loadTenants(1);
+  }, [search, pagination.pageSize]);
 
   return (
     <AppShell
@@ -181,7 +196,7 @@ export default function AdminPage() {
           title="Gestao SaaS"
           description="Acompanhe clientes, financeiro, servicos contratados, integracoes e riscos operacionais da plataforma CSR Tecnologia."
           actions={
-            <button className="btn secondary" disabled={loading} onClick={loadTenants}>
+            <button className="btn secondary" disabled={loading} onClick={() => loadTenants()}>
               {loading ? <Loader2 className="spin" size={17} /> : <RefreshCw size={17} />}
               Atualizar
             </button>
@@ -209,7 +224,7 @@ export default function AdminPage() {
               <ShieldCheck size={22} />
               <h2>Dados gerais da plataforma</h2>
             </div>
-            <button className="btn secondary" disabled={loading} onClick={loadTenants}>
+            <button className="btn secondary" disabled={loading} onClick={() => loadTenants()}>
               {loading ? <Loader2 className="spin" size={17} /> : <RefreshCw size={17} />}
               Atualizar
             </button>
@@ -262,6 +277,31 @@ export default function AdminPage() {
             <div className="panel-title">
               <Building2 size={22} />
               <h2>Clientes</h2>
+            </div>
+          </div>
+          <div className="admin-create-form">
+            <div className="field wide">
+              <label htmlFor="adminSearch">Buscar clientes</label>
+              <input
+                className="input"
+                id="adminSearch"
+                placeholder="Nome, codigo, email, telefone ou slug"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="adminPageSize">Por pagina</label>
+              <select
+                className="select"
+                id="adminPageSize"
+                value={pagination.pageSize}
+                onChange={(event) => setPagination((current) => ({ ...current, page: 1, pageSize: Number(event.target.value) }))}
+              >
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
             </div>
           </div>
           <form className="admin-create-form" onSubmit={createTenant}>
@@ -349,6 +389,22 @@ export default function AdminPage() {
                 </div>
               </article>
             ))}
+          </div>
+          <div className="actions">
+            <span className="step-caption">
+              Pagina {pagination.page} de {pagination.totalPages} | {pagination.total} cliente(s)
+            </span>
+            <button className="btn secondary" disabled={loading || pagination.page <= 1} onClick={() => loadTenants(pagination.page - 1)} type="button">
+              Anterior
+            </button>
+            <button
+              className="btn secondary"
+              disabled={loading || pagination.page >= pagination.totalPages}
+              onClick={() => loadTenants(pagination.page + 1)}
+              type="button"
+            >
+              Proxima
+            </button>
           </div>
         </section>
         ) : null}

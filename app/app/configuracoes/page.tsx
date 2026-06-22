@@ -15,9 +15,11 @@ type PublicSettings = {
   instagramAccountId: string;
   instagramAccessTokenConfigured: boolean;
   instagramOAuthAvailable: boolean;
+  googleBusinessClientId: string;
   googleBusinessAccountId: string;
   googleBusinessLocationId: string;
   googleBusinessTokenConfigured: boolean;
+  googleBusinessOAuthConfigured: boolean;
   googleBusinessTokenExpiresAt?: string | null;
   whatsappNumber: string;
   updatedAt?: string;
@@ -63,6 +65,8 @@ type FormState = {
   instagramAccessToken: string;
   googleBusinessAccountId: string;
   googleBusinessLocationId: string;
+  googleBusinessClientId: string;
+  googleBusinessClientSecret: string;
   googleBusinessRefreshToken: string;
   googleBusinessAccessToken: string;
   googleBusinessTokenExpiresAt: string;
@@ -93,6 +97,8 @@ const emptyForm: FormState = {
   instagramAccessToken: "",
   googleBusinessAccountId: "",
   googleBusinessLocationId: "",
+  googleBusinessClientId: "",
+  googleBusinessClientSecret: "",
   googleBusinessRefreshToken: "",
   googleBusinessAccessToken: "",
   googleBusinessTokenExpiresAt: "",
@@ -144,6 +150,8 @@ export default function ConfiguracoesPage() {
       instagramAccessToken: "",
       googleBusinessAccountId: nextSettings.googleBusinessAccountId || "",
       googleBusinessLocationId: nextSettings.googleBusinessLocationId || "",
+      googleBusinessClientId: nextSettings.googleBusinessClientId || "",
+      googleBusinessClientSecret: "",
       googleBusinessRefreshToken: "",
       googleBusinessAccessToken: "",
       googleBusinessTokenExpiresAt: nextSettings.googleBusinessTokenExpiresAt
@@ -229,10 +237,9 @@ export default function ConfiguracoesPage() {
       subtitle={settings?.companyName || "Configuracoes"}
       navItems={[
         { href: "/portal", label: "Portal" },
-        { href: "/app/instagram", label: "Publicador Multicanal" },
-        { href: "/app/leads", label: "Mini CRM" },
+        { href: "/app/instagram", label: "Publicador no Instagram" },
+        { href: "/app/leads", label: "CRM WhatsApp" },
         { href: "/app/blog", label: "Blog Automatizado" },
-        { href: "/app/pagamentos", label: "Pagamentos" },
         { href: "/app/configuracoes", label: "Configuracoes", active: true }
       ]}
       aside={
@@ -280,7 +287,15 @@ export default function ConfiguracoesPage() {
             </div>
             <div className="metric">
               <span>Google Meu Negocio</span>
-              <strong>{configuredLabel(Boolean(settings?.googleBusinessLocationId && settings?.googleBusinessTokenConfigured))}</strong>
+              <strong>
+                {configuredLabel(
+                  Boolean(
+                    settings?.googleBusinessOAuthConfigured &&
+                      settings?.googleBusinessLocationId &&
+                      settings?.googleBusinessTokenConfigured
+                  )
+                )}
+              </strong>
             </div>
           </div>
 
@@ -296,6 +311,38 @@ export default function ConfiguracoesPage() {
                 </div>
               </div>
               <div className="settings-grid">
+                <div className="field">
+                  <label htmlFor="googleBusinessClientId">Google OAuth Client ID {publishRequirement()}</label>
+                  <input
+                    className="input"
+                    id="googleBusinessClientId"
+                    onChange={(event) => updateField("googleBusinessClientId", event.target.value)}
+                    placeholder="938860403896-...apps.googleusercontent.com"
+                    value={form.googleBusinessClientId}
+                  />
+                </div>
+                <div className="field secret-field">
+                  <label htmlFor="googleBusinessClientSecret">Google OAuth Client Secret {publishRequirement()}</label>
+                  <input
+                    autoComplete="off"
+                    className="input"
+                    id="googleBusinessClientSecret"
+                    onChange={(event) => updateField("googleBusinessClientSecret", event.target.value)}
+                    placeholder={
+                      settings?.googleBusinessOAuthConfigured
+                        ? "Client Secret ja configurado. Preencha apenas para trocar."
+                        : "Client Secret real do OAuth deste cliente"
+                    }
+                    type="password"
+                    value={form.googleBusinessClientSecret}
+                  />
+                  {settings?.googleBusinessOAuthConfigured ? (
+                    <span className="secret-status">
+                      <CheckCircle2 size={15} />
+                      OAuth salvo
+                    </span>
+                  ) : null}
+                </div>
                 <div className="field">
                   <label htmlFor="legalName">Razao social</label>
                   <input

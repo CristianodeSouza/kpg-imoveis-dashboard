@@ -16,6 +16,8 @@ export type TenantSettings = {
   makeBaseUrl: string;
   makeDataStoreId: string;
   makeApiToken?: string;
+  googleBusinessClientId: string;
+  googleBusinessClientSecret?: string;
   googleBusinessAccountId: string;
   googleBusinessLocationId: string;
   googleBusinessRefreshToken?: string;
@@ -33,6 +35,7 @@ export type PublicTenantSettings = Omit<
   | "makeBaseUrl"
   | "makeDataStoreId"
   | "makeApiToken"
+  | "googleBusinessClientSecret"
   | "googleBusinessRefreshToken"
   | "googleBusinessAccessToken"
 > & {
@@ -41,6 +44,7 @@ export type PublicTenantSettings = Omit<
   instagramAccessTokenConfigured: boolean;
   instagramOAuthAvailable: boolean;
   googleBusinessTokenConfigured: boolean;
+  googleBusinessOAuthConfigured: boolean;
 };
 
 const text = (value: unknown) => String(value ?? "").trim();
@@ -62,6 +66,8 @@ function mapSettings(settings: DbTenantSettings): TenantSettings {
     makeBaseUrl: settings.makeBaseUrl,
     makeDataStoreId: settings.makeDataStoreId,
     makeApiToken: decryptSecret(settings.makeApiTokenEncrypted),
+    googleBusinessClientId: settings.googleBusinessClientId,
+    googleBusinessClientSecret: decryptSecret(settings.googleBusinessClientSecretEncrypted),
     googleBusinessAccountId: settings.googleBusinessAccountId,
     googleBusinessLocationId: settings.googleBusinessLocationId,
     googleBusinessRefreshToken: decryptSecret(settings.googleBusinessRefreshTokenEncrypted),
@@ -90,6 +96,7 @@ export async function readTenantSettings(tenantId: string) {
         instagramAccountId: "",
         makeBaseUrl: "",
         makeDataStoreId: "",
+        googleBusinessClientId: "",
         googleBusinessAccountId: "",
         googleBusinessLocationId: "",
         whatsappNumber: ""
@@ -118,6 +125,8 @@ export async function writeTenantSettings(tenantId: string, patch: Partial<Tenan
       makeBaseUrl: text(patch.makeBaseUrl),
       makeDataStoreId: text(patch.makeDataStoreId),
       makeApiTokenEncrypted: encryptSecret(patch.makeApiToken),
+      googleBusinessClientId: text(patch.googleBusinessClientId),
+      googleBusinessClientSecretEncrypted: encryptSecret(patch.googleBusinessClientSecret),
       googleBusinessAccountId: text(patch.googleBusinessAccountId),
       googleBusinessLocationId: text(patch.googleBusinessLocationId),
       googleBusinessRefreshTokenEncrypted: encryptSecret(patch.googleBusinessRefreshToken),
@@ -134,6 +143,7 @@ export async function writeTenantSettings(tenantId: string, patch: Partial<Tenan
       ...(hasField(patch, "instagramAccountId") ? { instagramAccountId: text(patch.instagramAccountId) } : {}),
       ...(hasField(patch, "makeBaseUrl") ? { makeBaseUrl: text(patch.makeBaseUrl) } : {}),
       ...(hasField(patch, "makeDataStoreId") ? { makeDataStoreId: text(patch.makeDataStoreId) } : {}),
+      ...(hasField(patch, "googleBusinessClientId") ? { googleBusinessClientId: text(patch.googleBusinessClientId) } : {}),
       ...(hasField(patch, "googleBusinessAccountId") ? { googleBusinessAccountId: text(patch.googleBusinessAccountId) } : {}),
       ...(hasField(patch, "googleBusinessLocationId") ? { googleBusinessLocationId: text(patch.googleBusinessLocationId) } : {}),
       ...(hasField(patch, "googleBusinessTokenExpiresAt")
@@ -146,6 +156,9 @@ export async function writeTenantSettings(tenantId: string, patch: Partial<Tenan
         ? { instagramAccessTokenEncrypted: encryptSecret(patch.instagramAccessToken) }
         : {}),
       ...(text(patch.makeApiToken) ? { makeApiTokenEncrypted: encryptSecret(patch.makeApiToken) } : {}),
+      ...(text(patch.googleBusinessClientSecret)
+        ? { googleBusinessClientSecretEncrypted: encryptSecret(patch.googleBusinessClientSecret) }
+        : {}),
       ...(text(patch.googleBusinessRefreshToken)
         ? { googleBusinessRefreshTokenEncrypted: encryptSecret(patch.googleBusinessRefreshToken) }
         : {}),
@@ -171,6 +184,7 @@ export function publicTenantSettings(settings: TenantSettings): PublicTenantSett
     makeBaseUrl,
     makeDataStoreId,
     makeApiToken,
+    googleBusinessClientSecret,
     googleBusinessRefreshToken,
     googleBusinessAccessToken,
     ...publicSettings
@@ -185,6 +199,7 @@ export function publicTenantSettings(settings: TenantSettings): PublicTenantSett
     metaAppSecretConfigured: Boolean(metaAppSecret),
     instagramAccessTokenConfigured: Boolean(instagramAccessToken),
     instagramOAuthAvailable: hasTenantMetaApp || hasPlatformMetaApp,
-    googleBusinessTokenConfigured: Boolean(googleBusinessRefreshToken || googleBusinessAccessToken)
+    googleBusinessTokenConfigured: Boolean(googleBusinessRefreshToken || googleBusinessAccessToken),
+    googleBusinessOAuthConfigured: Boolean(settings.googleBusinessClientId && googleBusinessClientSecret)
   };
 }

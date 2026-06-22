@@ -61,6 +61,8 @@ export async function POST(request: Request) {
     metaAppSecret: body.metaAppSecret,
     instagramAccountId: body.instagramAccountId,
     instagramAccessToken: body.instagramAccessToken,
+    googleBusinessClientId: body.googleBusinessClientId,
+    googleBusinessClientSecret: body.googleBusinessClientSecret,
     googleBusinessAccountId: body.googleBusinessAccountId,
     googleBusinessLocationId: body.googleBusinessLocationId,
     googleBusinessRefreshToken: body.googleBusinessRefreshToken,

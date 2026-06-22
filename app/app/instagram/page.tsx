@@ -16,8 +16,8 @@ import {
   Send,
   Sparkles
 } from "lucide-react";
-import { buildCaption, buildGeneratedContent, buildGoogleBusinessSummary, buildHashtags, buildPropertyPublicUrl } from "@/lib/property";
-import type { GeneratedContent, InstagramAccountSummary, MediaInsight, Property, PublishChannels } from "@/lib/types";
+import { buildCaption, buildGeneratedContent, buildHashtags } from "@/lib/property";
+import type { GeneratedContent, InstagramAccountSummary, MediaInsight, Property } from "@/lib/types";
 
 type Creatives = {
   feed: string[];
@@ -45,7 +45,6 @@ type PublicationLog = {
   caption: string;
   channels?: {
     instagram?: ChannelPublication;
-    googleBusinessProfile?: ChannelPublication;
     facebook?: ChannelPublication;
     blog?: ChannelPublication;
   };
@@ -67,7 +66,7 @@ type PublicationChannelRow = {
   title: string;
   propertyCode: string;
   caption: string;
-  channel: "instagram" | "googleBusinessProfile" | "facebook" | "blog";
+  channel: "instagram";
   channelLabel: string;
   status: string;
   url: string;
@@ -81,8 +80,8 @@ const steps = [
   ["Buscar Imovel", "Codigo no CRM SIGA"],
   ["Dados & Fotos", "Revise as informacoes"],
   ["Gerar Conteudo", "Criativos e textos"],
-  ["Selecionar canais", "Instagram e Google"],
-  ["Publicar", "Envio multicanal"]
+  ["Revisar legenda", "Instagram"],
+  ["Publicar", "Envio para Instagram"]
 ];
 
 const sampleInsights: MediaInsight[] = [
@@ -164,22 +163,14 @@ function publicationStatusLabel(status: string) {
 }
 
 function channelLabel(channel: PublicationChannelRow["channel"]) {
-  if (channel === "instagram") return "Instagram";
-  if (channel === "googleBusinessProfile") return "Google Meu Negocio";
-  if (channel === "facebook") return "Facebook";
-  return "Blog";
+  return "Instagram";
 }
 
 function channelFormat(row: PublicationChannelRow) {
-  if (row.channel === "googleBusinessProfile") return "Local Post";
-  if (row.channel === "blog") return "Artigo";
   return mediaTypeLabel(row.mediaType);
 }
 
 function channelLinkLabel(channel: PublicationChannelRow["channel"]) {
-  if (channel === "googleBusinessProfile") return "Abrir no Google";
-  if (channel === "facebook") return "Abrir no Facebook";
-  if (channel === "blog") return "Abrir artigo";
   return "Abrir post";
 }
 
@@ -202,26 +193,12 @@ function groupBy<TItem, TValue>(items: TItem[], labeler: (item: TItem) => string
   return Array.from(grouped.entries());
 }
 
-function FutureChannel({ label }: { label: string }) {
-  return (
-    <label className="channel-question-option disabled-channel">
-      <input disabled type="checkbox" />
-      <span>{label}</span>
-      <small>Futuro</small>
-    </label>
-  );
-}
-
 export default function HomePage() {
   const [code, setCode] = useState("");
   const [property, setProperty] = useState<Property | null>(null);
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [caption, setCaption] = useState("");
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
-  const [publishChannels, setPublishChannels] = useState<PublishChannels>({
-    instagram: true,
-    googleBusinessProfile: false
-  });
   const [publishResults, setPublishResults] = useState<Array<{ provider: string; success: boolean; postId?: string; url?: string; error?: string }>>([]);
   const [creatives, setCreatives] = useState<Creatives | null>(null);
   const [creativeLoading, setCreativeLoading] = useState(false);
@@ -290,24 +267,6 @@ export default function HomePage() {
     setCaption(nextContent.instagram_caption);
   }
 
-  function updateGoogleSummary(value: string) {
-    if (!property) return;
-    setGeneratedContent((current) => ({
-      ...(current || buildGeneratedContent(property, { tone, channel, includePrice })),
-      instagram_caption: caption,
-      gmb_summary: value
-    }));
-  }
-
-  function updateGmbUrl(value: string) {
-    if (!property) return;
-    setGeneratedContent((current) => ({
-      ...(current || buildGeneratedContent(property, { tone, channel, includePrice })),
-      instagram_caption: caption,
-      gmb_url: value
-    }));
-  }
-
   function togglePhoto(url: string) {
     setSelectedPhotos((current) =>
       current.includes(url) ? current.filter((item) => item !== url) : [...current, url].slice(0, 10)
@@ -329,20 +288,18 @@ export default function HomePage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Nao foi possivel gerar criativos.");
       setCreatives(data.criativos);
-      const gmbSummary = buildGoogleBusinessSummary(property);
-      const gmbUrl = buildPropertyPublicUrl(property);
       const nextCaption = data.caption || caption || buildCaption(property, { tone, channel, includePrice });
       setCaption(nextCaption);
       setGeneratedContent({
         instagram_caption: nextCaption,
         instagram_hashtags: buildHashtags(property),
-        gmb_summary: gmbSummary,
+        gmb_summary: "",
         gmb_cta: "LEARN_MORE",
-        gmb_url: gmbUrl
+        gmb_url: ""
       });
       if (data.criativos?.carousel?.length) setSelectedPhotos(data.criativos.carousel.slice(0, 10));
       setPublishResults([]);
-      setMessage({ type: "ok", text: "Criativos e textos gerados para publicacao multicanal." });
+      setMessage({ type: "ok", text: "Criativos e legenda gerados para publicacao no Instagram." });
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao gerar criativos." });
     } finally {
@@ -357,34 +314,24 @@ export default function HomePage() {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 90000);
     try {
-      const content = {
-        ...(generatedContent || (property ? buildGeneratedContent(property, { tone, channel, includePrice }) : null)),
-        instagram_caption: caption
-      };
-      const response = await fetch("/api/social-publisher/publish", {
+      const response = await fetch("/api/instagram/publish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          channels: publishChannels,
-          property,
-          content,
-          assets: { imageUrls: selectedPhotos }
+          caption,
+          imageUrls: selectedPhotos
         }),
         signal: controller.signal
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || data.detail || "Falha ao publicar.");
-      setPublishResults(data.results || []);
-      const failed = (data.results || []).filter((item: any) => !item.success).length;
-      const published = (data.results || []).filter((item: any) => item.success).length;
+      const result = { provider: "instagram", success: true, postId: data.result?.id, url: data.result?.url };
+      setPublishResults([result]);
       setPublishMessage({
-        type: failed ? "error" : "ok",
-        text: failed
-          ? `${published} canal(is) publicado(s), ${failed} falharam. Veja o status por canal.`
-          : "Publicacao enviada para todos os canais selecionados."
+        type: "ok",
+        text: "Publicacao enviada para o Instagram."
       });
-      const instagramResult = (data.results || []).find((item: any) => item.provider === "instagram");
-      if (instagramResult?.usage) setPublicationUsage(instagramResult.usage);
+      if (data.usage) setPublicationUsage(data.usage);
       await loadPublications();
     } catch (error) {
       const text =
@@ -524,7 +471,7 @@ export default function HomePage() {
         url: ""
       }
     };
-    const order: PublicationChannelRow["channel"][] = ["instagram", "googleBusinessProfile", "facebook", "blog"];
+    const order: PublicationChannelRow["channel"][] = ["instagram"];
     return order
       .map((channelName) => {
         const channel = channels[channelName];
@@ -552,23 +499,20 @@ export default function HomePage() {
       <header className="topbar">
         <div className="brand">
           <strong>CSR Tecnologia</strong>
-          <span>Publicador Multicanal</span>
+          <span>Publicador no Instagram</span>
         </div>
         <nav className="tool-nav" aria-label="Ferramentas CSR">
           <a className="tool-link" href="/portal">
             Portal
           </a>
           <a className="tool-link active" href="/app/instagram">
-            Publicador Multicanal
+            Publicador no Instagram
           </a>
           <a className="tool-link" href="/app/leads">
-            Mini CRM
+            CRM WhatsApp
           </a>
           <a className="tool-link" href="/app/blog">
             Blog Automatizado
-          </a>
-          <a className="tool-link" href="/app/pagamentos">
-            Pagamentos
           </a>
           <a className="tool-link" href="/app/configuracoes">
             Configuracoes
@@ -618,39 +562,6 @@ export default function HomePage() {
             </button>
           </div>
           {message ? <div className={`message ${message.type}`}>{message.text}</div> : null}
-        </section>
-
-        <section className="panel channel-question-panel" id="channel-question">
-          <div className="panel-heading">
-            <div className="panel-title">
-              <Send size={21} />
-              <h2>Em quais canais deseja publicar?</h2>
-            </div>
-          </div>
-          <div className="channel-question-grid">
-            <label className={`channel-question-option ${publishChannels.instagram ? "active" : ""}`}>
-              <input
-                checked={publishChannels.instagram}
-                onChange={(event) => setPublishChannels((current) => ({ ...current, instagram: event.target.checked }))}
-                type="checkbox"
-              />
-              <span>Instagram</span>
-              <small>Feed / carrossel</small>
-            </label>
-            <label className={`channel-question-option ${publishChannels.googleBusinessProfile ? "active" : ""}`}>
-              <input
-                checked={publishChannels.googleBusinessProfile}
-                onChange={(event) =>
-                  setPublishChannels((current) => ({ ...current, googleBusinessProfile: event.target.checked }))
-                }
-                type="checkbox"
-              />
-              <span>Google Meu Negocio</span>
-              <small>Local Post</small>
-            </label>
-            <FutureChannel label="Facebook" />
-            <FutureChannel label="Blog" />
-          </div>
         </section>
 
         {property ? (
@@ -725,7 +636,7 @@ export default function HomePage() {
             <div className="panel-heading">
               <div className="panel-title">
                 <Sparkles size={21} />
-                <h2>Conteudo e Publicacao Multicanal</h2>
+                <h2>Conteudo e Publicacao no Instagram</h2>
               </div>
               <div className="status-row">
                 <button className="btn secondary" disabled={creativeLoading} onClick={generateCreatives}>
@@ -774,25 +685,6 @@ export default function HomePage() {
                   }}
                 />
               </div>
-              <div className="field">
-                <label htmlFor="gmbSummary">Texto Google Meu Negocio</label>
-                <textarea
-                  className="textarea"
-                  id="gmbSummary"
-                  value={generatedContent?.gmb_summary || (property ? buildGoogleBusinessSummary(property) : "")}
-                  onChange={(event) => updateGoogleSummary(event.target.value)}
-                />
-              </div>
-              <div className="field wide">
-                <label htmlFor="gmbUrl">URL do imovel para Google Meu Negocio</label>
-                <input
-                  className="input"
-                  id="gmbUrl"
-                  placeholder="https://site.com.br/imovel/..."
-                  value={generatedContent?.gmb_url || (property ? buildPropertyPublicUrl(property) : "")}
-                  onChange={(event) => updateGmbUrl(event.target.value)}
-                />
-              </div>
             </div>
             <div className="actions">
               <div className="hashtags">
@@ -819,18 +711,18 @@ export default function HomePage() {
                 <span className="eyebrow">Etapa 5</span>
                 <button
                   className="btn success"
-                  disabled={publishing || !selectedPhotos.length || (!publishChannels.instagram && !publishChannels.googleBusinessProfile)}
+                  disabled={publishing || !selectedPhotos.length}
                   onClick={publish}
                 >
                   {publishing ? <Loader2 size={17} /> : <Send size={17} />}
-                  Publicar nos canais selecionados
+                  Publicar no Instagram
                 </button>
                 {publishMessage ? <div className={`message publish-message ${publishMessage.type}`}>{publishMessage.text}</div> : null}
                 {publishResults.length ? (
                   <div className="channel-result-list">
                     {publishResults.map((result) => (
                       <div className={`channel-result ${result.success ? "ok" : "error"}`} key={result.provider}>
-                        <strong>{result.provider === "instagram" ? "Instagram" : "Google Meu Negocio"}</strong>
+                        <strong>Instagram</strong>
                         <span>
                           {result.success ? "publicado com sucesso" : `falhou - ${result.error || "erro desconhecido"}`}
                         </span>
@@ -974,7 +866,7 @@ export default function HomePage() {
           <section className="analytics-block publication-history">
             <div className="section-inline-heading">
               <div>
-                <span className="eyebrow">Historico multicanal</span>
+                <span className="eyebrow">Historico Instagram</span>
                 <h3>Publicacoes realizadas</h3>
               </div>
               <button className="btn secondary" onClick={loadPublications} type="button">
@@ -982,7 +874,7 @@ export default function HomePage() {
                 Atualizar
               </button>
             </div>
-            <div className="publication-table" role="table" aria-label="Historico multicanal de publicacoes">
+            <div className="publication-table" role="table" aria-label="Historico de publicacoes no Instagram">
               {publicationChannelRows.length ? (
                 <>
                   <div className="publication-table-head" role="row">
@@ -998,12 +890,12 @@ export default function HomePage() {
                   {publicationChannelRows.map((item) => (
                     <div className="publication-table-row" key={item.id} role="row">
                       <span className="publication-title-cell" data-label="Publicacao">
-                        <strong>{item.title || "Publicacao multicanal"}</strong>
+                        <strong>{item.title || "Publicacao no Instagram"}</strong>
                         <small>{item.caption ? shortCaption(item.caption, item.title || "Legenda nao registrada") : "Legenda nao registrada"}</small>
                       </span>
                       <span data-label="Codigo">{item.propertyCode || "Nao registrado"}</span>
                       <span data-label="Canal">
-                        <span className={`channel-badge ${item.channel === "googleBusinessProfile" ? "google-business" : item.channel}`}>
+                        <span className={`channel-badge ${item.channel}`}>
                           {item.channelLabel}
                         </span>
                       </span>

@@ -6,8 +6,8 @@ export async function requirePlatformAdmin(request: Request) {
   const session = await getSessionFromRequest(request);
   if (!session) return { session: null, user: null, response: NextResponse.json({ error: "Sessao invalida." }, { status: 401 }) };
 
-  const user = await prisma.user.findUnique({ where: { id: session.userId } });
-  if (!user || user.tenantId !== session.tenantId || !user.isPlatformAdmin) {
+  const user = await prisma.user.findUnique({ where: { id: session.userId }, include: { tenant: true } });
+  if (!user || user.tenantId !== session.tenantId || !user.isPlatformAdmin || user.tenant.status !== "active") {
     return { session, user, response: NextResponse.json({ error: "Acesso restrito ao admin CSR." }, { status: 403 }) };
   }
 

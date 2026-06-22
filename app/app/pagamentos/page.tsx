@@ -83,10 +83,9 @@ export default function PagamentosPage() {
       subtitle="Pagamentos"
       navItems={[
         { href: "/portal", label: "Portal" },
-        { href: "/app/instagram", label: "Publicador Multicanal" },
-        { href: "/app/leads", label: "Mini CRM" },
+        { href: "/app/instagram", label: "Publicador no Instagram" },
+        { href: "/app/leads", label: "CRM WhatsApp" },
         { href: "/app/blog", label: "Blog Automatizado" },
-        { href: "/app/pagamentos", label: "Pagamentos", active: true },
         { href: "/app/configuracoes", label: "Configuracoes" }
       ]}
       aside={summary ? <StatusBadge status={summary.currentCyclePaid ? "success" : "warning"}>{summary.currentCyclePaid ? "Ciclo pago" : "Ciclo pendente"}</StatusBadge> : null}

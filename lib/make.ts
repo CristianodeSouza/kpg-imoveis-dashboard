@@ -10,8 +10,6 @@ type MakeConfig = {
 };
 
 const DEFAULT_MAKE_BASE_URL = "https://us2.make.com/api/v2";
-const LEGACY_MAKE_DATA_STORE_ID = "47814";
-
 function clean(value?: string | null) {
   return String(value || "").trim();
 }
@@ -25,17 +23,6 @@ function resolveMakeConfig(config?: MakeConfig) {
       token: tenantToken,
       dataStoreId: tenantDataStoreId,
       baseUrl: clean(config?.baseUrl) || DEFAULT_MAKE_BASE_URL
-    };
-  }
-
-  const platformToken = clean(process.env.MAKE_API_TOKEN);
-  const platformDataStoreId = clean(process.env.MAKE_DATA_STORE_ID) || LEGACY_MAKE_DATA_STORE_ID;
-
-  if (platformToken && platformDataStoreId) {
-    return {
-      token: platformToken,
-      dataStoreId: platformDataStoreId,
-      baseUrl: clean(process.env.MAKE_API_BASE_URL) || DEFAULT_MAKE_BASE_URL
     };
   }
 

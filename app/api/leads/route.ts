@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { normalizeLead, readLeads, updateLead } from "@/lib/leads";
-import { fetchMakeDataStoreRecords, hasMakeConfig } from "@/lib/make";
-import { readTenantSettings } from "@/lib/settings";
+import { readLeads, updateLead } from "@/lib/leads";
 import { requireTenantService } from "@/lib/services";
 
 export const dynamic = "force-dynamic";
@@ -11,28 +9,15 @@ export async function GET(request: Request) {
   if (response) return response;
   if (!session) return NextResponse.json({ error: "Sessao invalida." }, { status: 401 });
 
-  const settings = await readTenantSettings(session.tenantId);
-  const makeConfig = { baseUrl: settings.makeBaseUrl, dataStoreId: settings.makeDataStoreId, token: settings.makeApiToken };
-
-  if (hasMakeConfig(makeConfig) && !(process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL)) {
-    try {
-      const payloads = await fetchMakeDataStoreRecords(makeConfig);
-      return NextResponse.json({
-        leads: payloads.map(normalizeLead),
-        storage: "make-live"
-      });
-    } catch {
-      return NextResponse.json(
-        { error: "Nao foi possivel carregar as leads da integracao. Tente atualizar novamente." },
-        { status: 502 }
-      );
-    }
-  }
-
-  const leads = await readLeads(session.tenantId);
+  const params = new URL(request.url).searchParams;
+  const leads = await readLeads(session.tenantId, {
+    page: Number(params.get("page") || 1),
+    pageSize: Number(params.get("pageSize") || 100),
+    status: params.get("status") || undefined
+  });
   return NextResponse.json({
     leads,
-    storage: process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL ? "kv" : "memory"
+    storage: "supabase"
   });
 }
 

@@ -6,6 +6,14 @@ export { createSessionCookieValue, getSessionFromCookies, getSessionFromRequest,
 const DEFAULT_TENANT_SLUG = "kpg";
 const PLATFORM_TENANT_SLUG = "csr-tecnologia";
 
+function requiredPassword(envName: string, fallback?: string) {
+  const value = String(process.env[envName] || fallback || "").trim();
+  if (process.env.NODE_ENV === "production" && !value) {
+    throw new Error(`${envName} obrigatoria em producao.`);
+  }
+  return value || "dev-change-me";
+}
+
 export async function ensureDefaultTenantAndUser() {
   const tenant = await prisma.tenant.upsert({
     where: { slug: DEFAULT_TENANT_SLUG },
@@ -48,7 +56,7 @@ export async function ensureDefaultTenantAndUser() {
       tenantId: tenant.id,
       name: "Administrador",
       username,
-      passwordHash: await bcrypt.hash(process.env.DEFAULT_ADMIN_PASSWORD || "cristiano", 12),
+      passwordHash: await bcrypt.hash(requiredPassword("DEFAULT_ADMIN_PASSWORD"), 12),
       role: "owner",
       isPlatformAdmin: false
     }
@@ -72,7 +80,7 @@ export async function ensurePlatformTenantAndAdmin() {
   await ensureTenantServices(tenant.id, ["portal", "settings"]);
 
   const username = (process.env.PLATFORM_ADMIN_USERNAME || "CSRTECNOLOGIA").trim().toUpperCase();
-  const password = process.env.PLATFORM_ADMIN_PASSWORD || process.env.DEFAULT_ADMIN_PASSWORD || "cristiano";
+  const password = requiredPassword("PLATFORM_ADMIN_PASSWORD", process.env.DEFAULT_ADMIN_PASSWORD);
   const existingUser = await prisma.user.findUnique({ where: { username } });
 
   if (existingUser) {

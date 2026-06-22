@@ -1,11 +1,9 @@
 import type { Lead, LeadStatus } from "@/lib/types";
-import { ensureDefaultTenantAndUser } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 
 type LooseRecord = Record<string, unknown>;
 
-const storageKey = (tenantId: string) => `tenant:${tenantId}:leads:v1`;
-const MAX_LEADS = 500;
-const memoryStore = globalThis as typeof globalThis & { __tenantLeads?: Record<string, Lead[]> };
+const MAX_LEADS_PAGE_SIZE = 100;
 
 function text(value: unknown) {
   return String(value ?? "").trim();
@@ -52,58 +50,6 @@ function inferDirection(source: LooseRecord, message: string): Lead["direction"]
   return "desconhecido";
 }
 
-function getRedisConfig() {
-  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-  return url && token ? { url, token } : null;
-}
-
-async function redisCommand(command: unknown[]) {
-  const config = getRedisConfig();
-  if (!config) return null;
-
-  const response = await fetch(config.url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${config.token}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(command),
-    cache: "no-store"
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data?.error || "Falha ao acessar armazenamento de leads.");
-  return data.result;
-}
-
-async function resolveTenantId(tenantId?: string | null) {
-  if (tenantId) return tenantId;
-  const { tenant } = await ensureDefaultTenantAndUser();
-  return tenant.id;
-}
-
-export async function readLeads(tenantId?: string | null) {
-  const resolvedTenantId = await resolveTenantId(tenantId);
-  const stored = await redisCommand(["GET", storageKey(resolvedTenantId)]);
-  if (typeof stored === "string") {
-    return JSON.parse(stored) as Lead[];
-  }
-
-  memoryStore.__tenantLeads ||= {};
-  memoryStore.__tenantLeads[resolvedTenantId] ||= [];
-  return memoryStore.__tenantLeads[resolvedTenantId];
-}
-
-async function writeLeads(tenantId: string, leads: Lead[]) {
-  const limited = leads.slice(0, MAX_LEADS);
-  const result = await redisCommand(["SET", storageKey(tenantId), JSON.stringify(limited)]);
-  if (result === null) {
-    memoryStore.__tenantLeads ||= {};
-    memoryStore.__tenantLeads[tenantId] = limited;
-  }
-  return limited;
-}
-
 function inferInterest(source: LooseRecord) {
   const explicit = firstText(source, [
     "tipo_imovel",
@@ -144,6 +90,35 @@ function normalizeStatus(value: string, message = ""): LeadStatus {
   return "novo";
 }
 
+function parseDate(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+}
+
+function leadFromDb(lead: any): Lead {
+  return {
+    id: lead.id,
+    name: lead.name,
+    phone: lead.phone,
+    propertyInterest: lead.propertyInterest,
+    propertyCode: lead.propertyCode || undefined,
+    propertyUrl: lead.propertyUrl || undefined,
+    message: lead.message,
+    originalMessage: lead.originalMessage,
+    status: lead.status as LeadStatus,
+    stage: lead.stage || undefined,
+    source: lead.source,
+    conversationId: lead.conversationId || undefined,
+    chatLid: lead.chatLid || undefined,
+    direction: lead.direction,
+    createdAt: lead.createdAt.toISOString(),
+    lastMessageAt: lead.lastMessageAt.toISOString(),
+    interactions: lead.interactions,
+    notes: lead.notes || undefined,
+    raw: lead.raw || undefined
+  };
+}
+
 export function normalizeLead(payload: unknown): Lead {
   const source = payload && typeof payload === "object" ? (payload as LooseRecord) : {};
   const now = new Date().toISOString();
@@ -176,62 +151,64 @@ export function normalizeLead(payload: unknown): Lead {
   };
 }
 
-function sameLead(a: Lead, b: Lead) {
-  return Boolean(
-    (a.phone && b.phone && a.phone === b.phone) ||
-      (a.chatLid && b.chatLid && a.chatLid === b.chatLid) ||
-      (a.conversationId && b.conversationId && a.conversationId === b.conversationId)
-  );
+async function resolveTenantId(tenantId?: string | null) {
+  const resolvedTenantId = text(tenantId);
+  if (!resolvedTenantId) throw new Error("tenantId obrigatorio para leads.");
+  return resolvedTenantId;
 }
 
-export async function upsertLead(payload: unknown, tenantId?: string | null) {
+function leadIdentityWhere(tenantId: string, lead: Lead) {
+  const OR: Array<{ phone?: string; chatLid?: string; conversationId?: string }> = [];
+  if (lead.phone) OR.push({ phone: lead.phone });
+  if (lead.chatLid) OR.push({ chatLid: lead.chatLid });
+  if (lead.conversationId) OR.push({ conversationId: lead.conversationId });
+
+  return OR.length ? { tenantId, OR } : null;
+}
+
+export async function readLeads(tenantId?: string | null, options?: { page?: number; pageSize?: number; status?: string }) {
+  const resolvedTenantId = await resolveTenantId(tenantId);
+  const page = Math.max(1, Number(options?.page || 1));
+  const pageSize = Math.min(MAX_LEADS_PAGE_SIZE, Math.max(1, Number(options?.pageSize || 100)));
+  const status = text(options?.status);
+  const where = {
+    tenantId: resolvedTenantId,
+    ...(status ? { status } : {})
+  };
+
+  const leads = await prisma.lead.findMany({
+    where,
+    orderBy: [{ lastMessageAt: "desc" }, { createdAt: "desc" }],
+    skip: (page - 1) * pageSize,
+    take: pageSize
+  });
+
+  return leads.map(leadFromDb);
+}
+
+async function createInteraction(tenantId: string, leadId: string, lead: Lead) {
+  await prisma.leadInteraction.create({
+    data: {
+      tenantId,
+      leadId,
+      message: lead.originalMessage || lead.message,
+      direction: lead.direction,
+      raw: lead.raw as any
+    }
+  });
+}
+
+async function persistLead(payload: unknown, tenantId: string) {
   const resolvedTenantId = await resolveTenantId(tenantId);
   const incoming = normalizeLead(payload);
-  const leads = await readLeads(resolvedTenantId);
-  const existingIndex = leads.findIndex((lead) => sameLead(lead, incoming));
+  const identityWhere = leadIdentityWhere(resolvedTenantId, incoming);
+  const existing = identityWhere ? await prisma.lead.findFirst({ where: identityWhere }) : null;
+  const lastMessageAt = parseDate(incoming.lastMessageAt);
 
-  if (existingIndex >= 0) {
-    const existing = leads[existingIndex];
-    const updated: Lead = {
-      ...existing,
-      name: incoming.name !== "Lead sem nome" ? incoming.name : existing.name,
-      phone: incoming.phone || existing.phone,
-      propertyInterest: incoming.propertyInterest !== "Nao informado" ? incoming.propertyInterest : existing.propertyInterest,
-      propertyCode: incoming.propertyCode || existing.propertyCode,
-      propertyUrl: incoming.propertyUrl || existing.propertyUrl,
-      message: incoming.message || existing.message,
-      originalMessage: incoming.originalMessage || existing.originalMessage,
-      status: incoming.status !== "novo" ? incoming.status : existing.status,
-      stage: incoming.stage || existing.stage,
-      source: incoming.source || existing.source,
-      conversationId: incoming.conversationId || existing.conversationId,
-      chatLid: incoming.chatLid || existing.chatLid,
-      direction: incoming.direction !== "desconhecido" ? incoming.direction : existing.direction,
-      lastMessageAt: incoming.lastMessageAt,
-      interactions: existing.interactions + 1,
-      notes: incoming.notes || existing.notes,
-      raw: incoming.raw
-    };
-    leads.splice(existingIndex, 1);
-    return { lead: updated, leads: await writeLeads(resolvedTenantId, [updated, ...leads]) };
-  }
-
-  return { lead: incoming, leads: await writeLeads(resolvedTenantId, [incoming, ...leads]) };
-}
-
-export async function upsertLeads(payloads: unknown[], tenantId?: string | null) {
-  const resolvedTenantId = await resolveTenantId(tenantId);
-  let leads = await readLeads(resolvedTenantId);
-  const imported: Lead[] = [];
-
-  for (const payload of payloads) {
-    const incoming = normalizeLead(payload);
-    const existingIndex = leads.findIndex((lead) => sameLead(lead, incoming));
-
-    if (existingIndex >= 0) {
-      const existing = leads[existingIndex];
-      const updated: Lead = {
-        ...existing,
+  if (existing) {
+    const updated = await prisma.lead.update({
+      where: { id: existing.id },
+      data: {
         name: incoming.name !== "Lead sem nome" ? incoming.name : existing.name,
         phone: incoming.phone || existing.phone,
         propertyInterest: incoming.propertyInterest !== "Nao informado" ? incoming.propertyInterest : existing.propertyInterest,
@@ -245,27 +222,73 @@ export async function upsertLeads(payloads: unknown[], tenantId?: string | null)
         conversationId: incoming.conversationId || existing.conversationId,
         chatLid: incoming.chatLid || existing.chatLid,
         direction: incoming.direction !== "desconhecido" ? incoming.direction : existing.direction,
-        lastMessageAt: incoming.lastMessageAt,
-        interactions: Math.max(existing.interactions, incoming.interactions),
+        lastMessageAt,
+        interactions: { increment: 1 },
         notes: incoming.notes || existing.notes,
-        raw: incoming.raw
-      };
-      leads = [updated, ...leads.filter((_, index) => index !== existingIndex)];
-      imported.push(updated);
-    } else {
-      leads = [incoming, ...leads];
-      imported.push(incoming);
-    }
+        raw: incoming.raw as any
+      }
+    });
+    await createInteraction(resolvedTenantId, updated.id, incoming);
+    return leadFromDb(updated);
   }
 
-  await writeLeads(resolvedTenantId, leads);
+  const created = await prisma.lead.create({
+    data: {
+      tenantId: resolvedTenantId,
+      name: incoming.name,
+      phone: incoming.phone,
+      propertyInterest: incoming.propertyInterest,
+      propertyCode: incoming.propertyCode || "",
+      propertyUrl: incoming.propertyUrl || "",
+      message: incoming.message,
+      originalMessage: incoming.originalMessage,
+      status: incoming.status,
+      stage: incoming.stage || "",
+      source: incoming.source,
+      conversationId: incoming.conversationId || "",
+      chatLid: incoming.chatLid || "",
+      direction: incoming.direction,
+      createdAt: parseDate(incoming.createdAt),
+      lastMessageAt,
+      interactions: incoming.interactions,
+      notes: incoming.notes || "",
+      raw: incoming.raw as any
+    }
+  });
+  await createInteraction(resolvedTenantId, created.id, incoming);
+  return leadFromDb(created);
+}
+
+export async function upsertLead(payload: unknown, tenantId?: string | null) {
+  const resolvedTenantId = await resolveTenantId(tenantId);
+  const lead = await persistLead(payload, resolvedTenantId);
+  const leads = await readLeads(resolvedTenantId);
+  return { lead, leads };
+}
+
+export async function upsertLeads(payloads: unknown[], tenantId?: string | null) {
+  const resolvedTenantId = await resolveTenantId(tenantId);
+  const imported: Lead[] = [];
+
+  for (const payload of payloads) {
+    imported.push(await persistLead(payload, resolvedTenantId));
+  }
+
+  const leads = await readLeads(resolvedTenantId);
   return { imported, leads };
 }
 
 export async function updateLead(id: string, patch: Partial<Pick<Lead, "status" | "notes">>, tenantId?: string | null) {
   const resolvedTenantId = await resolveTenantId(tenantId);
-  const leads = await readLeads(resolvedTenantId);
-  const next = leads.map((lead) => (lead.id === id ? { ...lead, ...patch } : lead));
-  await writeLeads(resolvedTenantId, next);
-  return next.find((lead) => lead.id === id) || null;
+  const existing = await prisma.lead.findFirst({ where: { id, tenantId: resolvedTenantId } });
+  if (!existing) return null;
+
+  const lead = await prisma.lead.update({
+    where: { id: existing.id },
+    data: {
+      ...(patch.status ? { status: patch.status } : {}),
+      ...(Object.prototype.hasOwnProperty.call(patch, "notes") ? { notes: text(patch.notes) } : {})
+    }
+  });
+  return leadFromDb(lead);
 }
