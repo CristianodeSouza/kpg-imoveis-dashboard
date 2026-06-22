@@ -117,7 +117,7 @@ export class GoogleBusinessPostService {
     if (!summary) throw new Error("Texto do Google Meu Negocio nao pode ficar vazio.");
 
     return {
-      languageCode: "pt-BR",
+      languageCode: "br",
       summary,
       topicType: "STANDARD",
       media: [
