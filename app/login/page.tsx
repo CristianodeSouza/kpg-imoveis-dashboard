@@ -20,7 +20,16 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password })
       });
-      const data = await response.json();
+      const text = await response.text();
+      const data = text
+        ? (() => {
+            try {
+              return JSON.parse(text);
+            } catch {
+              return {};
+            }
+          })()
+        : {};
       if (!response.ok) throw new Error(data.error || "Falha ao entrar.");
       const next = new URLSearchParams(window.location.search).get("next") || "/portal";
       window.location.href = next.startsWith("/admin") && !data.user?.isPlatformAdmin ? "/portal" : next;

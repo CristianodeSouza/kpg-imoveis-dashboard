@@ -80,7 +80,6 @@ export async function ensurePlatformTenantAndAdmin() {
   await ensureTenantServices(tenant.id, ["portal", "settings"]);
 
   const username = (process.env.PLATFORM_ADMIN_USERNAME || "CSRTECNOLOGIA").trim().toUpperCase();
-  const password = requiredPassword("PLATFORM_ADMIN_PASSWORD", process.env.DEFAULT_ADMIN_PASSWORD);
   const existingUser = await prisma.user.findUnique({ where: { username } });
 
   if (existingUser) {
@@ -95,6 +94,7 @@ export async function ensurePlatformTenantAndAdmin() {
     return { tenant, user };
   }
 
+  const password = requiredPassword("PLATFORM_ADMIN_PASSWORD", process.env.DEFAULT_ADMIN_PASSWORD);
   const user = await prisma.user.create({
     data: {
       tenantId: tenant.id,
