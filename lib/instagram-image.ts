@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { saveTenantAsset } from "@/lib/assets";
+import { saveExternalTenantAsset, saveTenantAsset } from "@/lib/assets";
 
 type InstagramImagePreset = "feed-portrait" | "story-reel";
 
@@ -17,7 +17,16 @@ async function downloadImage(url: string) {
   if (contentType && !contentType.includes("image")) {
     throw new Error("URL retornou um arquivo que nao e imagem.");
   }
-  return Buffer.from(await response.arrayBuffer());
+  return {
+    buffer: Buffer.from(await response.arrayBuffer()),
+    contentType
+  };
+}
+
+function canUseOriginalForInstagram(input: { contentType: string; width?: number; height?: number; format?: string }) {
+  const ratio = input.width && input.height ? input.width / input.height : 0;
+  const isJpeg = input.contentType.includes("image/jpeg") || input.format === "jpeg" || input.format === "jpg";
+  return isJpeg && ratio >= 0.8 && ratio <= 1.91;
 }
 
 export async function prepareInstagramImage(
@@ -27,7 +36,34 @@ export async function prepareInstagramImage(
   const preset = options.preset || "feed-portrait";
   const size = presets[preset];
   const original = await downloadImage(url);
-  const processed = await sharp(original)
+  const metadata = await sharp(original.buffer).metadata();
+  const hasSupabaseStorage = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+  if (!hasSupabaseStorage && canUseOriginalForInstagram({
+    contentType: original.contentType,
+    width: metadata.width,
+    height: metadata.height,
+    format: metadata.format
+  })) {
+    const asset = await saveExternalTenantAsset({
+      tenantId: options.tenantId,
+      type: "instagram-image",
+      mimeType: original.contentType || "image/jpeg",
+      sourceUrl: url,
+      jobId: options.jobId,
+      sizeBytes: original.buffer.length,
+      metadata: {
+        preset: "original-compatible",
+        index: options.index,
+        width: metadata.width,
+        height: metadata.height,
+        reason: "Original JPEG publico compativel com Instagram; evitando fallback ImgBB."
+      }
+    });
+    return asset.url;
+  }
+
+  const processed = await sharp(original.buffer)
     .rotate()
     .resize(size.width, size.height, {
       fit: "cover",

@@ -95,3 +95,24 @@ export async function saveTenantAsset(input: AssetInput) {
     }
   });
 }
+
+export async function saveExternalTenantAsset(input: Omit<AssetInput, "buffer" | "extension"> & { sizeBytes?: number }) {
+  return prisma.asset.create({
+    data: {
+      tenantId: input.tenantId,
+      type: input.type,
+      provider: "external-source",
+      url: input.sourceUrl || "",
+      storagePath: "",
+      mimeType: input.mimeType,
+      sizeBytes: input.sizeBytes || 0,
+      jobId: input.jobId || "",
+      sourceUrl: input.sourceUrl || "",
+      metadata: {
+        ...(input.metadata || {}),
+        storageStrategy: "external-source",
+        fallbackUsed: false
+      }
+    }
+  });
+}
