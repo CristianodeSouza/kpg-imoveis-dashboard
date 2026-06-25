@@ -1,4 +1,4 @@
-import { claimNextJob, completeJob, failJob } from "@/lib/jobs";
+import { claimJobById, claimNextJob, completeJob, failJob } from "@/lib/jobs";
 import { publishInstagramJob } from "@/lib/instagram-publisher";
 import { analyzeSitemapJob } from "@/lib/seo-sitemap-job";
 
@@ -47,4 +47,24 @@ export async function runJobBatch(options?: { limit?: number; workerId?: string 
   }
 
   return { processed };
+}
+
+export async function runJobById(jobId: string, options?: { workerId?: string }) {
+  const workerId = options?.workerId || `worker-${Date.now()}`;
+  const job = await claimJobById(jobId, workerId);
+  if (!job) return null;
+
+  try {
+    const result = await processJob(job);
+    await completeJob(job.id, result);
+    return { id: job.id, type: job.type, status: "completed", result };
+  } catch (error) {
+    const failed = await failJob(job.id, error);
+    return {
+      id: job.id,
+      type: job.type,
+      status: failed.status,
+      error: error instanceof Error ? error.message : String(error)
+    };
+  }
 }

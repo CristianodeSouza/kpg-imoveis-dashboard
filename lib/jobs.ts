@@ -122,6 +122,15 @@ export async function claimNextJob(workerId: string) {
   return startJob(job.id, workerId);
 }
 
+export async function claimJobById(jobId: string, workerId: string) {
+  const claimed = await prisma.job.updateMany({
+    where: { id: jobId, status: "pending", runAfter: { lte: new Date() } },
+    data: { status: "processing", lockedAt: new Date(), lockedBy: workerId }
+  });
+  if (!claimed.count) return null;
+  return startJob(jobId, workerId);
+}
+
 export function jobStatusLabel(status: string) {
   const labels: Record<JobStatus, string> = {
     pending: "Pendente",

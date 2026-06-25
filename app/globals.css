@@ -2128,6 +2128,11 @@ a {
   border-color: #f77a7c;
 }
 
+.channel-result.queued {
+  background: var(--warning-surface);
+  border-color: #f5c96b;
+}
+
 .channel-result span,
 .channel-result a {
   font-size: 12px;

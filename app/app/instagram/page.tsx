@@ -206,7 +206,9 @@ export default function HomePage() {
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [caption, setCaption] = useState("");
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
-  const [publishResults, setPublishResults] = useState<Array<{ provider: string; success: boolean; postId?: string; url?: string; error?: string }>>([]);
+  const [publishResults, setPublishResults] = useState<
+    Array<{ provider: string; status: "published" | "queued" | "failed"; success: boolean; postId?: string; url?: string; error?: string }>
+  >([]);
   const [creatives, setCreatives] = useState<Creatives | null>(null);
   const [creativeLoading, setCreativeLoading] = useState(false);
   const [tone, setTone] = useState("consultivo");
@@ -333,7 +335,14 @@ export default function HomePage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || data.detail || "Falha ao publicar.");
-      const result = { provider: "instagram", success: true, postId: data.jobId, url: "" };
+      const published = !data.queued && data.result;
+      const result = {
+        provider: "instagram",
+        status: published ? "published" as const : "queued" as const,
+        success: Boolean(published),
+        postId: String(data.result?.postId || data.jobId || ""),
+        url: String(data.result?.url || "")
+      };
       setPublishResults([result]);
       setPublishMessage({
         type: "ok",
@@ -734,10 +743,14 @@ export default function HomePage() {
                 {publishResults.length ? (
                   <div className="channel-result-list">
                     {publishResults.map((result) => (
-                      <div className={`channel-result ${result.success ? "ok" : "error"}`} key={result.provider}>
+                      <div className={`channel-result ${result.status === "published" ? "ok" : result.status}`} key={result.provider}>
                         <strong>Instagram</strong>
                         <span>
-                          {result.success ? "publicado com sucesso" : `falhou - ${result.error || "erro desconhecido"}`}
+                          {result.status === "published"
+                            ? "publicado com sucesso"
+                            : result.status === "queued"
+                              ? "enviado para a fila"
+                              : `falhou - ${result.error || "erro desconhecido"}`}
                         </span>
                         {result.url ? (
                           <a href={result.url} rel="noreferrer" target="_blank">
