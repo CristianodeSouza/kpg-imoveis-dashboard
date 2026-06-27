@@ -4,6 +4,12 @@ import { prepareInstagramImages } from "@/lib/instagram-image";
 
 const graphVersion = process.env.META_GRAPH_VERSION || "v25.0";
 const graphBase = `https://graph.facebook.com/${graphVersion}`;
+const containerPollDelayMs = 5000;
+const containerPollAttempts = 24;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 async function createMediaContainer(imageUrl: string, caption: string, isCarouselItem: boolean, accountId: string, token: string) {
   if (!accountId || !token) throw new Error("Credenciais do Instagram nao configuradas no servidor.");
@@ -16,6 +22,32 @@ async function createMediaContainer(imageUrl: string, caption: string, isCarouse
   const data = await response.json();
   if (!response.ok) throw new Error(data?.error?.message || "Falha ao criar container de midia.");
   return String(data.id);
+}
+
+async function fetchContainerStatus(containerId: string, token: string) {
+  const response = await fetch(
+    `${graphBase}/${encodeURIComponent(containerId)}?fields=status_code,status&access_token=${encodeURIComponent(token)}`,
+    { cache: "no-store" }
+  );
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data?.error?.message || "Falha ao consultar status da midia no Instagram.");
+  return {
+    statusCode: String(data?.status_code || ""),
+    status: String(data?.status || "")
+  };
+}
+
+async function waitForContainerReady(containerId: string, token: string, label: string) {
+  for (let attempt = 1; attempt <= containerPollAttempts; attempt += 1) {
+    const status = await fetchContainerStatus(containerId, token);
+    if (status.statusCode === "FINISHED") return status;
+    if (status.statusCode === "ERROR" || status.statusCode === "EXPIRED") {
+      throw new Error(`${label} nao ficou pronto para publicacao: ${status.status || status.statusCode}.`);
+    }
+    if (attempt < containerPollAttempts) await sleep(containerPollDelayMs);
+  }
+
+  throw new Error(`${label} ainda nao ficou pronto para publicacao. Tente novamente em instantes.`);
 }
 
 async function publishContainer(creationId: string, accountId: string, token: string) {
@@ -66,6 +98,7 @@ export async function publishInstagramJob(input: {
 
   if (preparedImageUrls.length === 1) {
     const containerId = await createMediaContainer(preparedImageUrls[0], caption, false, accountId, token);
+    await waitForContainerReady(containerId, token, "Imagem do Instagram");
     const result = await publishContainer(containerId, accountId, token);
     const publishedPermalink = await fetchPublishedPermalink(String(result?.id || ""), token);
     const permalink = publishedPermalink || result?.permalink || result?.url || (result?.id ? `https://www.instagram.com/p/${result.id}/` : "");
@@ -82,10 +115,10 @@ export async function publishInstagramJob(input: {
     return { provider: "instagram", postId: result?.id, url: permalink, mediaType: "imagem", photosCount: 1, usage };
   }
 
-  const children = [];
-  for (const imageUrl of preparedImageUrls) {
-    children.push(await createMediaContainer(imageUrl, caption, true, accountId, token));
-  }
+  const children = await Promise.all(
+    preparedImageUrls.map((imageUrl) => createMediaContainer(imageUrl, caption, true, accountId, token))
+  );
+  await Promise.all(children.map((containerId, index) => waitForContainerReady(containerId, token, `Imagem ${index + 1} do carrossel`)));
 
   const carouselResponse = await fetch(`${graphBase}/${accountId}/media`, {
     method: "POST",
@@ -99,7 +132,9 @@ export async function publishInstagramJob(input: {
   const carousel = await carouselResponse.json();
   if (!carouselResponse.ok) throw new Error(carousel?.error?.message || "Falha ao criar carrossel.");
 
-  const result = await publishContainer(String(carousel.id), accountId, token);
+  const carouselId = String(carousel.id || "");
+  await waitForContainerReady(carouselId, token, "Carrossel do Instagram");
+  const result = await publishContainer(carouselId, accountId, token);
   const publishedPermalink = await fetchPublishedPermalink(String(result?.id || ""), token);
   const permalink = publishedPermalink || result?.permalink || result?.url || (result?.id ? `https://www.instagram.com/p/${result.id}/` : "");
   const { usage } = await recordInstagramPublication({

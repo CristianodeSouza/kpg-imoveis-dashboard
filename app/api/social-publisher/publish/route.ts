@@ -11,6 +11,7 @@ export const maxDuration = 90;
 type ProviderResult = {
   provider: "instagram" | "google_business_profile";
   success: boolean;
+  queued?: boolean;
   postId?: string;
   url?: string;
   error?: string;
@@ -72,6 +73,7 @@ export async function POST(request: Request) {
       results.push({
         provider: "instagram",
         success: true,
+        queued: true,
         postId: job.id,
         url: "",
         usage: { queued: true }
@@ -127,7 +129,7 @@ export async function POST(request: Request) {
       propertyCode,
       propertyUrl,
       channels: channels as any,
-      instagramStatus: instagram ? (instagram.success ? "published" : "failed") : "skipped",
+      instagramStatus: instagram ? (instagram.queued ? "pending" : instagram.success ? "published" : "failed") : "skipped",
       instagramPostId: instagram?.postId || "",
       instagramUrl: instagram?.url || "",
       gmbStatus: gmb ? (gmb.success ? "published" : "failed") : "skipped",

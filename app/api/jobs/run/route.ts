@@ -3,7 +3,7 @@ import { requirePlatformAdmin } from "@/lib/admin";
 import { runJobBatch } from "@/lib/job-runner";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 function authorized(request: Request) {
   const expected = process.env.JOBS_RUN_SECRET || process.env.CRON_SECRET;

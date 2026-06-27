@@ -322,7 +322,7 @@ export default function HomePage() {
     setPublishMessage(null);
     setPublishResults([]);
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 90000);
+    const timeout = window.setTimeout(() => controller.abort(), 300000);
     try {
       const response = await fetch("/api/instagram/publish", {
         method: "POST",
@@ -353,7 +353,7 @@ export default function HomePage() {
     } catch (error) {
       const text =
         error instanceof DOMException && error.name === "AbortError"
-          ? "A publicacao demorou demais e foi interrompida. Tente novamente com menos fotos ou gere os criativos antes."
+          ? "A publicacao demorou demais e foi interrompida. O Instagram pode levar alguns minutos para processar carrosseis; tente novamente com menos fotos."
           : error instanceof Error
             ? error.message
             : "Erro ao publicar.";
