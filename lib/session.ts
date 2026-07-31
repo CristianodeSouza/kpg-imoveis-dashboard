@@ -12,10 +12,11 @@ export type SessionPayload = {
 const SESSION_TTL_MS = 1000 * 60 * 60 * 12;
 
 function sessionSecret() {
-  if (process.env.NODE_ENV === "production" && !process.env.SESSION_SECRET) {
-    throw new Error("SESSION_SECRET obrigatoria em producao.");
+  const secret = process.env.SESSION_SECRET || process.env.SETTINGS_ENCRYPTION_KEY;
+  if (process.env.NODE_ENV === "production" && !secret) {
+    throw new Error("SESSION_SECRET ou SETTINGS_ENCRYPTION_KEY obrigatoria em producao.");
   }
-  return process.env.SESSION_SECRET || process.env.SETTINGS_ENCRYPTION_KEY || "dev-session-secret-change-me";
+  return secret || "dev-session-secret-change-me";
 }
 
 function sign(payload: string) {

@@ -110,8 +110,11 @@ export async function ensurePlatformTenantAndAdmin() {
 }
 
 export async function validateLogin(username: string, password: string) {
-  await ensureDefaultTenantAndUser();
-  await ensurePlatformTenantAndAdmin();
+  if (process.env.NODE_ENV !== "production") {
+    await ensureDefaultTenantAndUser();
+    await ensurePlatformTenantAndAdmin();
+  }
+
   const normalizedUsername = username.trim().toUpperCase();
   const user = await prisma.user.findUnique({
     where: { username: normalizedUsername },
