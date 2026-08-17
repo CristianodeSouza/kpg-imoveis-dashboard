@@ -290,11 +290,15 @@ model LeadInteraction {
   lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   message   String   @default("")
   direction String   @default("desconhecido")
+  source    String   @default("")
+  externalId String?
   raw       Json?
   createdAt DateTime @default(now())
 
   @@index([tenantId, leadId])
   @@index([tenantId, createdAt])
+  @@index([tenantId, source])
+  @@unique([tenantId, source, externalId])
 }
 
 model Job {

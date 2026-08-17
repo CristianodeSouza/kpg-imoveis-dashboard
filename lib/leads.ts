@@ -9,6 +9,13 @@ function text(value: unknown) {
   return String(value ?? "").trim();
 }
 
+function externalIdentity(lead: Lead) {
+  const raw = lead.raw && typeof lead.raw === "object" ? (lead.raw as LooseRecord) : {};
+  const source = firstText(raw, ["source", "origem"]) || lead.source;
+  const externalId = firstText(raw, ["externalId", "external_id", "sheetExternalId"]);
+  return { source, externalId };
+}
+
 function firstText(source: LooseRecord, keys: string[]) {
   for (const key of keys) {
     const found = Object.keys(source).find((item) => item.toLowerCase() === key.toLowerCase());
@@ -198,15 +205,26 @@ export async function readLeads(tenantId?: string | null, options?: { page?: num
 }
 
 async function createInteraction(tenantId: string, leadId: string, lead: Lead) {
+  const { source, externalId } = externalIdentity(lead);
+  if (externalId) {
+    const existing = await prisma.leadInteraction.findFirst({
+      where: { tenantId, source, externalId }
+    });
+    if (existing) return false;
+  }
+
   await prisma.leadInteraction.create({
     data: {
       tenantId,
       leadId,
       message: lead.originalMessage || lead.message,
       direction: lead.direction,
+      source,
+      externalId: externalId || null,
       raw: lead.raw as any
     }
   });
+  return true;
 }
 
 async function persistLead(payload: unknown, tenantId: string) {
@@ -215,6 +233,12 @@ async function persistLead(payload: unknown, tenantId: string) {
   const identityWhere = leadIdentityWhere(resolvedTenantId, incoming);
   const existing = identityWhere ? await prisma.lead.findFirst({ where: identityWhere }) : null;
   const lastMessageAt = parseDate(incoming.lastMessageAt);
+  const { source: incomingSource, externalId: incomingExternalId } = externalIdentity(incoming);
+  const duplicate = existing && incomingExternalId
+    ? Boolean(await prisma.leadInteraction.findFirst({
+        where: { tenantId: resolvedTenantId, source: incomingSource, externalId: incomingExternalId }
+      }))
+    : false;
 
   if (existing) {
     const updated = await prisma.lead.update({
@@ -234,12 +258,12 @@ async function persistLead(payload: unknown, tenantId: string) {
         chatLid: incoming.chatLid || existing.chatLid,
         direction: incoming.direction !== "desconhecido" ? incoming.direction : existing.direction,
         lastMessageAt,
-        interactions: { increment: 1 },
+        ...(duplicate ? {} : { interactions: { increment: 1 } }),
         notes: incoming.notes || existing.notes,
         raw: incoming.raw as any
       }
     });
-    await createInteraction(resolvedTenantId, updated.id, incoming);
+    if (!duplicate) await createInteraction(resolvedTenantId, updated.id, incoming);
     return leadFromDb(updated);
   }
 
