@@ -14,6 +14,7 @@ export async function POST(request: Request) {
     if (!session) return NextResponse.json({ error: "Sessao invalida." }, { status: 401 });
 
     const settings = await readTenantSettings(session.tenantId);
+    const body = await request.json().catch(() => ({}));
     const payloads = settings.leadSource === "GOOGLE_SHEETS"
       ? await fetchGoogleSheetsLeadRecords({
           spreadsheetId: settings.googleSheetsSpreadsheetId,
@@ -24,8 +25,23 @@ export async function POST(request: Request) {
           dataStoreId: settings.makeDataStoreId,
           token: settings.makeApiToken
         });
+    const invalid = payloads.filter((payload) => {
+      const row = payload as Record<string, unknown>;
+      return !String(row.nome || "").trim() && !String(row.numero || "").trim() && !String(row.chatLid || "").trim();
+    }).length;
+    if (body?.dryRun === true) {
+      return NextResponse.json({
+        ok: true,
+        dryRun: true,
+        source: settings.leadSource,
+        rows: payloads.length,
+        valid: payloads.length - invalid,
+        invalid
+      });
+    }
+
     const { pagination } = await upsertLeads(payloads, session.tenantId);
-    return NextResponse.json({ ok: true, source: settings.leadSource, imported: payloads.length, total: pagination.total, pagination });
+    return NextResponse.json({ ok: true, source: settings.leadSource, imported: payloads.length - invalid, invalid, total: pagination.total, pagination });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro ao sincronizar leads.";
     return NextResponse.json(
