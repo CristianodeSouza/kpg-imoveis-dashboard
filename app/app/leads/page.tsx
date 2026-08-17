@@ -114,6 +114,7 @@ export default function LeadsPage() {
   const [status, setStatus] = useState<LeadStatus | "todos">("todos");
   const [brokerFilter, setBrokerFilter] = useState<"todos" | "com_corretor" | "sem_corretor">("todos");
   const [viewMode, setViewMode] = useState<"inbox" | "funil">("inbox");
+  const [period, setPeriod] = useState<"7" | "30" | "90" | "all">("30");
   const [selectedLeadId, setSelectedLeadId] = useState("");
   const [message, setMessage] = useState("");
   const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: 100, total: 0, totalPages: 1 });
@@ -225,6 +226,15 @@ export default function LeadsPage() {
   const brokerCount = leads.filter(hasBrokerAssigned).length;
   const waitingCount = leads.filter((lead) => isOpenLead(lead) && !hasBrokerAssigned(lead) && hoursSince(lead.lastMessageAt) >= 24).length;
   const hotCount = leads.filter((lead) => isOpenLead(lead) && isHotLead(lead)).length;
+  const contactedCount = leads.filter((lead) => lead.status !== "novo").length;
+  const advancedCount = leads.filter((lead) => ["corretor_acionado", "ganho"].includes(lead.status)).length;
+  const wonCount = leads.filter((lead) => lead.status === "ganho").length;
+  const conversionRate = pagination.total ? Math.round((wonCount / pagination.total) * 100) : 0;
+  const statusDistribution = funnelStages.map((stage) => ({
+    stage,
+    label: statusLabels[stage],
+    count: leads.filter((lead) => lead.status === stage).length
+  }));
 
   return (
     <AppShell
@@ -245,9 +255,9 @@ export default function LeadsPage() {
     >
       <div className="v2-page v2-leads-page">
       <PageHeader
-        eyebrow="CRM conversacional"
-        title="CRM WhatsApp de Leads"
-        description="Atenda leads vindas do WhatsApp com contexto do imovel, etapa comercial, responsavel e historico em uma unica tela."
+        eyebrow="Operacao comercial"
+        title="CRM WhatsApp"
+        description="Acompanhe volume, atendimento e conversao dos leads no periodo selecionado."
         actions={
           <>
             <button className="btn secondary" disabled={syncing} onClick={syncLeads}>
@@ -262,13 +272,50 @@ export default function LeadsPage() {
         }
       />
 
-      <section className="crm-metrics ds-metrics-grid">
-        <MetricCard label="Total" value={pagination.total.toLocaleString("pt-BR")} hint="leads no CRM" />
-        <MetricCard label="Hoje" value={todayCount.toLocaleString("pt-BR")} hint="novas conversas" tone="info" />
-        <MetricCard label="Novos" value={newCount.toLocaleString("pt-BR")} hint="em triagem" />
-        <MetricCard label="Corretor" value={brokerCount.toLocaleString("pt-BR")} hint="acionado" tone="warning" />
-        <MetricCard label="Sem acao" value={waitingCount.toLocaleString("pt-BR")} hint="24h+" tone={waitingCount ? "danger" : "success"} />
-        <MetricCard label="Quentes" value={hotCount.toLocaleString("pt-BR")} hint="alta intencao" tone="success" />
+      <section className="crm-strategic-header">
+        <div>
+          <span className="eyebrow">Visao estrategica</span>
+          <h2>Performance da operacao</h2>
+          <p>Volume, alcance e conversao dos leads no periodo selecionado.</p>
+        </div>
+        <div className="crm-period-tabs" aria-label="Periodo da visao estrategica">
+          {([['7', '7 dias'], ['30', '30 dias'], ['90', '90 dias'], ['all', 'Todo periodo']] as const).map(([value, label]) => (
+            <button className={period === value ? "active" : ""} key={value} onClick={() => setPeriod(value)} type="button">
+              {label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="crm-performance-grid">
+        <MetricCard label="Novos leads" value={pagination.total.toLocaleString("pt-BR")} hint={`${todayCount} entraram hoje`} />
+        <MetricCard label="Taxa de contato" value={`${pagination.total ? Math.round((contactedCount / pagination.total) * 100) : 0}%`} hint={`${contactedCount} leads ja atendidos`} tone="info" />
+        <MetricCard label="Avanco no funil" value={`${pagination.total ? Math.round((advancedCount / pagination.total) * 100) : 0}%`} hint={`${advancedCount} em interacao ou alem`} tone="warning" />
+        <MetricCard label="Encaminhados" value={brokerCount.toLocaleString("pt-BR")} hint="para corretor" tone="success" />
+        <MetricCard label="Conversao" value={`${conversionRate}%`} hint={`${wonCount} vendas concluidas`} tone="dark" />
+      </section>
+
+      <section className="crm-analytics-grid">
+        <article className="panel crm-chart-panel">
+          <div className="crm-panel-heading"><div><span className="eyebrow">Demanda</span><h3>Entradas por periodo</h3></div><span className="crm-count-pill">{pagination.total} leads</span></div>
+          <div className="crm-bars" aria-label="Entradas de leads por periodo">
+            {statusDistribution.map(({ stage, count, label }) => <div className="crm-bar-item" key={stage}><span>{label}</span><div className="crm-bar-track"><i className={`crm-bar ${stage}`} style={{ height: `${Math.max(8, pagination.total ? (count / pagination.total) * 100 : 8)}%` }} /></div><strong>{count}</strong></div>)}
+          </div>
+        </article>
+        <article className="panel crm-chart-panel">
+          <div className="crm-panel-heading"><div><span className="eyebrow">Pipeline</span><h3>Avanco do funil</h3></div><span className="crm-count-pill">{leads.filter(isOpenLead).length} ativos</span></div>
+          <div className="crm-funnel-list">
+            {statusDistribution.map(({ stage, count, label }) => <div className="crm-funnel-row" key={stage}><div><span>{label}</span><small>{pagination.total ? Math.round((count / pagination.total) * 100) : 0}% dos leads</small></div><strong>{count}</strong><div className="crm-funnel-track"><i className={`crm-funnel-fill ${stage}`} style={{ width: `${pagination.total ? (count / pagination.total) * 100 : 0}%` }} /></div></div>)}
+          </div>
+        </article>
+      </section>
+
+      <section className="crm-analytics-grid crm-analytics-secondary">
+        <article className="panel crm-chart-panel crm-distribution-panel">
+          <div className="crm-panel-heading"><div><span className="eyebrow">Distribuicao</span><h3>Leads por status</h3></div></div>
+          <div className="crm-donut-layout"><div className="crm-donut" style={{ background: `conic-gradient(#f1b64b 0 ${pagination.total ? (newCount / pagination.total) * 100 : 0}%, #5f8ec4 ${pagination.total ? (newCount / pagination.total) * 100 : 0}% ${pagination.total ? ((newCount + contactedCount) / pagination.total) * 100 : 0}%, #9a69ba ${pagination.total ? ((newCount + contactedCount) / pagination.total) * 100 : 0}% 100%)` }}><strong>{pagination.total}</strong><small>leads</small></div><div className="crm-legend">{statusDistribution.map(({ stage, count, label }) => <span key={stage}><i className={`crm-dot ${stage}`} />{label}<strong>{count} · {pagination.total ? Math.round((count / pagination.total) * 100) : 0}%</strong></span>)}</div></div>
+        </article>
+        <article className="panel crm-chart-panel"><div className="crm-panel-heading"><div><span className="eyebrow">Resultado operacional</span><h3>Comparativo do funil</h3></div><span className="crm-count-pill">base: {pagination.total}</span></div><div className="crm-comparison">{[["Recebidos", pagination.total], ["Contatados", contactedCount], ["Encaminhados", brokerCount], ["Vendas", wonCount]].map(([label, count], index) => <div className="crm-comparison-row" key={String(label)}><span>{label}</span><div><i className={`comparison-${index}`} style={{ width: `${pagination.total ? (Number(count) / pagination.total) * 100 : 0}%` }} /></div><strong>{count}</strong></div>)}</div></article>
       </section>
 
       <section className="panel crm-control-panel">
@@ -326,6 +373,8 @@ export default function LeadsPage() {
             Quando novas conversas chegarem pela integracao de WhatsApp, elas aparecem aqui.
           </EmptyState>
         ) : null}
+
+        {!loading && filteredLeads.length ? <section className="crm-table-section"><div className="crm-panel-heading"><div><span className="eyebrow">Carteira comercial</span><h3>Leads em atendimento</h3><p>Consulte contatos e atualize o estagio de cada oportunidade.</p></div><span className="crm-count-pill">{filteredLeads.length} leads</span></div><div className="crm-table-wrap"><table className="crm-leads-table"><thead><tr><th>Cliente</th><th>WhatsApp</th><th>Data de entrada</th><th>Status</th><th>Acao</th></tr></thead><tbody>{filteredLeads.slice(0, 20).map((lead) => <tr key={lead.id}><td><strong>{lead.name}</strong></td><td>{digits(lead.phone) || "-"}</td><td>{formatDate(lead.lastMessageAt)}</td><td><select className={`status-select ${lead.status}`} value={lead.status} onChange={(event) => updateStatus(lead.id, event.target.value as LeadStatus)}>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></td><td><button className="btn tertiary crm-view-button" onClick={() => { setSelectedLeadId(lead.id); setViewMode("inbox"); }} type="button">Ver <ExternalLink size={14} /></button></td></tr>)}</tbody></table></div></section> : null}
 
         {!loading && filteredLeads.length && viewMode === "inbox" ? (
           <section className="crm-inbox-layout">

@@ -97,7 +97,7 @@ export function MetricCard({
   label: string;
   value: ReactNode;
   hint?: ReactNode;
-  tone?: "neutral" | "success" | "warning" | "danger" | "info";
+  tone?: "neutral" | "success" | "warning" | "danger" | "info" | "dark";
 }) {
   return (
     <div className={`ds-metric-card ${tone}`}>
