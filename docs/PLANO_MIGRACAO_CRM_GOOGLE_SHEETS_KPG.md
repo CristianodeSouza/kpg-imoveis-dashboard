@@ -237,3 +237,26 @@ Esse inventario e uma fotografia tecnica do ambiente consultado. Antes da import
 ## Resultado final esperado
 
 O CRM continuara multi-tenant. O KPG Imoveis passara a receber novas conversas da aba `atendimento`, enquanto o historico antigo permanecera no Supabase e os demais clientes continuarao isolados usando suas proprias fontes. A sincronizacao podera ser repetida com seguranca, sem duplicacao e sem depender de uma requisicao web longa.
+
+## Registro de execucao
+
+Execucao realizada em 17/08/2026:
+
+- Etapa 0: concluida no commit `d9a0983`; deploy de producao `dpl_7bLDzbG7gayCHWAVQjQW2rE5KF4R`.
+- Etapa 1: concluida no commit `4dc4271`; deploy de producao `dpl_A652AvaEjkHDVakjPkT72xifYqeL`.
+- Etapa 2: concluida no commit `7fa62fc`; schema Supabase atualizado e tenant `kpg` configurado; deploy `dpl_8NLjYuHmcHCbvtbAZfKeRYQaApvC`.
+- Etapa 3: concluida no commit `984e6c1`; idempotencia aplicada no Supabase; deploy `dpl_6d3WARTVDjfLWor3e5CtFTFAKPvo`.
+- Etapa 4: concluida no commit `c8351c1`; dry-run e importacao controlada publicados; deploy `dpl_HoQfQn7mLbVnnrvfPC7dQZfciLvm`.
+- Etapa 5: concluida no commit `b8f97fb`; rota neutra, retry e frontend atualizados; deploy `dpl_5hY5ACGb7CDJZtBKyRgudVtFibQy`.
+
+Validacoes de producao realizadas:
+
+- Login do tenant KPG: HTTP 200.
+- Dry-run da planilha: 1 linha, 1 valida, 0 invalidas.
+- Importacao inicial: 1 lead, 1 interacao.
+- Reprocessamento da mesma planilha: banco permaneceu com 1 lead e 1 interacao.
+- Sincronizacao pela nova rota `/api/leads/sync`: HTTP 200 e fonte `GOOGLE_SHEETS`.
+- Configuracao dos tenants: somente `kpg` usa `GOOGLE_SHEETS`; os demais permanecem em `MAKE`.
+- Typecheck e builds da Vercel: aprovados em todas as etapas de codigo.
+
+Pendencia operacional futura: quando a planilha crescer significativamente, mover a leitura para um `Job` assicrono com painel de progresso. A importacao atual ja e idempotente e possui retry, mas ainda pode ser executada dentro da requisicao enquanto o volume permanecer pequeno.
