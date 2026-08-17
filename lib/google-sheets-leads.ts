@@ -112,7 +112,18 @@ export async function fetchGoogleSheetsLeadRecords(options: {
   url.searchParams.set("tqx", "out:csv");
   url.searchParams.set("sheet", sheetName);
 
-  const response = await fetch(url, { cache: "no-store" });
+  let response: Response | null = null;
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      response = await fetch(url, { cache: "no-store" });
+      if (response.ok || (response.status < 500 && response.status !== 429)) break;
+    } catch (error) {
+      lastError = error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250 * 2 ** attempt));
+  }
+  if (!response) throw lastError instanceof Error ? lastError : new Error("Nao foi possivel conectar a planilha de atendimento.");
   if (!response.ok) throw new Error(`Nao foi possivel ler a planilha de atendimento (HTTP ${response.status}).`);
 
   const csv = await response.text();

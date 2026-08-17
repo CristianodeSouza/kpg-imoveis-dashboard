@@ -163,7 +163,7 @@ export default function LeadsPage() {
     setSyncing(true);
     setMessage("");
     try {
-      const response = await fetch("/api/leads/sync-make", { method: "POST" });
+      const response = await fetch("/api/leads/sync", { method: "POST" });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Nao foi possivel sincronizar as leads.");
       setMessage(`${data.imported} registros sincronizados. Total no CRM: ${data.total}.`);
