@@ -260,3 +260,22 @@ Validacoes de producao realizadas:
 - Typecheck e builds da Vercel: aprovados em todas as etapas de codigo.
 
 Pendencia operacional futura: quando a planilha crescer significativamente, mover a leitura para um `Job` assicrono com painel de progresso. A importacao atual ja e idempotente e possui retry, mas ainda pode ser executada dentro da requisicao enquanto o volume permanecer pequeno.
+
+Checklist de ativacao final:
+
+- [x] Fonte do KPG configurada por tenant.
+- [x] Historico antigo preservado.
+- [x] Leitura da aba `atendimento` validada em producao.
+- [x] Importacao inicial executada.
+- [x] Reprocessamento sem duplicacao confirmado.
+- [x] Rota antiga mantida para rollback de codigo.
+- [x] Rota nova `/api/leads/sync` publicada.
+- [x] Build e typecheck aprovados.
+- [x] Rollback tecnico: voltar ao deploy anterior e alterar `leadSource` do KPG para `MAKE`; nenhum dado precisa ser apagado.
+
+Monitoramento recomendado apos a ativacao:
+
+- Conferir a primeira sincronizacao diaria e o total de linhas retornadas.
+- Conferir `LeadInteraction.source` para separar historico legado de conversas da planilha.
+- Investigar qualquer aumento de `invalid` ou falha HTTP 429/5xx.
+- Migrar para Job assicrono antes de a planilha atingir volume que possa ultrapassar o timeout da Vercel.
