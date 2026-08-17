@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { upsertLeads } from "@/lib/leads";
 import { fetchMakeDataStoreRecords } from "@/lib/make";
+import { fetchGoogleSheetsLeadRecords } from "@/lib/google-sheets-leads";
 import { readTenantSettings } from "@/lib/settings";
 import { requireTenantService } from "@/lib/services";
 
@@ -13,13 +14,18 @@ export async function POST(request: Request) {
     if (!session) return NextResponse.json({ error: "Sessao invalida." }, { status: 401 });
 
     const settings = await readTenantSettings(session.tenantId);
-    const payloads = await fetchMakeDataStoreRecords({
-      baseUrl: settings.makeBaseUrl,
-      dataStoreId: settings.makeDataStoreId,
-      token: settings.makeApiToken
-    });
+    const payloads = settings.leadSource === "GOOGLE_SHEETS"
+      ? await fetchGoogleSheetsLeadRecords({
+          spreadsheetId: settings.googleSheetsSpreadsheetId,
+          sheetName: settings.googleSheetsSheetName
+        })
+      : await fetchMakeDataStoreRecords({
+          baseUrl: settings.makeBaseUrl,
+          dataStoreId: settings.makeDataStoreId,
+          token: settings.makeApiToken
+        });
     const { pagination } = await upsertLeads(payloads, session.tenantId);
-    return NextResponse.json({ ok: true, imported: payloads.length, total: pagination.total, pagination });
+    return NextResponse.json({ ok: true, source: settings.leadSource, imported: payloads.length, total: pagination.total, pagination });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro ao sincronizar leads.";
     return NextResponse.json(

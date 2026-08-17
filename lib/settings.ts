@@ -16,6 +16,9 @@ export type TenantSettings = {
   makeBaseUrl: string;
   makeDataStoreId: string;
   makeApiToken?: string;
+  leadSource: string;
+  googleSheetsSpreadsheetId: string;
+  googleSheetsSheetName: string;
   googleBusinessClientId: string;
   googleBusinessClientSecret?: string;
   googleBusinessAccountId: string;
@@ -66,6 +69,9 @@ function mapSettings(settings: DbTenantSettings): TenantSettings {
     makeBaseUrl: settings.makeBaseUrl,
     makeDataStoreId: settings.makeDataStoreId,
     makeApiToken: decryptSecret(settings.makeApiTokenEncrypted),
+    leadSource: settings.leadSource,
+    googleSheetsSpreadsheetId: settings.googleSheetsSpreadsheetId,
+    googleSheetsSheetName: settings.googleSheetsSheetName,
     googleBusinessClientId: settings.googleBusinessClientId,
     googleBusinessClientSecret: decryptSecret(settings.googleBusinessClientSecretEncrypted),
     googleBusinessAccountId: settings.googleBusinessAccountId,
@@ -96,6 +102,9 @@ export async function readTenantSettings(tenantId: string) {
         instagramAccountId: "",
         makeBaseUrl: "",
         makeDataStoreId: "",
+        leadSource: "MAKE",
+        googleSheetsSpreadsheetId: "",
+        googleSheetsSheetName: "atendimento",
         googleBusinessClientId: "",
         googleBusinessAccountId: "",
         googleBusinessLocationId: "",
@@ -125,6 +134,9 @@ export async function writeTenantSettings(tenantId: string, patch: Partial<Tenan
       makeBaseUrl: text(patch.makeBaseUrl),
       makeDataStoreId: text(patch.makeDataStoreId),
       makeApiTokenEncrypted: encryptSecret(patch.makeApiToken),
+      leadSource: text(patch.leadSource).toUpperCase() || "MAKE",
+      googleSheetsSpreadsheetId: text(patch.googleSheetsSpreadsheetId),
+      googleSheetsSheetName: text(patch.googleSheetsSheetName) || "atendimento",
       googleBusinessClientId: text(patch.googleBusinessClientId),
       googleBusinessClientSecretEncrypted: encryptSecret(patch.googleBusinessClientSecret),
       googleBusinessAccountId: text(patch.googleBusinessAccountId),
@@ -144,6 +156,9 @@ export async function writeTenantSettings(tenantId: string, patch: Partial<Tenan
       ...(hasField(patch, "instagramAccountId") ? { instagramAccountId: text(patch.instagramAccountId) } : {}),
       ...(hasField(patch, "makeBaseUrl") ? { makeBaseUrl: text(patch.makeBaseUrl) } : {}),
       ...(hasField(patch, "makeDataStoreId") ? { makeDataStoreId: text(patch.makeDataStoreId) } : {}),
+      ...(hasField(patch, "leadSource") ? { leadSource: text(patch.leadSource).toUpperCase() || "MAKE" } : {}),
+      ...(hasField(patch, "googleSheetsSpreadsheetId") ? { googleSheetsSpreadsheetId: text(patch.googleSheetsSpreadsheetId) } : {}),
+      ...(hasField(patch, "googleSheetsSheetName") ? { googleSheetsSheetName: text(patch.googleSheetsSheetName) || "atendimento" } : {}),
       ...(hasField(patch, "googleBusinessClientId") ? { googleBusinessClientId: text(patch.googleBusinessClientId) } : {}),
       ...(hasField(patch, "googleBusinessAccountId") ? { googleBusinessAccountId: text(patch.googleBusinessAccountId) } : {}),
       ...(hasField(patch, "googleBusinessLocationId") ? { googleBusinessLocationId: text(patch.googleBusinessLocationId) } : {}),

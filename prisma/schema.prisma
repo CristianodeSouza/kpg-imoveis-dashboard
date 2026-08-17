@@ -114,6 +114,9 @@ model TenantSettings {
   makeBaseUrl                   String   @default("")
   makeDataStoreId               String   @default("")
   makeApiTokenEncrypted         String?
+  leadSource                    String   @default("MAKE")
+  googleSheetsSpreadsheetId     String   @default("")
+  googleSheetsSheetName        String   @default("atendimento")
   googleBusinessClientId        String   @default("")
   googleBusinessClientSecretEncrypted String?
   googleBusinessAccountId       String   @default("")
