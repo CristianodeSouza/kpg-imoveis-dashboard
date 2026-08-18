@@ -635,14 +635,14 @@ export default function HomePage() {
                   <ImageIcon size={21} />
                   <h2>{creatives ? "Criativos Selecionados" : "Fotos Selecionadas"}</h2>
                 </div>
-                <span className="step-caption">{selectedPhotos.length}/10</span>
+                <span className="step-caption">{selectedPhotos.length}/10 selecionadas · {(creatives?.carousel?.length ? creatives.carousel : property.photos).length} disponiveis</span>
               </div>
               <div className="photo-grid">
                 {(creatives?.carousel?.length ? creatives.carousel : property.photos).length ? (
-                  (creatives?.carousel?.length ? creatives.carousel : property.photos).slice(0, 24).map((url) => (
+                  (creatives?.carousel?.length ? creatives.carousel : property.photos).map((url) => (
                     <label className={`photo-choice ${selectedPhotos.includes(url) ? "selected" : ""}`} key={url}>
                       <input checked={selectedPhotos.includes(url)} onChange={() => togglePhoto(url)} type="checkbox" />
-                      <img src={url} alt="Foto do imovel" />
+                      {property.mediaTypes?.[url] === "video" ? <video muted controls preload="metadata" src={url} /> : <img src={url} alt="Foto do imovel" />}
                     </label>
                   ))
                 ) : (

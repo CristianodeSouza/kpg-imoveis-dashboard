@@ -139,7 +139,7 @@ const aspenFeatures = [
 const kpgAuthority =
   "A KPG Imóveis é uma referência confiável no mercado imobiliário de Gramado e Canela há mais de 15 anos, localizada na Av. Borges de Medeiros, 3165 - Sala 09A - Segundo Andar, Centro / Gramado - RS.";
 
-const collectPhotos = (source: LooseRecord) => {
+const collectMedia = (source: LooseRecord) => {
   const candidates = [
     recordValue(source, "fotos"),
     recordValue(source, "fotos_edificio"),
@@ -150,10 +150,15 @@ const collectPhotos = (source: LooseRecord) => {
     recordValue(source, "images"),
     recordValue(source, "photos"),
     recordValue(source, "galeria"),
-    recordValue(nestedRecord(recordValue(source, "midias")), "fotos")
+    recordValue(nestedRecord(recordValue(source, "midias")), "fotos"),
+    recordValue(source, "video"),
+    recordValue(source, "videos"),
+    recordValue(source, "video_edificio"),
+    recordValue(source, "videoEdificio"),
+    recordValue(nestedRecord(recordValue(source, "midias")), "videos")
   ];
 
-  const photos = candidates
+  const media = candidates
     .flatMap(asArray)
     .map((item) => {
       if (typeof item === "string") return item;
@@ -181,7 +186,9 @@ const collectPhotos = (source: LooseRecord) => {
       return Array.from(url.matchAll(/https?:\/\/[^\s;}"']+/gi)).map((match) => match[0]);
     });
 
-  return Array.from(new Set(photos));
+  const urls = Array.from(new Set(media));
+  const mediaTypes = Object.fromEntries(urls.map((url) => [url, /\.(?:mp4|webm|mov|m4v)(?:[?#].*)?$/i.test(url) ? "video" : "image"])) as Record<string, "image" | "video">;
+  return { urls, mediaTypes };
 };
 
 const collectFeatures = (source: LooseRecord) => {
@@ -263,6 +270,8 @@ export function normalizeProperty(payload: unknown, code: string): Property {
     { label: "IPTU", value: propertyTax !== "Consulte" ? propertyTax : "" }
   ].filter((fact) => isMeaningful(fact.value));
 
+  const media = collectMedia(source);
+
   return {
     code: pickString(source, ["codigo", "referencia", "id", "code"]) || code,
     title,
@@ -283,7 +292,8 @@ export function normalizeProperty(payload: unknown, code: string): Property {
     facts,
     description: collectDescription(source) || (isAspen2239 ? aspenDescription : ""),
     features: collectFeatures(source).length ? collectFeatures(source) : isAspen2239 ? aspenFeatures : [],
-    photos: collectPhotos(source),
+    photos: media.urls,
+    mediaTypes: media.mediaTypes,
     sourceUrl,
     raw: payload
   };

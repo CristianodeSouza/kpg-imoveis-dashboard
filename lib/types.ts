@@ -19,6 +19,7 @@ export type Property = {
   description: string;
   features: string[];
   photos: string[];
+  mediaTypes?: Record<string, "image" | "video">;
   sourceUrl?: string;
   raw: unknown;
 };

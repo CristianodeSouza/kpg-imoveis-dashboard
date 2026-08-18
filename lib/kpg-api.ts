@@ -83,6 +83,7 @@ async function fetchWithTimeout(endpoint: string, init: RequestInit = {}) {
 }
 
 function cacheResultFromRecord(record: {
+  code: string;
   imovel: unknown;
   origem: string;
   property: unknown;
@@ -91,7 +92,7 @@ function cacheResultFromRecord(record: {
   return {
     imovel: record.imovel,
     origem: `${record.origem || "cache"}-cache`,
-    property: record.property as ReturnType<typeof normalizeProperty>,
+    property: normalizeProperty(record.imovel, record.code),
     upstream: { source: record.sourceUrl }
   };
 }
@@ -102,14 +103,14 @@ async function readFreshCache(codigo: string, tenantId: string) {
   >`SELECT "imovel", "origem", "property", "sourceUrl", "lastSuccessAt" FROM "PropertyCache" WHERE "tenantId" = ${tenantId} AND "code" = ${codigo} LIMIT 1`;
   if (!cached) return null;
   if (Date.now() - cached.lastSuccessAt.getTime() > PROPERTY_CACHE_TTL_MS) return null;
-  return cacheResultFromRecord(cached);
+  return cacheResultFromRecord({ ...cached, code: codigo });
 }
 
 async function readStaleCache(codigo: string, tenantId: string) {
   const [cached] = await prisma.$queryRaw<
     Array<{ imovel: unknown; origem: string; property: unknown; sourceUrl: string }>
   >`SELECT "imovel", "origem", "property", "sourceUrl" FROM "PropertyCache" WHERE "tenantId" = ${tenantId} AND "code" = ${codigo} LIMIT 1`;
-  return cached ? cacheResultFromRecord(cached) : null;
+  return cached ? cacheResultFromRecord({ ...cached, code: codigo }) : null;
 }
 
 async function savePropertyCache(tenantId: string, codigo: string, result: LookupResult) {
