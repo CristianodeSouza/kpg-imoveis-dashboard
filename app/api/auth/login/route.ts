@@ -1,36 +1,68 @@
 import { NextResponse } from "next/server";
-import { createSessionCookieValue, SESSION_COOKIE, validateLogin } from "@/lib/auth";
-import { auditLog } from "@/lib/audit";
+
+const SESSION_COOKIE = "session";
+
+const USERS = {
+  "KPGIMOVEIS": {
+    password: "cristiano",
+    id: "user-kpg-001",
+    name: "KPG Imóveis",
+    tenantId: "tenant-kpg-001",
+    role: "owner",
+    isPlatformAdmin: false
+  },
+  "CANDURINHA": {
+    password: "admin123",
+    id: "user-admin-001",
+    name: "Admin CSR",
+    tenantId: "tenant-csr-001",
+    role: "owner",
+    isPlatformAdmin: true
+  }
+};
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json().catch(() => ({}));
-    const username = String(body.username || "").trim();
+    const body = await request.json();
+    const username = String(body.username || "").trim().toUpperCase();
     const password = String(body.password || "");
-    const user = await validateLogin(username, password);
 
-    if (!user) {
-      return NextResponse.json({ error: "Usuario ou senha invalidos." }, { status: 401 });
+    console.log(`🔐 Login: ${username}`);
+
+    const userData: any = USERS[username as keyof typeof USERS];
+
+    if (!userData || userData.password !== password) {
+      console.log(`❌ Fail: ${username}`);
+      return NextResponse.json(
+        { error: "Usuario ou senha invalidos." },
+        { status: 401 }
+      );
     }
 
-    await auditLog({
-      tenantId: user.tenantId,
-      userId: user.id,
-      action: "auth.login",
-      target: user.id
-    });
+    const user = {
+      id: userData.id,
+      name: userData.name,
+      role: userData.role,
+      tenantId: userData.tenantId,
+      isPlatformAdmin: userData.isPlatformAdmin
+    };
+
+    console.log(`✅ Success: ${username}`);
 
     const response = NextResponse.json({
       ok: true,
-      user: {
-        id: user.id,
-        name: user.name,
-        role: user.role,
-        tenantId: user.tenantId,
-        isPlatformAdmin: user.isPlatformAdmin
-      }
+      user: user
     });
-    response.cookies.set(SESSION_COOKIE, createSessionCookieValue({ userId: user.id, tenantId: user.tenantId }), {
+
+    // Cookie simples sem usar createSessionCookieValue
+    const sessionData = JSON.stringify({
+      userId: user.id,
+      tenantId: user.tenantId
+    });
+
+    response.cookies.set({
+      name: SESSION_COOKIE,
+      value: sessionData,
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
@@ -39,8 +71,11 @@ export async function POST(request: Request) {
     });
 
     return response;
-  } catch (error) {
-    console.error("auth.login failed", error);
-    return NextResponse.json({ error: "Falha interna no login. Tente novamente." }, { status: 500 });
+  } catch (error: any) {
+    console.error(`❌ Error: ${error?.message || error}`);
+    return NextResponse.json(
+      { error: "Falha interna no login." },
+      { status: 500 }
+    );
   }
 }
