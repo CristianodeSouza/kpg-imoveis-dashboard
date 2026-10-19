@@ -1,38 +1,34 @@
 import { NextResponse } from "next/server";
+import { createSessionCookieValue, SESSION_COOKIE } from "@/lib/session";
 
-const SESSION_COOKIE = "session";
-
-const USERS = {
-  "KPGIMOVEIS": {
-    password: "cristiano",
-    id: "user-kpg-001",
-    name: "KPG Imóveis",
-    tenantId: "tenant-kpg-001",
-    role: "owner",
-    isPlatformAdmin: false
-  },
-  "CANDURINHA": {
-    password: "admin123",
-    id: "user-admin-001",
-    name: "Admin CSR",
-    tenantId: "tenant-csr-001",
-    role: "owner",
-    isPlatformAdmin: true
-  }
+const DEFAULT_USERNAME = "KPGIMOVEIS";
+const DEFAULT_USER = {
+  id: "user-kpg-001",
+  name: "KPG Imóveis",
+  tenantId: "tenant-kpg-001",
+  role: "owner",
+  isPlatformAdmin: false
 };
+
+function configuredCredentials() {
+  const username = String(process.env.AUTH_USERNAME || "").trim().toUpperCase();
+  const password = String(process.env.AUTH_PASSWORD || "");
+
+  if (!username || !password) {
+    throw new Error("AUTH_USERNAME e AUTH_PASSWORD precisam estar configuradas.");
+  }
+
+  return { username, password };
+}
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const username = String(body.username || "").trim().toUpperCase();
     const password = String(body.password || "");
+    const credentials = configuredCredentials();
 
-    console.log(`🔐 Login: ${username}`);
-
-    const userData: any = USERS[username as keyof typeof USERS];
-
-    if (!userData || userData.password !== password) {
-      console.log(`❌ Fail: ${username}`);
+    if (username !== credentials.username || password !== credentials.password) {
       return NextResponse.json(
         { error: "Usuario ou senha invalidos." },
         { status: 401 }
@@ -40,29 +36,20 @@ export async function POST(request: Request) {
     }
 
     const user = {
-      id: userData.id,
-      name: userData.name,
-      role: userData.role,
-      tenantId: userData.tenantId,
-      isPlatformAdmin: userData.isPlatformAdmin
+      ...DEFAULT_USER,
+      id: process.env.AUTH_USER_ID || DEFAULT_USER.id,
+      name: process.env.AUTH_USER_NAME || DEFAULT_USER.name,
+      tenantId: process.env.AUTH_TENANT_ID || DEFAULT_USER.tenantId,
+      isPlatformAdmin: process.env.AUTH_IS_PLATFORM_ADMIN === "true"
     };
 
-    console.log(`✅ Success: ${username}`);
-
-    const response = NextResponse.json({
-      ok: true,
-      user: user
-    });
-
-    // Cookie simples sem usar createSessionCookieValue
-    const sessionData = JSON.stringify({
-      userId: user.id,
-      tenantId: user.tenantId
-    });
-
+    const response = NextResponse.json({ ok: true, user });
     response.cookies.set({
       name: SESSION_COOKIE,
-      value: sessionData,
+      value: createSessionCookieValue({
+        userId: user.id,
+        tenantId: user.tenantId
+      }),
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
@@ -71,8 +58,8 @@ export async function POST(request: Request) {
     });
 
     return response;
-  } catch (error: any) {
-    console.error(`❌ Error: ${error?.message || error}`);
+  } catch (error) {
+    console.error("Login error:", error);
     return NextResponse.json(
       { error: "Falha interna no login." },
       { status: 500 }
