@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createSessionCookieValue, SESSION_COOKIE } from "@/lib/session";
 
-const DEFAULT_USERNAME = "KPGIMOVEIS";
 const DEFAULT_USER = {
   id: "user-kpg-001",
   name: "KPG Imóveis",
@@ -11,13 +10,14 @@ const DEFAULT_USER = {
 };
 
 function configuredCredentials() {
-  const username = String(process.env.AUTH_USERNAME || "").trim().toUpperCase();
-  const password = String(process.env.AUTH_PASSWORD || "");
+  const username = String(
+    process.env.AUTH_USERNAME || process.env.DEFAULT_ADMIN_USERNAME || ""
+  ).trim().toUpperCase();
+  const password = String(
+    process.env.AUTH_PASSWORD || process.env.DEFAULT_ADMIN_PASSWORD || ""
+  );
 
-  if (!username || !password) {
-    throw new Error("AUTH_USERNAME e AUTH_PASSWORD precisam estar configuradas.");
-  }
-
+  if (!username || !password) return null;
   return { username, password };
 }
 
@@ -27,6 +27,14 @@ export async function POST(request: Request) {
     const username = String(body.username || "").trim().toUpperCase();
     const password = String(body.password || "");
     const credentials = configuredCredentials();
+
+    if (!credentials) {
+      console.error("Login configuration missing: set AUTH_* or DEFAULT_ADMIN_*.");
+      return NextResponse.json(
+        { error: "Login temporariamente indisponivel: configure as credenciais do servidor." },
+        { status: 503 }
+      );
+    }
 
     if (username !== credentials.username || password !== credentials.password) {
       return NextResponse.json(
