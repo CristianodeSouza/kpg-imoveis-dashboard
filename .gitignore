@@ -11,5 +11,6 @@ prisma/*.db-journal
 vercel.json
 *.tsbuildinfo
 .vercel/
+.open-next/
 
 .vercel
